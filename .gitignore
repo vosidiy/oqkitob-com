@@ -1,0 +1,10 @@
+# Ignore Vue development files
+frontend-src/node_modules/
+
+# Ignore CodeIgniter logs and cache
+public_html/codeigniter/writable/*
+!public_html/codeigniter/writable/index.html
+!public_html/codeigniter/writable/.htaccess
+
+# Ignore environment secrets
+# public_html/codeigniter/.env
