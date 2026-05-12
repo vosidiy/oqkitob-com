@@ -1,5 +1,6 @@
 # Ignore Vue development files
 frontend-src/node_modules/
+dist/
 
 # Ignore CodeIgniter logs and cache
 public_html/codeigniter/writable/*

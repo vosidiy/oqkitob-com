@@ -1,25 +1,44 @@
 # frontend-src
 
-This template should help get you started developing with Vue 3 in Vite.
+This directory contains the frontend source code for `oqkitob-com`.
 
-## Customize configuration
+## Role of This Folder
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+- Edit frontend code only in this folder.
+- Keep Vue SPA pages, components, router, styles, and static frontend assets here.
+- Do not maintain standalone SEO pages in this folder.
+- Production-like SPA artifacts are generated into the root-level `dist/` folder.
 
-## Project Setup
+## Development Commands
+
+Install dependencies:
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+Start the Vite development server:
 
 ```sh
 npm run dev
 ```
 
-### Compile and Minify for Production
+Build the frontend into `../dist`:
 
 ```sh
 npm run build
 ```
+
+Preview the built frontend locally:
+
+```sh
+npm run preview
+```
+
+## Notes
+
+- API requests should use relative paths such as `/api/test`.
+- The backend remains separate under `../api` and `../codeigniter`.
+- The Vue SPA source lives in `src/`.
+- Standalone SEO HTML pages are maintained in the repository root, not inside `frontend-src/`.
+- When testing the root-served SPA, manually copy `dist/index.html`, `dist/assets/`, and `dist/favicon.ico` to the repository root.
