@@ -222,9 +222,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `default_book_id`, `name`, `email`, `phone`, `country_name`, `country_code`, `city`, `timezone`, `date_of_birth`, `email_verified_at`, `password_hash`, `google_id`, `avatar`, `locale`, `status`, `last_login_at`, `plan`, `license_expires_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
-('11111111-1111-1111-1111-111111111111', 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 'Ali Vohidov', 'ali@example.com', NULL, 'Uzbekistan', 'UZ', 'Tashkent', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', NULL, NULL, NULL, 'en', 'active', NULL, 'free', NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
-('22222222-2222-2222-2222-222222222222', 'bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1', 'Malika Karimova', 'malika@example.com', NULL, 'Uzbekistan', 'UZ', 'Samarkand', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', NULL, NULL, NULL, 'en', 'active', NULL, 'free', NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
-('33333333-3333-3333-3333-333333333333', 'ccccccc1-cccc-cccc-cccc-ccccccccccc1', 'Jasur Rahimov', 'jasur@example.com', NULL, 'Uzbekistan', 'UZ', 'Bukhara', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', NULL, NULL, NULL, 'en', 'active', NULL, 'free', NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL);
+('11111111-1111-1111-1111-111111111111', 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 'Ali Vohidov', 'ali@example.com', NULL, 'Uzbekistan', 'UZ', 'Tashkent', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', '$2y$10$Gb2WOlLeeAg7j0fP2hNPke8dvXmuqUzb0y5iw0fZbyDW/aywm1vby', NULL, NULL, 'en', 'active', NULL, 'free', NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
+('22222222-2222-2222-2222-222222222222', 'bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1', 'Malika Karimova', 'malika@example.com', NULL, 'Uzbekistan', 'UZ', 'Samarkand', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', '$2y$10$Gb2WOlLeeAg7j0fP2hNPke8dvXmuqUzb0y5iw0fZbyDW/aywm1vby', NULL, NULL, 'en', 'active', NULL, 'free', NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
+('33333333-3333-3333-3333-333333333333', 'ccccccc1-cccc-cccc-cccc-ccccccccccc1', 'Jasur Rahimov', 'jasur@example.com', NULL, 'Uzbekistan', 'UZ', 'Bukhara', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', '$2y$10$Gb2WOlLeeAg7j0fP2hNPke8dvXmuqUzb0y5iw0fZbyDW/aywm1vby', NULL, NULL, 'en', 'active', NULL, 'free', NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL);
 
 -- --------------------------------------------------------
 

@@ -46,8 +46,39 @@ oqkitob-com/
 - Vite builds the SPA into the root-level `dist/` folder.
 - Vue uses Axios and calls the backend through relative `/api/...` URLs.
 - Vite dev proxy forwards `/api` requests to `http://localhost:8888`.
-- CodeIgniter currently exposes a test endpoint at `/api/test`.
+- CodeIgniter exposes auth endpoints under `/api/auth/*`, books at `/api/books`, and a test endpoint at `/api/test`.
 - Root `.htaccess` serves real root files directly, while allowing `/api/*` to pass through and falling back to `/index.html` for SPA routes.
+
+## MVP Authentication
+
+- The web app uses same-origin cookie sessions with CodeIgniter 4.
+- Session records are stored in MySQL through the `ci_sessions` table.
+- Login is email/password only for the MVP.
+- The SPA uses `/` as the public landing/login page and `/home` as the authenticated dashboard route.
+- State-changing auth requests use CodeIgniter CSRF protection bootstrapped through `GET /api/auth/csrf`.
+
+### Demo credentials from `db.sql`
+
+- Emails:
+  - `ali@example.com`
+  - `malika@example.com`
+  - `jasur@example.com`
+- Shared password: `Demo123!`
+
+### Auth/API endpoints
+
+- `GET /api/auth/csrf`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/books`
+
+### Dashboard behavior
+
+- After successful login, the SPA redirects to `/home`.
+- `/home` loads the authenticated user profile from `/api/auth/me`.
+- `/home` loads the signed-in user’s non-archived books from `/api/books`.
+- The MVP dashboard shows a Bootstrap-only sidebar of books, a user info card, and a blank main content area for future work.
 
 ## Planned Runtime Layout
 
@@ -93,7 +124,7 @@ public_html/
 - Keep the web app as same-origin SPA + cookie session auth.
 - Store web sessions in MySQL using CodeIgniter's database session handler.
 - Use application-generated UUID strings (`CHAR(36)`) for primary entities in the MVP.
-- Start API routes under `/api/...` For example:  `/api/test`.
+- Start API routes under `/api/...` For example: `/api/auth/login`.
 - Keep book-type data in dedicated tables linked through a central `books` table.
 
 ## Frontend Development Workflow
@@ -117,7 +148,7 @@ public_html/
 
 ## Routing Model
 
-- Vue should own the SPA entry and client-side app routes.
+- Vue should own the SPA entry and client-side app routes, including `/` and `/home`.
 - Root `about.html`, `contact.html`, and `terms.html` should be served as real static files.
 - Frontend API calls should stay same-origin and relative, for example `/api/test`.
 - CodeIgniter owns `/api/*`.
