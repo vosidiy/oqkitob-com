@@ -8,6 +8,13 @@ use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\I18n\Time;
 use RuntimeException;
 
+/**
+ * Public authentication endpoints for the web SPA.
+ *
+ * Unlike book-content controllers, this controller extends BaseController
+ * directly because login/logout own the session lifecycle instead of assuming
+ * AuthFilter has already granted access.
+ */
 class AuthController extends BaseController
 {
     use ResponseTrait;
@@ -19,6 +26,8 @@ class AuthController extends BaseController
 
     public function login()
     {
+        // Accept JSON for SPA requests and fall back to form payloads for
+        // simple/manual testing.
         $payload = $this->request->getJSON(true) ?? $this->request->getPost();
         $email   = trim((string) ($payload['email'] ?? ''));
         $password = (string) ($payload['password'] ?? '');
@@ -51,9 +60,9 @@ class AuthController extends BaseController
 
     public function logout()
     {
-        $session = service('session');
-        $session->start();
-        $session->remove('user_id');
+        // Only the auth marker is removed. The rest of the session may still
+        // be useful later if we add non-auth session data.
+        $this->session->remove('user_id');
 
         return $this->respond([
             'message' => 'Logout successful.',
@@ -62,10 +71,11 @@ class AuthController extends BaseController
 
     public function me()
     {
-        $session = service('session');
-        $session->start();
+        $userId = (string) $this->session->get('user_id');
 
-        $userId = (string) $session->get('user_id');
+        // This is a read-only endpoint, so release the session lock before
+        // loading the profile row from the database.
+        $this->session->close();
         $user   = $this->users->getProfileById($userId);
 
         if (! $user) {
@@ -79,6 +89,10 @@ class AuthController extends BaseController
         ]);
     }
 
+    /**
+     * Validates credentials, writes the authenticated session user ID, and
+     * returns the sanitized profile that the SPA stores as auth state.
+     */
     private function attemptLogin(string $email, string $password): array
     {
         $user = $this->users->findActiveByEmail(trim(strtolower($email)));
@@ -91,9 +105,8 @@ class AuthController extends BaseController
             throw new RuntimeException('This account is not allowed to sign in.');
         }
 
-        $session = service('session');
-        $session->start();
-        $session->set('user_id', $user['id']);
+        // Controllers and AuthFilter both use this same session key later.
+        $this->session->set('user_id', $user['id']);
 
         $this->users->update($user['id'], [
             'last_login_at' => Time::now('UTC')->toDateTimeString(),

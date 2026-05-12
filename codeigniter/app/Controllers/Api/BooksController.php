@@ -2,14 +2,17 @@
 
 namespace App\Controllers\Api;
 
-use App\Controllers\BaseController;
 use App\Models\BookModel;
-use CodeIgniter\API\ResponseTrait;
 
-class BooksController extends BaseController
+/**
+ * Authenticated book metadata endpoints.
+ *
+ * This controller intentionally stays narrow: it serves the shared sidebar
+ * book list for the frontend shell. Type-specific content lives in
+ * NotesController, TodosController, and FinanceController.
+ */
+class BooksController extends AuthenticatedApiController
 {
-    use ResponseTrait;
-
     public function __construct(
         private readonly BookModel $books = new BookModel()
     ) {
@@ -17,13 +20,9 @@ class BooksController extends BaseController
 
     public function index()
     {
-        $userId = (string) ($_SESSION['user_id'] ?? '');
-
-        if ($userId === '') {
-            $session = service('session');
-            $session->start();
-            $userId = (string) $session->get('user_id');
-        }
+        // Read-only endpoint: fetch the user ID first, then release the
+        // session lock before running the book query.
+        $userId = $this->currentUserIdForRead();
 
         return $this->respond([
             'books' => $this->books->findSidebarBooksForUser($userId),

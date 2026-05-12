@@ -15,4 +15,10 @@ $routes->group('auth', static function ($routes) {
     $routes->post('logout', 'Api\AuthController::logout', ['filter' => 'auth']);
     $routes->get('me', 'Api\AuthController::me', ['filter' => 'auth']);
 });
-$routes->get('books', 'Api\BooksController::index', ['filter' => 'auth']);
+
+$routes->group('books', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('', 'Api\BooksController::index');
+    $routes->get('(:segment)/notes', 'Api\NotesController::index/$1');
+    $routes->get('(:segment)/todos', 'Api\TodosController::index/$1');
+    $routes->get('(:segment)/finance', 'Api\FinanceController::index/$1');
+});

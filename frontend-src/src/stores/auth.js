@@ -38,6 +38,8 @@ export const authStore = {
   },
 
   async ensureChecked() {
+    // After the first server-backed auth check, reuse the cached result for
+    // router guards and views instead of calling /auth/me again.
     if (hasValidatedServer) {
       return state.user
     }

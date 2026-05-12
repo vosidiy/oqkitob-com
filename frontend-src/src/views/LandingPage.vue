@@ -85,7 +85,7 @@
 
 <script setup>
 import axios from 'axios'
-import { onMounted, reactive, ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { authStore } from '@/stores/auth'
 
@@ -99,19 +99,20 @@ const form = reactive({
 const errorMessage = ref('')
 const isSubmitting = ref(false)
 
-onMounted(async () => {
-  if (authStore.state.checked && authStore.state.user) {
+function redirectToHomeIfAuthenticated(checked, user) {
+  if (checked && user) {
     router.replace('/home')
   }
-})
+}
 
 watch(
-  () => authStore.state.user,
-  (user) => {
-    if (authStore.state.checked && user) {
-      router.replace('/home')
-    }
-  }
+  () => [authStore.state.checked, authStore.state.user],
+  ([checked, user]) => {
+    // The public landing page should disappear as soon as restored auth state
+    // confirms that the user already has a valid session.
+    redirectToHomeIfAuthenticated(checked, user)
+  },
+  { immediate: true }
 )
 
 async function handleSubmit() {
@@ -126,13 +127,17 @@ async function handleSubmit() {
 
     router.push('/home')
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      errorMessage.value = error.response?.data?.message ?? 'Unable to sign in right now.'
-    } else {
-      errorMessage.value = 'Unable to sign in right now.'
-    }
+    errorMessage.value = getLoginErrorMessage(error)
   } finally {
     isSubmitting.value = false
   }
+}
+
+function getLoginErrorMessage(error) {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message ?? 'Unable to sign in right now.'
+  }
+
+  return 'Unable to sign in right now.'
 }
 </script>

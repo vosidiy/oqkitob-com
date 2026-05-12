@@ -1,170 +1,118 @@
 # oqkitob-com
 
-`oqkitob-com` is planned as a Vue.js single-page application with a CodeIgniter 4 API backend and a MySQL database.
+`oqkitob-com` is a Vue.js single-page application with a CodeIgniter 4 API backend and a MySQL database.
 
-The product idea is a "books" platform where each user creates mini software workspaces called books. Each book has a type such as `notes`, `todo`, or `finance`, and each type stores data in its own set of tables.
+The core product idea is a books platform where each user owns multiple mini software workspaces called books. Each book has a `type_key` such as `notes`, `todo`, or `finance`, and each type stores its data in dedicated tables.
 
 ## Project Structure
 
 ```text
 oqkitob-com/
-├── api/                 # Public API entry point (renamed CI4 public/ folder)
-│   └── index.php
-├── codeigniter/         # CodeIgniter 4 application, system, writable, tests
-│   ├── app/
-│   ├── system/
-│   └── writable/
-├── frontend-src/        # Frontend source code only
-│   ├── src/             # Vue SPA source
-│   ├── public/          # Vite public assets only
-│   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
-├── dist/                # Vite-generated SPA build output
-│   ├── index.html
-│   └── assets/
-├── index.html           # Copied SPA entry for local root testing
-├── about.html           # Editable SEO page source
-├── contact.html         # Editable SEO page source
-├── terms.html           # Editable SEO page source
-├── .htaccess            # Root SPA rewrite for published SPA builds
-├── .gitattributes
-└── .gitignore
+├── api/                                # Public API entry point (renamed CI4 public/ folder)
+├── codeigniter/                        # CodeIgniter 4 app, config, models, controllers, tests
+├── frontend-src/                       # Vue SPA source only
+│   └── src/
+│       ├── components/books/           # Dedicated book-type render components
+│       ├── layouts/                    # Shared authenticated shell layouts
+│       ├── router/                     # Vue Router
+│       ├── services/                   # Axios / API helpers
+│       ├── stores/                     # Shared frontend state
+│       └── views/                      # Route-level views
+├── dist/                               # Vite build output only
+├── index.html                          # Root-served SPA entry for local/published runtime
+├── about.html
+├── contact.html
+├── terms.html
+├── README.md
+├── ARCHITECTURE.md
+└── db.sql
 ```
 
-## Source of Truth
+## Current Runtime
 
-- Vue SPA code is written in `frontend-src/src/`.
-- Root `about.html`, `contact.html`, and `terms.html` are the editable source for SEO/static content.
-- Backend code lives only in `api/` and `codeigniter/`.
-- `dist/` contains Vite-generated SPA output only.
-- The repository root intentionally contains both editable SEO pages and copied SPA runtime files.
+- Frontend SPA routes:
+  - `/` -> public landing/login page
+  - `/home` -> authenticated shell + account overview
+  - `/home/books/:bookId` -> authenticated shell + selected book content
+- Backend API routes:
+  - `POST /api/auth/login`
+  - `POST /api/auth/logout`
+  - `GET /api/auth/me`
+  - `GET /api/books`
+  - `GET /api/books/{bookId}/notes`
+  - `GET /api/books/{bookId}/todos`
+  - `GET /api/books/{bookId}/finance`
+- Frontend API calls are same-origin and relative, for example `/api/books`.
+- Root `.htaccess` keeps `/api/*` on the backend and falls back to `/index.html` for SPA routes.
 
-## Current Technical Behavior
+## Current Frontend Behavior
 
-- Frontend source lives in `frontend-src/`.
-- Vite builds the SPA into the root-level `dist/` folder.
-- Vue uses Axios and calls the backend through relative `/api/...` URLs.
-- Vite dev proxy forwards `/api` requests to `http://localhost:8888`.
-- CodeIgniter exposes auth endpoints under `/api/auth/*`, books at `/api/books`, and a test endpoint at `/api/test`.
-- Root `.htaccess` serves real root files directly, while allowing `/api/*` to pass through and falling back to `/index.html` for SPA routes.
+- The authenticated shell lives in `frontend-src/src/layouts/BaseShell.vue`.
+- The shell keeps a persistent left sidebar with:
+  - signed-in user name and email
+  - clickable list of the user’s visible books
+  - active-book highlighting based on the route param
+- When no book is selected, the right panel shows the account overview view.
+- When a book is selected, the route-level container `BookContentView.vue` loads the correct dataset and renders a dedicated component for that book type:
+  - `NotesBookContent.vue`
+  - `TodoBookContent.vue`
+  - `FinanceBookContent.vue`
 
-## MVP Authentication
+## Current Backend Behavior
 
-- The web app uses same-origin cookie sessions with CodeIgniter 4.
-- Session records are stored in MySQL through the `ci_sessions` table.
-- Login is email/password only for the MVP.
-- The SPA uses `/` as the public landing/login page and `/home` as the authenticated dashboard route.
-- State-changing auth requests use CodeIgniter CSRF protection bootstrapped through `GET /api/auth/csrf`.
+- `BooksController` owns only the authenticated sidebar book list.
+- `NotesController`, `TodosController`, and `FinanceController` own type-specific book content endpoints.
+- `AuthenticatedApiController` centralizes authenticated API helpers such as reading the current `user_id`.
+- `BookAccessService` centralizes “user owns active book” lookup so controllers do not duplicate ownership checks.
 
-### Demo credentials from `db.sql`
+## Session/Auth Rules
 
-- Emails:
-  - `ali@example.com`
-  - `malika@example.com`
-  - `jasur@example.com`
+- Web auth uses same-origin cookie sessions backed by the `ci_sessions` table.
+- Application code must use CodeIgniter’s session service only.
+- Do not read from `$_SESSION` directly in app code.
+- Do not call `$session->start()` in controllers or filters.
+- `BaseController` preloads the CI4 session service once for controller access.
+- Read-only authenticated endpoints should read `user_id` and then call `$this->session->close()` before database work to reduce session-lock contention for concurrent SPA requests.
+
+## Domain Rules
+
+- A user owns books.
+- A book has exactly one `type_key`.
+- Book-type records always belong to a single `book_id`.
+- Book-type endpoints must validate both ownership and expected book type.
+- Keep book-type data isolated in dedicated tables such as `notes`, `todos`, and `finance_transactions`.
+
+## Demo Credentials
+
+From `db.sql`:
+
+- `ali@example.com`
+- `malika@example.com`
+- `jasur@example.com`
 - Shared password: `Demo123!`
 
-### Auth/API endpoints
+## Development Workflow
 
-- `GET /api/auth/csrf`
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
-- `GET /api/books`
+1. Edit Vue SPA source in `frontend-src/`.
+2. Run `npm install` in `frontend-src/` if needed.
+3. Run `npm run dev` in `frontend-src/` for local development.
+4. Run `npm run build` in `frontend-src/` to generate `dist/`.
+5. Manually copy `dist/index.html`, `dist/assets/`, and `dist/favicon.ico` into the repository root when validating the root-served SPA.
+6. Do not hand-edit compiled files inside `dist/`.
 
-### Dashboard behavior
+## Current Coding Conventions
 
-- After successful login, the SPA redirects to `/home`.
-- `/home` loads the authenticated user profile from `/api/auth/me`.
-- `/home` loads the signed-in user’s non-archived books from `/api/books`.
-- The MVP dashboard shows a Bootstrap-only sidebar of books, a user info card, and a blank main content area for future work.
+- Keep frontend source only in `frontend-src/`.
+- Keep backend source only in `api/` and `codeigniter/`.
+- Use Bootstrap classes only for current authenticated UI work unless a later task introduces a broader design system.
+- Keep backend endpoints under `/api/*`.
+- Prefer explicit controller/module boundaries over catch-all controllers.
+- Keep table names plural and snake_case.
+- Prefer soft deletes for user-owned business records.
 
-## Planned Runtime Layout
+## Reference Files
 
-Local:
-
-```text
-http://localhost:8888/        -> Current site root / eventual published SPA
-http://localhost:8888/api/    -> CodeIgniter API
-```
-
-Development artifact:
-
-```text
-dist/
-├── index.html
-├── favicon.ico
-└── assets/
-```
-
-Published deployment target:
-
-```text
-public_html/
-├── index.html      # copied from dist when publishing
-├── assets/         # copied from dist when publishing
-├── favicon.ico     # copied from dist when publishing
-├── about.html      # maintained in root as static source
-├── contact.html    # maintained in root as static source
-├── terms.html      # maintained in root as static source
-├── api/
-└── codeigniter/
-```
-
-## Planning Files
-
-- [PROJECT_PLAN.md](/Applications/MAMP/htdocs/oqkitob-com/PROJECT_PLAN.md)
 - [ARCHITECTURE.md](/Applications/MAMP/htdocs/oqkitob-com/ARCHITECTURE.md)
 - [DATABASE.md](/Applications/MAMP/htdocs/oqkitob-com/DATABASE.md)
 - [schema.sql](/Applications/MAMP/htdocs/oqkitob-com/schema.sql)
-
-## Recommended Direction
-
-- Keep the web app as same-origin SPA + cookie session auth.
-- Store web sessions in MySQL using CodeIgniter's database session handler.
-- Use application-generated UUID strings (`CHAR(36)`) for primary entities in the MVP.
-- Start API routes under `/api/...` For example: `/api/auth/login`.
-- Keep book-type data in dedicated tables linked through a central `books` table.
-
-## Frontend Development Workflow
-
-1. Edit frontend source in `frontend-src/`.
-2. Install dependencies in `frontend-src/` with `npm install`.
-3. Run `npm run dev` for the Vite development server.
-4. Run `npm run build` to generate the SPA files in `dist/`.
-5. Manually copy `dist/index.html`, `dist/assets/`, and `dist/favicon.ico` into the repository root when testing the root-served SPA.
-6. Edit `about.html`, `contact.html`, and `terms.html` directly in the repository root as needed.
-7. Use `npm run preview` to inspect the built SPA when needed.
-
-## Build and Publish Workflow
-
-- Day-to-day frontend work happens only in `frontend-src/`.
-- `npm run build` writes the compiled SPA to `dist/`.
-- `dist/` is used to verify and stage only the SPA build output.
-- The repository root keeps editable static pages plus copied SPA runtime files for local root-based testing.
-- When updating the root-served SPA, manually copy only `dist/index.html`, `dist/assets/`, and `dist/favicon.ico`.
-- Do not overwrite root `about.html`, `contact.html`, or `terms.html` during manual copy.
-
-## Routing Model
-
-- Vue should own the SPA entry and client-side app routes, including `/` and `/home`.
-- Root `about.html`, `contact.html`, and `terms.html` should be served as real static files.
-- Frontend API calls should stay same-origin and relative, for example `/api/test`.
-- CodeIgniter owns `/api/*`.
-- Root `.htaccess` should serve real files directly and only fall back to `/index.html` for non-file SPA routes.
-
-## Conventions
-
-- Do not hand-edit compiled SPA files in `dist/`.
-- Use `frontend-src/` only for Vue SPA source.
-- Author `about.html`, `contact.html`, and `terms.html` directly in the repository root.
-- Treat root SEO pages as the source of truth for static content.
-- Manually copy only SPA build files from `dist/` into root.
-- Do not overwrite root SEO pages during manual copy.
-- Do not mix frontend source files into `api/` or `codeigniter/`.
-- Keep backend endpoints under `/api/*`.
-
-## Notes
-
-- Bootstrap utility classes can be used later for UI styling.
+- [db.sql](/Applications/MAMP/htdocs/oqkitob-com/db.sql)
