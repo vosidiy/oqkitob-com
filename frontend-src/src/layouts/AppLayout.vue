@@ -62,9 +62,7 @@
         </aside>
 
         <section class="col-lg-8 col-xl-9">
-          <RouterView v-slot="{ Component }">
-            <component :is="Component" :key="routerViewKey" />
-          </RouterView>
+          <RouterView :key="routerViewKey" />
         </section>
       </div>
     </main>
@@ -128,7 +126,7 @@ async function handleLogout() {
     await authStore.logout()
     booksStore.reset()
     router.replace({ name: 'login' })
-  } catch (error) {
+  } catch {
     errorMessage.value = 'Unable to log out right now.'
   } finally {
     isLoggingOut.value = false
