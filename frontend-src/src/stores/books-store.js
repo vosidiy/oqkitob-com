@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { fetchBooksList } from '@/api/books'
+import { fetchBooksList } from '@/api/books-api'
 
 // Keep the shared list request outside the store state so we can dedupe calls
 // without polluting serializable Pinia state.

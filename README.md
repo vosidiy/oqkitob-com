@@ -2,7 +2,7 @@
 
 `oqkitob-com` is a same-origin Vue SPA with a CodeIgniter 4 API backend and a MySQL database.
 
-The product is organized around user-owned books. Each book has a `type_key` such as `notes`, `todo`, or `finance`, and each type behaves like a small focused app inside the main dashboard.
+The product is organized around user-owned books. Each book has a `type_key` such as `notes`, `todo`, or `finance`, and each type behaves like a small focused app inside the main layout.
 
 ## Project Structure
 
@@ -34,6 +34,7 @@ oqkitob-com/
 - `frontend-src/src/layouts/AppLayout.vue`
   - authenticated shell for `/home`
   - loads the shared books list for the sidebar
+  - hosts the native create-book dialog for the sidebar
   - remounts the book page when `bookId` changes
 - `frontend-src/src/layouts/GuestLayout.vue`
   - minimal guest shell for auth pages
@@ -109,7 +110,9 @@ Frontend API helpers live under `frontend-src/src/api/`.
   - `fetchCurrentUserRequest`
 - `books.js`
   - `fetchBooksList()`
+  - `fetchBookTypes()`
   - `fetchBookById(bookId)`
+  - `createBookRequest(payload)`
 - `notes.js`
   - `fetchNotes(bookId)`
 - `todos.js`
@@ -134,6 +137,14 @@ Each book mini app then fetches its own content on mount:
 - todo -> `/api/books/{bookId}/todos`
 - finance -> `/api/books/{bookId}/finance`
 
+The sidebar also owns book creation:
+
+1. open the native create-book dialog from `AppLayout.vue`
+2. load active book types from `GET /api/books/types`
+3. submit the new book to `POST /api/books`
+4. validate the returned `book.id`
+5. do a full page navigation to `/home/books/{bookId}`
+
 ## Backend API Surface
 
 Current API routes:
@@ -142,6 +153,8 @@ Current API routes:
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `GET /api/books`
+- `POST /api/books`
+- `GET /api/books/types`
 - `GET /api/books/{bookId}`
 - `GET /api/books/{bookId}/notes`
 - `GET /api/books/{bookId}/todos`

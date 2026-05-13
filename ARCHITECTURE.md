@@ -32,6 +32,7 @@ The current architecture is intentionally book-centric: a user owns books, each 
   - renders:
     - signed-in user summary
     - shared books sidebar
+    - create-book dialog
     - logout action
     - child route content
   - warms the shared books list with `booksStore.fetchBooks()`
@@ -145,6 +146,16 @@ The main metadata source is `GET /api/books`.
 
 `AppLayout.vue` fetches this list once for the sidebar. `BookView.vue` reuses the same shared list first before attempting any fallback request.
 
+### Book Creation Flow
+
+`AppLayout.vue` also owns the sidebar create flow:
+
+1. open the native `<dialog>`
+2. load active types from `GET /api/books/types`
+3. submit `title`, `description`, and `type_key` to `POST /api/books`
+4. validate the returned `book.id`
+5. do a full page navigation to `/home/books/:bookId`
+
 ### Selected Book Resolution
 
 `BookView.vue` uses this sequence:
@@ -179,7 +190,7 @@ API helpers live in `frontend-src/src/api/`.
 - `auth.js`
   - auth request helpers
 - `books.js`
-  - books list and single-book fallback helpers
+  - books list, book-type loading, single-book fallback, and book creation helpers
 - `notes.js`, `todos.js`, `finance.js`
   - book-type request helpers
 
@@ -193,6 +204,8 @@ This keeps transport code out of views and stores while staying lightweight.
 - `Books`
   - `Api\BooksController`
   - authenticated books list
+  - active book-type list
+  - book creation
   - single-book metadata fallback
 - `Notes`
   - `Api\NotesController`
@@ -222,6 +235,8 @@ Current routes:
 /api/auth/logout
 /api/auth/me
 /api/books
+/api/books      (POST create)
+/api/books/types
 /api/books/{bookId}
 /api/books/{bookId}/notes
 /api/books/{bookId}/todos

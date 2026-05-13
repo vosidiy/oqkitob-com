@@ -18,6 +18,9 @@ $routes->group('auth', static function ($routes) {
 
 $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->get('', 'Api\BooksController::index');
+    $routes->post('', 'Api\BooksController::create');
+    // Register fixed subpaths before `(:segment)` so they are not mistaken for book IDs.
+    $routes->get('types', 'Api\BooksController::types');
     $routes->get('(:segment)', 'Api\BooksController::show/$1');
     $routes->get('(:segment)/notes', 'Api\NotesController::index/$1');
     $routes->get('(:segment)/todos', 'Api\TodosController::index/$1');

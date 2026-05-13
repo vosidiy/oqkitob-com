@@ -28,6 +28,7 @@ final class AuthFlowTest extends CIUnitTestCase
         $db->query('DROP TABLE IF EXISTS db_todos');
         $db->query('DROP TABLE IF EXISTS db_notes');
         $db->query('DROP TABLE IF EXISTS db_books');
+        $db->query('DROP TABLE IF EXISTS db_book_types');
         $db->query('DROP TABLE IF EXISTS db_users');
 
         $db->query(<<<'SQL'
@@ -61,9 +62,20 @@ CREATE TABLE db_books (
     color TEXT NULL,
     is_archived INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NULL,
-    updated_at TEXT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TEXT NULL
+)
+SQL);
+
+        $db->query(<<<'SQL'
+CREATE TABLE db_book_types (
+    type_key TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NULL,
+    updated_at TEXT NULL
 )
 SQL);
 
@@ -117,6 +129,7 @@ CREATE TABLE db_finance_transactions (
 SQL);
 
         $this->seedUsers($db);
+        $this->seedBookTypes($db);
         $this->seedBooks($db);
         $this->seedNotes($db);
         $this->seedTodos($db);
@@ -193,6 +206,165 @@ SQL);
         self::assertSame('Daily Notes', $books[0]['title']);
         self::assertSame('Personal Tasks', $books[1]['title']);
         self::assertSame('Personal Finance', $books[2]['title']);
+    }
+
+    public function testBookTypesRequireAuthentication(): void
+    {
+        $response = $this->get('books/types');
+
+        $response->assertStatus(401);
+    }
+
+    public function testBookTypesReturnOnlyActiveTypesInAlphabeticalOrder(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->get('books/types');
+
+        $response->assertStatus(200);
+
+        $payload   = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $bookTypes = $payload['bookTypes'];
+
+        self::assertCount(3, $bookTypes);
+        self::assertSame('Finance', $bookTypes[0]['name']);
+        self::assertSame('Notes', $bookTypes[1]['name']);
+        self::assertSame('Todo', $bookTypes[2]['name']);
+    }
+
+    public function testCreateBookRequiresAuthentication(): void
+    {
+        $response = $this->withBodyFormat('json')
+            ->post('books', [
+                'title' => 'Travel Plans',
+                'description' => 'Summer trip ideas',
+                'type_key' => 'notes',
+            ]);
+
+        $response->assertStatus(401);
+    }
+
+    public function testCreateBookSucceedsForTheAuthenticatedUser(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books', [
+                'title' => 'Travel Plans',
+                'description' => 'Summer trip ideas',
+                'type_key' => 'notes',
+            ]);
+
+        $response->assertStatus(201);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $book    = $payload['book'];
+        $row     = db_connect('tests')->table('books')
+            ->where('id', $book['id'])
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Book created successfully.', $payload['message']);
+        self::assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/',
+            $book['id']
+        );
+        self::assertSame('Travel Plans', $book['title']);
+        self::assertSame('notes', $book['type_key']);
+        self::assertSame('Summer trip ideas', $book['description']);
+        self::assertArrayNotHasKey('user_id', $book);
+
+        self::assertNotNull($row);
+        self::assertSame('11111111-1111-1111-1111-111111111111', $row['user_id']);
+        self::assertSame('notes', $row['type_key']);
+        self::assertSame('Travel Plans', $row['title']);
+        self::assertSame('Summer trip ideas', $row['description']);
+        self::assertSame(5, (int) $row['sort_order']);
+        self::assertNotEmpty($row['created_at']);
+        self::assertSame($row['created_at'], $row['updated_at']);
+    }
+
+    public function testCreateBookRejectsBlankTitle(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books', [
+                'title' => '   ',
+                'description' => 'Summer trip ideas',
+                'type_key' => 'notes',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Book name is required.', $payload['message']);
+    }
+
+    public function testCreateBookRejectsInvalidTypeKey(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books', [
+                'title' => 'Travel Plans',
+                'description' => 'Summer trip ideas',
+                'type_key' => 'unknown',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Please select a valid book type.', $payload['message']);
+    }
+
+    public function testCreateBookRejectsInactiveTypeKey(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books', [
+                'title' => 'Travel Plans',
+                'description' => 'Summer trip ideas',
+                'type_key' => 'legacy',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Please select a valid book type.', $payload['message']);
+    }
+
+    public function testNewlyCreatedBookAppearsAtTheEndOfTheSidebarList(): void
+    {
+        $createResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books', [
+                'title' => 'Trip Checklist',
+                'description' => '',
+                'type_key' => 'todo',
+            ]);
+
+        $createResponse->assertStatus(201);
+
+        $listResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->get('books');
+
+        $listResponse->assertStatus(200);
+
+        $payload = json_decode((string) $listResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $books   = $payload['books'];
+        $lastBook = $books[array_key_last($books)];
+
+        self::assertCount(4, $books);
+        self::assertSame('Trip Checklist', $lastBook['title']);
+        self::assertSame('todo', $lastBook['type_key']);
+        self::assertNull($lastBook['description']);
     }
 
     public function testNotesEndpointRequiresAuthentication(): void
@@ -334,6 +506,44 @@ SQL);
                 'created_at' => '2026-05-11 20:52:13',
                 'updated_at' => '2026-05-11 20:52:13',
                 'deleted_at' => null,
+            ],
+        ]);
+    }
+
+    private function seedBookTypes($db): void
+    {
+        $db->table('book_types')->insertBatch([
+            [
+                'type_key' => 'finance',
+                'name' => 'Finance',
+                'description' => 'Book type for income and expense tracking',
+                'is_active' => 1,
+                'created_at' => '2026-05-11 20:01:14',
+                'updated_at' => '2026-05-11 20:01:14',
+            ],
+            [
+                'type_key' => 'notes',
+                'name' => 'Notes',
+                'description' => 'Book type for note taking',
+                'is_active' => 1,
+                'created_at' => '2026-05-11 20:01:14',
+                'updated_at' => '2026-05-11 20:01:14',
+            ],
+            [
+                'type_key' => 'todo',
+                'name' => 'Todo',
+                'description' => 'Book type for task management',
+                'is_active' => 1,
+                'created_at' => '2026-05-11 20:01:14',
+                'updated_at' => '2026-05-11 20:01:14',
+            ],
+            [
+                'type_key' => 'legacy',
+                'name' => 'Legacy',
+                'description' => 'Inactive book type for validation tests',
+                'is_active' => 0,
+                'created_at' => '2026-05-11 20:01:14',
+                'updated_at' => '2026-05-11 20:01:14',
             ],
         ]);
     }

@@ -6,11 +6,23 @@ use CodeIgniter\Model;
 
 class BookModel extends Model
 {
+    private const SIDEBAR_COLUMNS = [
+        'id',
+        'title',
+        'type_key',
+        'description',
+        'icon',
+        'color',
+        'is_archived',
+    ];
+
     protected $table          = 'books';
     protected $primaryKey     = 'id';
+    protected $useAutoIncrement = false;
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
     protected $allowedFields  = [
+        'id',
         'user_id',
         'type_key',
         'title',
@@ -21,8 +33,6 @@ class BookModel extends Model
         'is_archived',
         'sort_order',
         'last_opened_at',
-        'created_at',
-        'updated_at',
         'deleted_at',
     ];
     protected $useTimestamps  = false;
@@ -35,20 +45,48 @@ class BookModel extends Model
      */
     public function findSidebarBooksForUser(string $userId): array
     {
-        return $this->select([
-            'id',
-            'title',
-            'type_key',
-            'description',
-            'icon',
-            'color',
-            'is_archived',
-        ])->where('user_id', $userId)
+        return $this->select(self::SIDEBAR_COLUMNS)
+            ->where('user_id', $userId)
             ->where('deleted_at', null)
             ->where('is_archived', 0)
             ->orderBy('sort_order', 'ASC')
             ->orderBy('created_at', 'ASC')
             ->findAll();
+    }
+
+    /**
+     * Returns one sidebar-formatted book after a successful create request.
+     */
+    public function findSidebarBookByIdForUser(string $userId, string $bookId): ?array
+    {
+        if ($userId === '' || $bookId === '') {
+            return null;
+        }
+
+        $book = $this->select(self::SIDEBAR_COLUMNS)
+            ->where('id', $bookId)
+            ->where('user_id', $userId)
+            ->where('deleted_at', null)
+            ->first();
+
+        return $book ?: null;
+    }
+
+    /**
+     * New books are appended to the user's current manual order.
+     */
+    public function findNextSortOrderForUser(string $userId): int
+    {
+        if ($userId === '') {
+            return 1;
+        }
+
+        $row = $this->selectMax('sort_order', 'max_sort_order')
+            ->where('user_id', $userId)
+            ->where('deleted_at', null)
+            ->first();
+
+        return ((int) ($row['max_sort_order'] ?? 0)) + 1;
     }
 
     /**

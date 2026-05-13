@@ -54,6 +54,12 @@ const router = createRouter({
           component: HomeView,
         },
         {
+          path: 'books',
+          redirect: {
+            name: 'dashboard-home',
+          },
+        },
+        {
           path: 'books/:bookId',
           name: 'book-detail',
           component: BookView,
