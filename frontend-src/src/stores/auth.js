@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { api } from '@/services/api'
+import { fetchCurrentUserRequest, loginRequest, logoutRequest } from '@/api/auth'
 
 const state = reactive({
   user: null,
@@ -19,7 +19,7 @@ export const authStore = {
 
     state.checkPromise = (async () => {
       try {
-        const { data } = await api.get('/auth/me')
+        const { data } = await fetchCurrentUserRequest()
         state.user = data.user
 
         return state.user
@@ -47,12 +47,8 @@ export const authStore = {
     return this.checkAuth()
   },
 
-  async hydrateUser() {
-    return this.checkAuth()
-  },
-
   async login(payload) {
-    const { data } = await api.post('/auth/login', payload)
+    const { data } = await loginRequest(payload)
     state.user = data.user
     state.checked = true
     hasValidatedServer = true
@@ -61,7 +57,7 @@ export const authStore = {
   },
 
   async logout() {
-    await api.post('/auth/logout')
+    await logoutRequest()
 
     state.user = null
     state.checked = true

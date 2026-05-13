@@ -3,6 +3,7 @@
 namespace App\Controllers\Api;
 
 use App\Models\BookModel;
+use App\Services\BookAccessService;
 
 /**
  * Authenticated book metadata endpoints.
@@ -14,6 +15,7 @@ use App\Models\BookModel;
 class BooksController extends AuthenticatedApiController
 {
     public function __construct(
+        private readonly BookAccessService $bookAccess = new BookAccessService(),
         private readonly BookModel $books = new BookModel()
     ) {
     }
@@ -26,6 +28,20 @@ class BooksController extends AuthenticatedApiController
 
         return $this->respond([
             'books' => $this->books->findSidebarBooksForUser($userId),
+        ]);
+    }
+
+    public function show(string $bookId)
+    {
+        $userId = $this->currentUserIdForRead();
+        $book   = $this->bookAccess->getAccessibleBook($userId, $bookId);
+
+        if ($book === null) {
+            return $this->failNotFound('Book not found.');
+        }
+
+        return $this->respond([
+            'book' => $book,
         ]);
     }
 }

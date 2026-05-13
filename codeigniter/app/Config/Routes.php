@@ -18,6 +18,7 @@ $routes->group('auth', static function ($routes) {
 
 $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->get('', 'Api\BooksController::index');
+    $routes->get('(:segment)', 'Api\BooksController::show/$1');
     $routes->get('(:segment)/notes', 'Api\NotesController::index/$1');
     $routes->get('(:segment)/todos', 'Api\TodosController::index/$1');
     $routes->get('(:segment)/finance', 'Api\FinanceController::index/$1');

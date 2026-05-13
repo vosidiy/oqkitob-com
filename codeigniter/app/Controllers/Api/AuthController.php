@@ -60,9 +60,9 @@ class AuthController extends BaseController
 
     public function logout()
     {
-        // Only the auth marker is removed. The rest of the session may still
-        // be useful later if we add non-auth session data.
-        $this->session->remove('user_id');
+        // End the authenticated session completely so the browser receives a
+        // fresh anonymous session ID after logout.
+        $this->session->destroy();
 
         return $this->respond([
             'message' => 'Logout successful.',
@@ -104,6 +104,10 @@ class AuthController extends BaseController
         if (($user['status'] ?? null) !== 'active') {
             throw new RuntimeException('This account is not allowed to sign in.');
         }
+
+        // Rotate the session ID before promoting the visitor into an
+        // authenticated session to reduce fixation risk.
+        $this->session->regenerate(true);
 
         // Controllers and AuthFilter both use this same session key later.
         $this->session->set('user_id', $user['id']);

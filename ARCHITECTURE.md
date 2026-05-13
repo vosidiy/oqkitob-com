@@ -13,70 +13,216 @@ Browser
   -> MySQL
 ```
 
-The near-term architecture is intentionally book-centric: a user owns books, each book has one `type_key`, and each mini app keeps its own data isolated by `book_id`.
+The current architecture is intentionally book-centric: a user owns books, each book has one `type_key`, and each type behaves like a small app whose data is isolated by `book_id`.
 
 ## Frontend Composition
 
-- `App.vue` renders the router only.
-- `/home` uses `BaseShell.vue` as the authenticated layout shell.
-- The shell owns:
-  - user summary in the sidebar
-  - shared book navigation
-  - logout action
-  - nested route rendering
-- Child route views:
-  - `DashboardHomeView.vue` for the no-book overview state
-  - `BookContentView.vue` as the route-level selected-book container
-- `BookContentView.vue` loads the selected dataset and renders one dedicated book-type component from `components/books/`.
+- `App.vue`
+  - renders the router only
+- `main.js`
+  - mounts Vue
+  - registers Pinia
+  - registers Vue Router
+  - runs the initial `authStore.checkAuth()`
+
+### Layouts
+
+- `AppLayout.vue`
+  - authenticated shell for `/home`
+  - renders:
+    - signed-in user summary
+    - shared books sidebar
+    - logout action
+    - child route content
+  - warms the shared books list with `booksStore.fetchBooks()`
+  - keys the child `RouterView` by `bookId` so each selected book remounts as a fresh mini app
+
+- `GuestLayout.vue`
+  - lightweight shell for `/login`, `/register`, and `/forgot-password`
+
+### Route Views
+
+- `LandingPage.vue`
+  - public entry page at `/`
+- `HomeView.vue`
+  - authenticated overview page at `/home`
+- `BookView.vue`
+  - selected-book controller view at `/home/books/:bookId`
+  - resolves selected-book metadata
+  - chooses the correct mini app component
+
+### Book Mini Apps
+
+Book-specific UI no longer lives in `components/`. It now lives in `views/book-types/`.
+
+- `views/book-types/notes/NotesApp.vue`
+- `views/book-types/todo/TodoApp.vue`
+- `views/book-types/finance/FinanceApp.vue`
+
+Each mini app:
+
+- accepts a `book` prop
+- fetches its own type-specific data on mount
+- owns its own loading and error UI
+- redirects to `login` on `401`
+
+## Frontend State Architecture
+
+The app currently uses a mixed state model.
+
+### Auth Store
+
+`frontend-src/src/stores/auth.js` is a custom reactive singleton, not Pinia.
+
+Responsibilities:
+
+- hold the authenticated user
+- dedupe `/auth/me` checks through `state.checkPromise`
+- provide router-safe auth bootstrap through `ensureChecked()`
+- handle login/logout state updates
+
+State shape:
+
+- `state.user`
+- `state.checked`
+- `state.checkPromise`
+
+Public methods:
+
+- `checkAuth()`
+- `ensureChecked()`
+- `login(payload)`
+- `logout()`
+
+### Books Store
+
+`frontend-src/src/stores/books.js` is a Pinia setup store via `useBooksStore()`.
+
+Responsibilities:
+
+- own the shared books list used by the sidebar
+- expose list-level loading/error state
+- dedupe concurrent `/books` requests with a module-scoped `listPromise`
+
+State:
+
+- `books`
+- `isLoading`
+- `loaded`
+- `errorMessage`
+
+Public methods:
+
+- `fetchBooks(force = false)`
+- `reset()`
+
+This store intentionally does not own selected-book state anymore. Selected-book resolution now lives inside `BookView.vue`.
+
+## Routing and Guards
+
+`frontend-src/src/router/index.js` defines three route groups:
+
+- public
+  - `/` -> `LandingPage`
+- guest-only under `GuestLayout`
+  - `/login`
+  - `/register`
+  - `/forgot-password`
+- authenticated under `AppLayout`
+  - `/home`
+  - `/home/books/:bookId`
+
+The global `beforeEach` guard uses `authStore.ensureChecked()`:
+
+- `requiresAuth` routes redirect guests to `login`
+- `requiresGuest` routes redirect signed-in users to `dashboard-home`
+
+## Frontend Data Flow
+
+### Shared Book Metadata
+
+The main metadata source is `GET /api/books`.
+
+`AppLayout.vue` fetches this list once for the sidebar. `BookView.vue` reuses the same shared list first before attempting any fallback request.
+
+### Selected Book Resolution
+
+`BookView.vue` uses this sequence:
+
+1. read `bookId` from the route
+2. search `booksStore.books`
+3. if missing, await `booksStore.fetchBooks()`
+4. search the shared list again
+5. if still missing, call `fetchBookById(bookId)` as a simple fallback
+6. resolve the child app from `book.type_key`
+
+This keeps the common path simple while still allowing direct URL access when the shared list is initially empty.
+
+### Type-Specific Data
+
+After the selected book is known:
+
+- `NotesApp.vue` calls `fetchNotes(book.id)`
+- `TodoApp.vue` calls `fetchTodos(book.id)`
+- `FinanceApp.vue` calls `fetchFinanceTransactions(book.id)`
+
+Because `AppLayout` keys `RouterView` by `bookId`, switching between books remounts `BookView` and the child mini app, which resets filters, dialogs, and local in-memory state cleanly.
+
+## Frontend API Layer
+
+API helpers live in `frontend-src/src/api/`.
+
+- `client.js`
+  - shared Axios instance with `baseURL: '/api'`
+- `errors.js`
+  - small helpers for reading response status and backend messages from unknown thrown errors
+- `auth.js`
+  - auth request helpers
+- `books.js`
+  - books list and single-book fallback helpers
+- `notes.js`, `todos.js`, `finance.js`
+  - book-type request helpers
+
+This keeps transport code out of views and stores while staying lightweight.
 
 ## Backend Module Boundaries
 
 - `Auth`
-  - `AuthController`
-  - login, logout, current user profile
+  - `Api\AuthController`
+  - login, logout, current user
 - `Books`
-  - `BooksController`
-  - sidebar book list / book metadata for the authenticated user
+  - `Api\BooksController`
+  - authenticated books list
+  - single-book metadata fallback
 - `Notes`
-  - `NotesController`
-  - notes data for a `notes` book
+  - `Api\NotesController`
+  - notes-book content
 - `Todos`
-  - `TodosController`
-  - todo data for a `todo` book
+  - `Api\TodosController`
+  - todo-book content
 - `Finance`
-  - `FinanceController`
-  - finance transactions for a `finance` book
+  - `Api\FinanceController`
+  - finance-book transactions
 - Shared authenticated API layer
   - `AuthenticatedApiController`
   - `BookAccessService`
 
 Recommended layering:
 
-- Controllers: request/response only
-- Services: ownership and access rules
-- Models: persistence and query shape
-
-## Session/Auth Architecture
-
-- Browser auth is session-based and same-origin.
-- CodeIgniter owns the server-side session lifecycle.
-- Application code uses the CI4 session service only.
-- `BaseController` preloads the shared session service for controllers.
-- `AuthFilter` checks `user_id` through the session service and returns `401` for guests.
-- `AuthenticatedApiController` provides `currentUserId()` helpers for authenticated API controllers.
-- Read-only authenticated endpoints should release the session lock early with `$this->session->close()` after reading the authenticated user ID.
-
-This approach is preferred over direct `$_SESSION` usage because it stays aligned with the framework, avoids duplicate session boot logic, and scales better for concurrent SPA requests.
+- controllers: request/response orchestration
+- services: ownership and access rules
+- models: query and persistence logic
 
 ## API Surface
 
-Current authenticated API families:
+Current routes:
 
 ```text
 /api/auth/login
 /api/auth/logout
 /api/auth/me
 /api/books
+/api/books/{bookId}
 /api/books/{bookId}/notes
 /api/books/{bookId}/todos
 /api/books/{bookId}/finance
@@ -84,13 +230,27 @@ Current authenticated API families:
 
 Conventions:
 
-- Book-type endpoints use `/api/books/{bookId}/{type}`.
-- Finance uses `/finance` even though the response payload key remains `transactions`.
-- Every book-type endpoint validates:
+- book-type routes use `/api/books/{bookId}/{type}`
+- finance uses `/finance` while the response payload remains `transactions`
+- book-type endpoints validate:
   - authenticated user
   - book ownership
-  - book is active / not archived / not deleted
-  - expected `type_key`
+  - active/non-deleted book
+  - matching `type_key`
+
+## Session/Auth Architecture
+
+- Browser auth is session-based and same-origin.
+- CodeIgniter owns the server-side session lifecycle.
+- App code uses the CI4 session service, not direct `$_SESSION` access.
+- `BaseController` preloads the session service.
+- Auth-protected routes use the `auth` filter.
+- `AuthenticatedApiController` provides helpers for reading the authenticated user ID.
+- Read-only authenticated endpoints should release the session lock early with `$this->session->close()` after reading `user_id`.
+- Login regenerates the session ID.
+- Logout destroys the session.
+
+This is a good fit for the current MVP because the SPA and API share one origin and the browser sends the session cookie automatically on relative `/api` calls.
 
 ## Data Model
 
@@ -105,26 +265,19 @@ users
       -> finance_categories
 ```
 
-Important rules:
+Rules:
 
-- Core entities use UUID strings.
-- Tables remain plural and snake_case.
-- Timestamps are stored in UTC.
-- Type-specific records must never mix across books.
+- a user owns books
+- a book has exactly one `type_key`
+- type-specific records belong to one `book_id`
+- type-specific data stays isolated in dedicated tables
+- UUID strings are used for core entities
 
-## Performance Notes
+## Current Tradeoffs
 
-- Session-backed auth is appropriate because the SPA and API share the same origin.
-- Database-backed sessions avoid file-session hosting issues and scale more cleanly later.
-- Releasing the session lock on read endpoints improves parallel SPA loading behavior.
-- Dedicated controllers per book type keep route handling smaller and prevent `BooksController` from becoming a catch-all module.
+- auth is still a custom reactive store while books use Pinia
+- `BookView` owns selected-book resolution locally for readability
+- the frontend keeps `GET /api/books/{bookId}` only as a fallback path
+- `/register` and `/forgot-password` exist as frontend scaffolds and are not fully wired to backend flows yet
 
-## Technical Conventions
-
-- Use relative frontend API URLs such as `/api/books`.
-- Avoid hardcoded domains in frontend source.
-- Use CodeIgniter session service only.
-- Do not call `$session->start()` in app controllers or filters.
-- Do not read `$_SESSION` directly in app code.
-- Keep Vue layouts in `frontend-src/src/layouts/`.
-- Keep reusable book-type UI in `frontend-src/src/components/books/`.
+These tradeoffs are intentional for MVP simplicity and can be evolved later without changing the core book-centric structure.

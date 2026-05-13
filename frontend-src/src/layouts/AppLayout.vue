@@ -30,15 +30,15 @@
 
               <h2 class="h5 mb-3">Books</h2>
 
-              <div v-if="booksState.isLoading" class="text-secondary">Loading books...</div>
+              <div v-if="booksStore.isLoading" class="text-secondary">Loading books...</div>
 
-              <div v-else-if="books.length === 0" class="text-secondary">
+              <div v-else-if="booksStore.books.length === 0" class="text-secondary">
                 No books available yet.
               </div>
 
               <div v-else class="list-group">
                 <RouterLink
-                  v-for="book in books"
+                  v-for="book in booksStore.books"
                   :key="book.id"
                   :to="{ name: 'book-detail', params: { bookId: book.id } }"
                   class="list-group-item list-group-item-action"
@@ -62,7 +62,9 @@
         </aside>
 
         <section class="col-lg-8 col-xl-9">
-          <RouterView />
+          <RouterView v-slot="{ Component }">
+            <component :is="Component" :key="routerViewKey" />
+          </RouterView>
         </section>
       </div>
     </main>
@@ -70,42 +72,51 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
+import { isUnauthorizedError } from '@/api/errors'
 import { authStore } from '@/stores/auth'
-import { booksStore } from '@/stores/books'
+import { useBooksStore } from '@/stores/books'
 
 const router = useRouter()
 const route = useRoute()
+const booksStore = useBooksStore()
 
 const errorMessage = ref('')
 const isLoggingOut = ref(false)
 
 const user = computed(() => authStore.state.user)
-const books = computed(() => booksStore.state.books)
-const booksState = booksStore.state
 const selectedBookId = computed(() => String(route.params.bookId ?? ''))
+
+// Remount the book detail page whenever the route's bookId changes so each
+// book mini app starts with fresh local state, dialogs, and filters.
+const routerViewKey = computed(() => {
+  if (route.name === 'book-detail') {
+    return String(route.params.bookId ?? 'book-detail')
+  }
+
+  return String(route.name ?? route.path)
+})
 
 onMounted(async () => {
   try {
-    // The shell owns the shared authenticated layout, so it loads sidebar
-    // books once and child views reuse the same store state.
+    // The shell is the single place that warms the shared sidebar book list.
+    // Child views can still call fetchBooks(), but the store dedupes the request.
     const authenticatedUser = await authStore.ensureChecked()
 
     if (!authenticatedUser) {
-      router.replace('/')
+      router.replace({ name: 'login' })
       return
     }
 
     await booksStore.fetchBooks()
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      router.replace('/')
+    if (isUnauthorizedError(error)) {
+      router.replace({ name: 'login' })
       return
     }
 
-    errorMessage.value = booksStore.state.errorMessage || 'Unable to load dashboard data right now.'
+    errorMessage.value = booksStore.errorMessage || 'Unable to load dashboard data right now.'
   }
 })
 
@@ -113,9 +124,10 @@ async function handleLogout() {
   isLoggingOut.value = true
 
   try {
+    // Logout also clears the shared books cache so the next session starts clean.
     await authStore.logout()
     booksStore.reset()
-    router.replace('/')
+    router.replace({ name: 'login' })
   } catch (error) {
     errorMessage.value = 'Unable to log out right now.'
   } finally {

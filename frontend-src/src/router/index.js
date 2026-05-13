@@ -1,8 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import BaseShell from '@/layouts/BaseShell.vue'
-import DashboardHomeView from '@/views/DashboardHomeView.vue'
-import BookContentView from '@/views/BookContentView.vue'
+import AppLayout from '@/layouts/AppLayout.vue'
+import GuestLayout from '@/layouts/GuestLayout.vue'
+import HomeView from '@/views/HomeView.vue'
+import BookView from '@/views/BookView.vue'
 import LandingPage from '@/views/LandingPage.vue'
+import LoginView from '@/views/auth/LoginView.vue'
+import RegisterView from '@/views/auth/RegisterView.vue'
+import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
 import { authStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -14,8 +18,32 @@ const router = createRouter({
       component: LandingPage,
     },
     {
+      path: '/',
+      component: GuestLayout,
+      meta: {
+        requiresGuest: true,
+      },
+      children: [
+        {
+          path: 'login',
+          name: 'login',
+          component: LoginView,
+        },
+        {
+          path: 'register',
+          name: 'register',
+          component: RegisterView,
+        },
+        {
+          path: 'forgot-password',
+          name: 'forgot-password',
+          component: ForgotPasswordView,
+        },
+      ],
+    },
+    {
       path: '/home',
-      component: BaseShell,
+      component: AppLayout,
       meta: {
         requiresAuth: true,
       },
@@ -23,12 +51,12 @@ const router = createRouter({
         {
           path: '',
           name: 'dashboard-home',
-          component: DashboardHomeView,
+          component: HomeView,
         },
         {
           path: 'books/:bookId',
           name: 'book-detail',
-          component: BookContentView,
+          component: BookView,
         },
       ],
     },
@@ -36,17 +64,17 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  // The guard relies on authStore.ensureChecked() so the SPA only performs
-  // one initial auth probe against /auth/me when possible.
-  if (!to.meta.requiresAuth) {
-    return true
-  }
-
   const user = await authStore.ensureChecked()
 
-  if (!user) {
+  if (to.meta.requiresAuth && !user) {
     return {
-      name: 'landing',
+      name: 'login',
+    }
+  }
+
+  if (to.meta.requiresGuest && user) {
+    return {
+      name: 'dashboard-home',
     }
   }
 
