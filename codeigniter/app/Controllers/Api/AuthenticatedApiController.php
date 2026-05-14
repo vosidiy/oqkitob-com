@@ -9,7 +9,7 @@ use CodeIgniter\API\ResponseTrait;
  * Shared base for authenticated JSON endpoints.
  *
  * Use this in API controllers that already sit behind AuthFilter and need
- * read access to the current session user ID. Public controllers such as
+ * access to the current session user ID. Public controllers such as
  * AuthController should continue extending BaseController directly.
  */
 abstract class AuthenticatedApiController extends BaseController
@@ -28,16 +28,14 @@ abstract class AuthenticatedApiController extends BaseController
     }
 
     /**
-     * Returns the authenticated user ID and then releases the session lock.
+     * Returns the authenticated user ID and releases the session lock.
      *
-     * Book read endpoints use this before database queries so parallel SPA
-     * requests do not block each other on the session handler.
+     * Use this for authenticated endpoints that do not need later session writes.
      */
-    protected function currentUserIdForRead(): string
+    protected function currentUserIdAndCloseSession(): string
     {
         $userId = $this->currentUserId();
 
-        // Release the session lock before query work so concurrent SPA reads do not block.
         $this->session->close();
 
         return $userId;

@@ -102,6 +102,7 @@ CREATE TABLE `ci_sessions` (
 CREATE TABLE `finance_categories` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `type` enum('income','expense') COLLATE utf8mb4_unicode_ci NOT NULL,
   `color` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -119,6 +120,7 @@ CREATE TABLE `finance_categories` (
 CREATE TABLE `finance_transactions` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `category_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `type` enum('income','expense') COLLATE utf8mb4_unicode_ci NOT NULL,
   `amount` decimal(15,2) NOT NULL,
@@ -140,12 +142,15 @@ CREATE TABLE `finance_transactions` (
 CREATE TABLE `notes` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `content` longtext COLLATE utf8mb4_unicode_ci,
+  `color` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `position` int NOT NULL DEFAULT '0',
   `is_pinned` tinyint(1) NOT NULL DEFAULT '0',
-  `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL,
+  `is_archived` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -173,6 +178,7 @@ CREATE TABLE `password_reset_tokens` (
 CREATE TABLE `todos` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `parent_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text COLLATE utf8mb4_unicode_ci,
@@ -273,6 +279,7 @@ ALTER TABLE `ci_sessions`
 ALTER TABLE `finance_categories`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_finance_categories_book_id` (`book_id`),
+  ADD KEY `idx_finance_categories_created_by` (`created_by`),
   ADD KEY `idx_finance_categories_book_type` (`book_id`,`type`);
 
 --
@@ -281,6 +288,7 @@ ALTER TABLE `finance_categories`
 ALTER TABLE `finance_transactions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_finance_transactions_book_id` (`book_id`),
+  ADD KEY `idx_finance_transactions_created_by` (`created_by`),
   ADD KEY `idx_finance_transactions_category_id` (`category_id`),
   ADD KEY `idx_finance_transactions_book_date` (`book_id`,`transaction_date`),
   ADD KEY `idx_finance_transactions_book_type` (`book_id`,`type`);
@@ -291,6 +299,8 @@ ALTER TABLE `finance_transactions`
 ALTER TABLE `notes`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_notes_book_id` (`book_id`),
+  ADD KEY `idx_notes_created_by` (`created_by`),
+  ADD KEY `idx_notes_book_archived` (`book_id`,`is_archived`),
   ADD KEY `idx_notes_book_position` (`book_id`,`position`),
   ADD KEY `idx_notes_book_pinned` (`book_id`,`is_pinned`);
 
@@ -308,6 +318,7 @@ ALTER TABLE `password_reset_tokens`
 ALTER TABLE `todos`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_todos_book_id` (`book_id`),
+  ADD KEY `idx_todos_created_by` (`created_by`),
   ADD KEY `idx_todos_parent_id` (`parent_id`),
   ADD KEY `idx_todos_book_completed` (`book_id`,`is_completed`),
   ADD KEY `idx_todos_book_due_at` (`book_id`,`due_at`);
@@ -345,20 +356,23 @@ ALTER TABLE `books`
 -- Constraints for table `finance_categories`
 --
 ALTER TABLE `finance_categories`
-  ADD CONSTRAINT `fk_finance_categories_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_finance_categories_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_finance_categories_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `finance_transactions`
 --
 ALTER TABLE `finance_transactions`
   ADD CONSTRAINT `fk_finance_transactions_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_finance_transactions_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_finance_transactions_category` FOREIGN KEY (`category_id`) REFERENCES `finance_categories` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `notes`
 --
 ALTER TABLE `notes`
-  ADD CONSTRAINT `fk_notes_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_notes_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_notes_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `password_reset_tokens`
@@ -371,6 +385,7 @@ ALTER TABLE `password_reset_tokens`
 --
 ALTER TABLE `todos`
   ADD CONSTRAINT `fk_todos_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_todos_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_todos_parent` FOREIGN KEY (`parent_id`) REFERENCES `todos` (`id`) ON DELETE SET NULL;
 
 --

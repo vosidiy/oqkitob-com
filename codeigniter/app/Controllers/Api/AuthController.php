@@ -29,7 +29,7 @@ class AuthController extends BaseController
         // Accept JSON for SPA requests and fall back to form payloads for
         // simple/manual testing.
         $payload = $this->request->getJSON(true) ?? $this->request->getPost();
-        $email   = trim((string) ($payload['email'] ?? ''));
+        $email    = (string) ($payload['email'] ?? '');
         $password = (string) ($payload['password'] ?? '');
 
         if ($email === '' || $password === '') {

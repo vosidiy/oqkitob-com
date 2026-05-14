@@ -7,9 +7,7 @@ use App\Models\BookModel;
 /**
  * Business-level access rules for books.
  *
- * Controllers should call this service instead of reaching straight into
- * BookModel when they need to answer "can this user access this book?".
- * The model still owns the raw query shape.
+ * Controllers should call this service when they need book permission checks.
  */
 class BookAccessService
 {
@@ -19,20 +17,19 @@ class BookAccessService
     }
 
     /**
-     * Returns the book only when it belongs to the user, is active, and
-     * optionally matches the expected type for the calling controller.
+     * Returns the user's permission level for the book.
      *
-     * Used by NotesController, TodosController, and FinanceController before
-     * loading type-specific records.
+     * The MVP only distinguishes between owner and no access, but this return
+     * value is intentionally future-friendly for shared books.
      */
-    public function getAccessibleBook(string $userId, string $bookId, ?string $typeKey = null): ?array
+    public function getUserBookPermission(string $userId, string $bookId, ?string $typeKey = null): string
     {
         if ($userId === '' || $bookId === '') {
-            return null;
+            return 'none';
         }
 
-        // Delegate the persistence details to BookModel. The service keeps the
-        // controller-facing meaning: "give me a book this user may access".
-        return $this->books->findOwnedActiveBook($userId, $bookId, $typeKey);
+        return $this->books->hasOwnedActiveBook($userId, $bookId, $typeKey)
+            ? 'owner'
+            : 'none';
     }
 }

@@ -90,10 +90,7 @@ class BookModel extends Model
     }
 
     /**
-     * Low-level book access query.
-     *
-     * BookAccessService wraps this so controllers can talk in terms of access
-     * rules while the model stays responsible for the SQL conditions.
+     * Returns the book row for an owned active book when the caller needs it.
      */
     public function findOwnedActiveBook(string $userId, string $bookId, ?string $typeKey = null): ?array
     {
@@ -122,5 +119,27 @@ class BookModel extends Model
         $book = $query->first();
 
         return $book ?: null;
+    }
+
+    /**
+     * Lightweight permission/existence check for an owned active book.
+     */
+    public function hasOwnedActiveBook(string $userId, string $bookId, ?string $typeKey = null): bool
+    {
+        if ($userId === '' || $bookId === '') {
+            return false;
+        }
+
+        $query = $this->select('id')
+            ->where('id', $bookId)
+            ->where('user_id', $userId)
+            ->where('deleted_at', null)
+            ->where('is_archived', 0);
+
+        if ($typeKey !== null) {
+            $query->where('type_key', $typeKey);
+        }
+
+        return $query->first() !== null;
     }
 }

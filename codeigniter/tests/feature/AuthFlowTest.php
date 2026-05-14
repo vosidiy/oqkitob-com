@@ -83,10 +83,13 @@ SQL);
 CREATE TABLE db_notes (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL,
+    created_by TEXT NULL,
     title TEXT NULL,
     content TEXT NULL,
+    color TEXT NULL,
     position INTEGER NOT NULL DEFAULT 0,
     is_pinned INTEGER NOT NULL DEFAULT 0,
+    is_archived INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NULL,
     updated_at TEXT NULL,
     deleted_at TEXT NULL
@@ -387,6 +390,261 @@ SQL);
         self::assertCount(2, $payload['notes']);
         self::assertSame('Pinned Note', $payload['notes'][0]['title']);
         self::assertSame('Second Note', $payload['notes'][1]['title']);
+        self::assertSame('yellow', $payload['notes'][0]['color']);
+    }
+
+    public function testCreateNoteRequiresAuthentication(): void
+    {
+        $response = $this->withBodyFormat('json')
+            ->post('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes', [
+                'title' => 'New note',
+                'content' => 'Fresh content',
+                'color' => 'blue',
+            ]);
+
+        $response->assertStatus(401);
+    }
+
+    public function testCreateNoteSucceedsForAccessibleNotesBook(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes', [
+                'title' => 'Travel ideas',
+                'content' => 'Visit Samarkand',
+                'color' => 'blue',
+            ]);
+
+        $response->assertStatus(201);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $note    = $payload['note'];
+        $row     = db_connect('tests')->table('notes')
+            ->where('id', $note['id'])
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Note created successfully.', $payload['message']);
+        self::assertSame('Travel ideas', $note['title']);
+        self::assertSame('Visit Samarkand', $note['content']);
+        self::assertSame('blue', $note['color']);
+        self::assertSame('11111111-1111-1111-1111-111111111111', $note['created_by']);
+        self::assertSame(0, (int) $note['is_pinned']);
+        self::assertSame(0, (int) $note['is_archived']);
+        self::assertNull($note['deleted_at']);
+
+        self::assertNotNull($row);
+        self::assertSame('aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1', $row['book_id']);
+        self::assertSame('11111111-1111-1111-1111-111111111111', $row['created_by']);
+        self::assertSame('blue', $row['color']);
+        self::assertSame(0, (int) $row['is_archived']);
+        self::assertNotEmpty($row['created_at']);
+        self::assertSame($row['created_at'], $row['updated_at']);
+    }
+
+    public function testCreateNoteRejectsBlankTitleAndContent(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes', [
+                'title' => '   ',
+                'content' => '   ',
+                'color' => '',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Please enter a title or note content.', $payload['message']);
+    }
+
+    public function testCreateNoteRejectsInvalidColor(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes', [
+                'title' => 'Color test',
+                'content' => '',
+                'color' => 'purple',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Please choose a valid note color.', $payload['message']);
+    }
+
+    public function testUpdateNoteSucceedsForAccessibleNote(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes/note-2', [
+                'title' => 'Updated second note',
+                'content' => 'Updated content',
+                'color' => 'green',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row     = db_connect('tests')->table('notes')
+            ->where('id', 'note-2')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Note updated successfully.', $payload['message']);
+        self::assertSame('Updated second note', $payload['note']['title']);
+        self::assertSame('Updated content', $payload['note']['content']);
+        self::assertSame('green', $payload['note']['color']);
+        self::assertSame('note-2', $payload['note']['id']);
+        self::assertNotNull($row);
+        self::assertSame('Updated second note', $row['title']);
+        self::assertSame('Updated content', $row['content']);
+        self::assertSame('green', $row['color']);
+        self::assertSame($row['updated_at'], $payload['note']['updated_at']);
+    }
+
+    public function testArchiveNoteHidesItFromNotesListWithoutDeletingIt(): void
+    {
+        $archiveResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->post('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes/note-2/archive');
+
+        $archiveResponse->assertStatus(200);
+
+        $payload = json_decode((string) $archiveResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row     = db_connect('tests')->table('notes')
+            ->where('id', 'note-2')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Note archived successfully.', $payload['message']);
+        self::assertSame('note-2', $payload['noteId']);
+        self::assertSame(1, (int) $payload['is_archived']);
+        self::assertNotNull($row);
+        self::assertSame(1, (int) $row['is_archived']);
+        self::assertNull($row['deleted_at']);
+        self::assertSame($row['updated_at'], $payload['updated_at']);
+
+        $listResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->get('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes');
+
+        $listResponse->assertStatus(200);
+
+        $listPayload = json_decode((string) $listResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $noteIds     = array_column($listPayload['notes'], 'id');
+
+        self::assertNotContains('note-2', $noteIds);
+    }
+
+    public function testPinNoteMarksTheNoteAsPinnedAndKeepsItFirst(): void
+    {
+        $pinResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->post('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes/note-2/pin');
+
+        $pinResponse->assertStatus(200);
+
+        $payload = json_decode((string) $pinResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row     = db_connect('tests')->table('notes')
+            ->where('id', 'note-2')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Note pinned successfully.', $payload['message']);
+        self::assertSame('note-2', $payload['noteId']);
+        self::assertSame(1, (int) $payload['is_pinned']);
+        self::assertNotNull($row);
+        self::assertSame(1, (int) $row['is_pinned']);
+        self::assertSame($row['updated_at'], $payload['updated_at']);
+
+        $listResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->get('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes');
+
+        $listResponse->assertStatus(200);
+
+        $listPayload = json_decode((string) $listResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Pinned Note', $listPayload['notes'][0]['title']);
+        self::assertSame('Second Note', $listPayload['notes'][1]['title']);
+        self::assertSame(1, (int) $listPayload['notes'][1]['is_pinned']);
+    }
+
+    public function testUnpinNoteClearsThePinnedFlag(): void
+    {
+        $unpinResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->post('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes/note-1/unpin');
+
+        $unpinResponse->assertStatus(200);
+
+        $payload = json_decode((string) $unpinResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row     = db_connect('tests')->table('notes')
+            ->where('id', 'note-1')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Note unpinned successfully.', $payload['message']);
+        self::assertSame('note-1', $payload['noteId']);
+        self::assertSame(0, (int) $payload['is_pinned']);
+        self::assertNotNull($row);
+        self::assertSame(0, (int) $row['is_pinned']);
+        self::assertSame($row['updated_at'], $payload['updated_at']);
+    }
+
+    public function testDeleteNoteSoftDeletesItAndHidesItFromNotesList(): void
+    {
+        $deleteResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->delete('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes/note-2');
+
+        $deleteResponse->assertStatus(200);
+
+        $payload = json_decode((string) $deleteResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row     = db_connect('tests')->table('notes')
+            ->where('id', 'note-2')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Note deleted successfully.', $payload['message']);
+        self::assertSame('note-2', $payload['noteId']);
+        self::assertNotNull($row);
+        self::assertNotEmpty($row['deleted_at']);
+        self::assertSame($row['deleted_at'], $payload['deleted_at']);
+        self::assertSame($row['updated_at'], $payload['updated_at']);
+
+        $listResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->get('books/aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1/notes');
+
+        $listResponse->assertStatus(200);
+
+        $listPayload = json_decode((string) $listResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $noteIds     = array_column($listPayload['notes'], 'id');
+
+        self::assertNotContains('note-2', $noteIds);
+    }
+
+    public function testUpdateNoteRejectsInaccessibleBook(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('books/bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1/notes/note-3', [
+                'title' => 'Should fail',
+                'content' => 'Should fail',
+                'color' => '',
+            ]);
+
+        $response->assertStatus(404);
     }
 
     public function testTodosEndpointReturnsOnlySelectedBooksTodos(): void
@@ -630,10 +888,13 @@ SQL);
             [
                 'id' => 'note-1',
                 'book_id' => 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+                'created_by' => '11111111-1111-1111-1111-111111111111',
                 'title' => 'Pinned Note',
                 'content' => 'First note content',
+                'color' => 'yellow',
                 'position' => 0,
                 'is_pinned' => 1,
+                'is_archived' => 0,
                 'created_at' => '2026-05-11 20:52:13',
                 'updated_at' => '2026-05-11 20:52:13',
                 'deleted_at' => null,
@@ -641,21 +902,55 @@ SQL);
             [
                 'id' => 'note-2',
                 'book_id' => 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+                'created_by' => '11111111-1111-1111-1111-111111111111',
                 'title' => 'Second Note',
                 'content' => 'Second note content',
+                'color' => null,
                 'position' => 1,
                 'is_pinned' => 0,
+                'is_archived' => 0,
                 'created_at' => '2026-05-11 20:52:13',
                 'updated_at' => '2026-05-11 20:52:13',
                 'deleted_at' => null,
             ],
             [
+                'id' => 'note-archived',
+                'book_id' => 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+                'created_by' => '11111111-1111-1111-1111-111111111111',
+                'title' => 'Archived Note',
+                'content' => 'Should stay hidden',
+                'color' => 'red',
+                'position' => 2,
+                'is_pinned' => 0,
+                'is_archived' => 1,
+                'created_at' => '2026-05-11 20:52:13',
+                'updated_at' => '2026-05-11 20:52:13',
+                'deleted_at' => null,
+            ],
+            [
+                'id' => 'note-deleted',
+                'book_id' => 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+                'created_by' => '11111111-1111-1111-1111-111111111111',
+                'title' => 'Deleted Note',
+                'content' => 'Should stay hidden',
+                'color' => null,
+                'position' => 3,
+                'is_pinned' => 0,
+                'is_archived' => 0,
+                'created_at' => '2026-05-11 20:52:13',
+                'updated_at' => '2026-05-11 20:52:13',
+                'deleted_at' => '2026-05-12 20:52:13',
+            ],
+            [
                 'id' => 'note-3',
                 'book_id' => 'bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
+                'created_by' => '22222222-2222-2222-2222-222222222222',
                 'title' => 'Other User Note',
                 'content' => 'Hidden from Ali',
+                'color' => 'blue',
                 'position' => 0,
                 'is_pinned' => 0,
+                'is_archived' => 0,
                 'created_at' => '2026-05-11 20:52:13',
                 'updated_at' => '2026-05-11 20:52:13',
                 'deleted_at' => null,

@@ -4,6 +4,22 @@
 
 The product is organized around user-owned books. Each book has a `type_key` such as `notes`, `todo`, or `finance`, and each type behaves like a small focused app inside the main layout.
 
+## What It Is
+A single-page web app where users register, sign in, and create "books".
+A book is a mini application workspace. Each book has a type, and each type
+maps to dedicated database tables and dedicated frontend/backend behavior.
+
+## Tech Stack
+
+| Layer     | Technology                        |
+|-----------|-----------------------------------|
+| Frontend  | Vue 3, Vite, Vue Router, Axios    |
+| Backend   | CodeIgniter 4 (JSON API only)     |
+| Database  | MySQL                             |
+| Auth      | Same-origin cookie sessions       |
+| Styling   | Bootstrap (MVP phase)             |
+
+
 ## Project Structure
 
 ```text
@@ -145,20 +161,6 @@ The sidebar also owns book creation:
 4. validate the returned `book.id`
 5. do a full page navigation to `/home/books/{bookId}`
 
-## Backend API Surface
-
-Current API routes:
-
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
-- `GET /api/books`
-- `POST /api/books`
-- `GET /api/books/types`
-- `GET /api/books/{bookId}`
-- `GET /api/books/{bookId}/notes`
-- `GET /api/books/{bookId}/todos`
-- `GET /api/books/{bookId}/finance`
 
 Books list responses are used as the primary frontend metadata source for:
 
@@ -183,6 +185,8 @@ This is a minimal but reasonable MVP setup for same-origin cookie auth.
 3. Run `npm run dev` in `frontend-src/` during development.
 4. Run `npm run build` in `frontend-src/` before wrapping up frontend refactors.
 5. Do not edit compiled files inside `dist/` manually.
+6. We don't use database migrations. We manually work with  SQL code using phpMyAdmin interface
+
 
 ## Demo Credentials
 
@@ -191,7 +195,7 @@ From `db.sql`:
 - `ali@example.com`
 - `malika@example.com`
 - `jasur@example.com`
-- shared password: `Demo123!`
+- shared password: `123`
 
 ## Reference Files
 
@@ -199,3 +203,9 @@ From `db.sql`:
 - [DATABASE.md](/Applications/MAMP/htdocs/oqkitob-com/DATABASE.md)
 - [schema.sql](/Applications/MAMP/htdocs/oqkitob-com/schema.sql)
 - [db.sql](/Applications/MAMP/htdocs/oqkitob-com/db.sql)
+
+## For testing (important)
+
+The repo doesn’t have the local PHPUnit binary installed, and this CodeIgniter setup also doesn’t expose a spark test command here. 
+There’s no PHPUnit installed locally or globally, so backend feature execution is blocked by missing test tooling. 
+Do other useful verification or check by running PHP syntax checks across the changed backend files to make sure the implementation at least parses cleanly.

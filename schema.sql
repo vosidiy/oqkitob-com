@@ -115,25 +115,34 @@ CREATE TABLE IF NOT EXISTS books (
 CREATE TABLE IF NOT EXISTS notes (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
     title VARCHAR(255) DEFAULT NULL,
     content LONGTEXT DEFAULT NULL,
+    color VARCHAR(20) DEFAULT NULL,
     position INT NOT NULL DEFAULT 0,
     is_pinned TINYINT(1) NOT NULL DEFAULT 0,
-    created_at DATETIME DEFAULT NULL,
-    updated_at DATETIME DEFAULT NULL,
+    is_archived TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     KEY idx_notes_book_id (book_id),
+    KEY idx_notes_created_by (created_by),
+    KEY idx_notes_book_archived (book_id, is_archived),
     KEY idx_notes_book_position (book_id, position),
     KEY idx_notes_book_pinned (book_id, is_pinned),
     CONSTRAINT fk_notes_book
         FOREIGN KEY (book_id) REFERENCES books(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_notes_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS todos (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
     parent_id CHAR(36) DEFAULT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT DEFAULT NULL,
@@ -147,12 +156,16 @@ CREATE TABLE IF NOT EXISTS todos (
     deleted_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     KEY idx_todos_book_id (book_id),
+    KEY idx_todos_created_by (created_by),
     KEY idx_todos_parent_id (parent_id),
     KEY idx_todos_book_completed (book_id, is_completed),
     KEY idx_todos_book_due_at (book_id, due_at),
     CONSTRAINT fk_todos_book
         FOREIGN KEY (book_id) REFERENCES books(id)
         ON DELETE CASCADE,
+    CONSTRAINT fk_todos_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL,
     CONSTRAINT fk_todos_parent
         FOREIGN KEY (parent_id) REFERENCES todos(id)
         ON DELETE SET NULL
@@ -161,6 +174,7 @@ CREATE TABLE IF NOT EXISTS todos (
 CREATE TABLE IF NOT EXISTS finance_categories (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
     name VARCHAR(255) NOT NULL,
     type ENUM('income', 'expense') NOT NULL,
     color VARCHAR(20) DEFAULT NULL,
@@ -169,15 +183,20 @@ CREATE TABLE IF NOT EXISTS finance_categories (
     deleted_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     KEY idx_finance_categories_book_id (book_id),
+    KEY idx_finance_categories_created_by (created_by),
     KEY idx_finance_categories_book_type (book_id, type),
     CONSTRAINT fk_finance_categories_book
         FOREIGN KEY (book_id) REFERENCES books(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_finance_categories_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS finance_transactions (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
     category_id CHAR(36) DEFAULT NULL,
     type ENUM('income', 'expense') NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
@@ -190,12 +209,16 @@ CREATE TABLE IF NOT EXISTS finance_transactions (
     deleted_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     KEY idx_finance_transactions_book_id (book_id),
+    KEY idx_finance_transactions_created_by (created_by),
     KEY idx_finance_transactions_category_id (category_id),
     KEY idx_finance_transactions_book_date (book_id, transaction_date),
     KEY idx_finance_transactions_book_type (book_id, type),
     CONSTRAINT fk_finance_transactions_book
         FOREIGN KEY (book_id) REFERENCES books(id)
         ON DELETE CASCADE,
+    CONSTRAINT fk_finance_transactions_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL,
     CONSTRAINT fk_finance_transactions_category
         FOREIGN KEY (category_id) REFERENCES finance_categories(id)
         ON DELETE SET NULL

@@ -23,6 +23,12 @@ $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->get('types', 'Api\BooksController::types');
     $routes->get('(:segment)', 'Api\BooksController::show/$1');
     $routes->get('(:segment)/notes', 'Api\NotesController::index/$1');
+    $routes->post('(:segment)/notes', 'Api\NotesController::create/$1');
+    $routes->put('(:segment)/notes/(:segment)', 'Api\NotesController::update/$1/$2');
+    $routes->post('(:segment)/notes/(:segment)/pin', 'Api\NotesController::pin/$1/$2');
+    $routes->post('(:segment)/notes/(:segment)/unpin', 'Api\NotesController::unpin/$1/$2');
+    $routes->post('(:segment)/notes/(:segment)/archive', 'Api\NotesController::archive/$1/$2');
+    $routes->delete('(:segment)/notes/(:segment)', 'Api\NotesController::delete/$1/$2');
     $routes->get('(:segment)/todos', 'Api\TodosController::index/$1');
     $routes->get('(:segment)/finance', 'Api\FinanceController::index/$1');
 });

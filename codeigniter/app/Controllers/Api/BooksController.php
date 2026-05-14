@@ -4,7 +4,6 @@ namespace App\Controllers\Api;
 
 use App\Models\BookModel;
 use App\Models\BookTypeModel;
-use App\Services\BookAccessService;
 
 /**
  * Authenticated book metadata endpoints.
@@ -16,7 +15,6 @@ use App\Services\BookAccessService;
 class BooksController extends AuthenticatedApiController
 {
     public function __construct(
-        private readonly BookAccessService $bookAccess = new BookAccessService(),
         private readonly BookModel $books = new BookModel(),
         private readonly BookTypeModel $bookTypes = new BookTypeModel()
     ) {
@@ -26,7 +24,7 @@ class BooksController extends AuthenticatedApiController
     {
         // Read-only endpoint: fetch the user ID first, then release the
         // session lock before running the book query.
-        $userId = $this->currentUserIdForRead();
+        $userId = $this->currentUserIdAndCloseSession();
 
         return $this->respond([
             'books' => $this->books->findSidebarBooksForUser($userId),
@@ -35,8 +33,8 @@ class BooksController extends AuthenticatedApiController
 
     public function show(string $bookId)
     {
-        $userId = $this->currentUserIdForRead();
-        $book   = $this->bookAccess->getAccessibleBook($userId, $bookId);
+        $userId = $this->currentUserIdAndCloseSession();
+        $book   = $this->books->findOwnedActiveBook($userId, $bookId);
 
         if ($book === null) {
             return $this->failNotFound('Book not found.');
@@ -51,7 +49,7 @@ class BooksController extends AuthenticatedApiController
     {
         // This endpoint is read-only, so release the session lock after
         // confirming the request is authenticated.
-        $this->currentUserIdForRead();
+        $this->currentUserIdAndCloseSession();
 
         return $this->respond([
             'bookTypes' => $this->bookTypes->findActiveForSelection(),

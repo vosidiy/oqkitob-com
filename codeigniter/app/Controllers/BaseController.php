@@ -5,6 +5,7 @@ namespace App\Controllers;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Session\Session;
 use Psr\Log\LoggerInterface;
 
@@ -42,5 +43,13 @@ abstract class BaseController extends Controller
         // Controllers use the shared CI4 session service from here onward.
         // AuthController and AuthenticatedApiController both rely on this property.
         $this->session = service('session');
+    }
+
+    /**
+     * Shared UTC timestamp helper for controller-managed audit fields.
+     */
+    protected function utcNow(): string
+    {
+        return Time::now('UTC')->toDateTimeString();
     }
 }

@@ -20,13 +20,10 @@ class TodosController extends AuthenticatedApiController
 
     public function index(string $bookId)
     {
-        $userId = $this->currentUserIdForRead();
+        $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'todo');
 
-        // Reuse the shared book access rule so the controller does not repeat
-        // ownership, archive, delete, and type checks inline.
-        $book   = $this->bookAccess->getAccessibleBook($userId, $bookId, 'todo');
-
-        if ($book === null) {
+        if ($permission === 'none') {
             return $this->failNotFound('Book not found.');
         }
 

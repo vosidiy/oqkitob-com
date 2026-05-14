@@ -23,12 +23,10 @@ class FinanceController extends AuthenticatedApiController
 
     public function index(string $bookId)
     {
-        $userId = $this->currentUserIdForRead();
+        $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'finance');
 
-        // Finance books use the same access rule path as other book types.
-        $book   = $this->bookAccess->getAccessibleBook($userId, $bookId, 'finance');
-
-        if ($book === null) {
+        if ($permission === 'none') {
             return $this->failNotFound('Book not found.');
         }
 
