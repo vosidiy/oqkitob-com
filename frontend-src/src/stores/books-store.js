@@ -56,6 +56,12 @@ export const useBooksStore = defineStore('books', () => {
     return listPromise
   }
 
+  function findBookById(bookId) {
+    // Book detail views use the warmed sidebar metadata first and only fall
+    // back to the single-book endpoint when the shared list truly cannot help.
+    return books.value.find((candidateBook) => candidateBook.id === bookId) ?? null
+  }
+
   function reset() {
     // Clear both UI state and the shared list request marker on logout.
     books.value = []
@@ -71,6 +77,7 @@ export const useBooksStore = defineStore('books', () => {
     loaded,
     errorMessage,
     fetchBooks,
+    findBookById,
     reset,
   }
 })

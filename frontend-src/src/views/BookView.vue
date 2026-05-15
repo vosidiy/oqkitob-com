@@ -62,7 +62,8 @@ const componentByType = {
 const route = useRoute()
 const router = useRouter()
 
-// The books store still owns the shared list used by the sidebar and by the initial book lookup.
+// The books store still owns the shared list used by the sidebar and by the
+// first-pass selected-book lookup.
 const booksStore = useBooksStore()
 
 // BookView keeps the selected book locally because each book page now remounts
@@ -89,7 +90,7 @@ onMounted(async () => {
 
   try {
     // First reuse any metadata already present from the shared sidebar book list.
-    const cachedBook = findBookById(currentBookId)
+    const cachedBook = booksStore.findBookById(currentBookId)
 
     if (cachedBook) {
       book.value = cachedBook
@@ -100,15 +101,15 @@ onMounted(async () => {
     // then try the local lookup again.
     await booksStore.fetchBooks()
 
-    const bookFromList = findBookById(currentBookId)
+    const bookFromList = booksStore.findBookById(currentBookId)
 
     if (bookFromList) {
       book.value = bookFromList
       return
     }
 
-    // Final fallback: one simple single-book request for direct links or when
-    // the book is missing from the sidebar projection for some reason.
+    // Final fallback only: ask the backend for one book when the warmed list
+    // still cannot resolve the page, such as a direct URL or stale local data.
     const { data } = await fetchBookById(currentBookId)
     book.value = data.book ?? null
 
@@ -131,9 +132,4 @@ onMounted(async () => {
     isLoadingBook.value = false
   }
 })
-
-function findBookById(bookId) {
-  // Keep this lookup local because only BookView needs selected-book resolution.
-  return booksStore.books.find((candidateBook) => candidateBook.id === bookId) ?? null
-}
 </script>

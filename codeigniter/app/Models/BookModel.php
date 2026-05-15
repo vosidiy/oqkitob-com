@@ -122,6 +122,38 @@ class BookModel extends Model
     }
 
     /**
+     * Returns one active book row without applying any ownership rule.
+     *
+     * Callers should only use this after a higher-level access service has
+     * already confirmed the current user may see the book.
+     */
+    public function findActiveBookById(string $bookId, ?string $typeKey = null): ?array
+    {
+        if ($bookId === '') {
+            return null;
+        }
+
+        $query = $this->select([
+            'id',
+            'user_id',
+            'type_key',
+            'title',
+            'description',
+            'is_archived',
+        ])->where('id', $bookId)
+            ->where('deleted_at', null)
+            ->where('is_archived', 0);
+
+        if ($typeKey !== null) {
+            $query->where('type_key', $typeKey);
+        }
+
+        $book = $query->first();
+
+        return $book ?: null;
+    }
+
+    /**
      * Lightweight permission/existence check for an owned active book.
      */
     public function hasOwnedActiveBook(string $userId, string $bookId, ?string $typeKey = null): bool

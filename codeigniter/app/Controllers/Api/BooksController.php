@@ -4,6 +4,7 @@ namespace App\Controllers\Api;
 
 use App\Models\BookModel;
 use App\Models\BookTypeModel;
+use App\Services\BookAccessService;
 
 /**
  * Authenticated book metadata endpoints.
@@ -16,7 +17,8 @@ class BooksController extends AuthenticatedApiController
 {
     public function __construct(
         private readonly BookModel $books = new BookModel(),
-        private readonly BookTypeModel $bookTypes = new BookTypeModel()
+        private readonly BookTypeModel $bookTypes = new BookTypeModel(),
+        private readonly BookAccessService $bookAccess = new BookAccessService()
     ) {
     }
 
@@ -34,7 +36,15 @@ class BooksController extends AuthenticatedApiController
     public function show(string $bookId)
     {
         $userId = $this->currentUserIdAndCloseSession();
-        $book   = $this->books->findOwnedActiveBook($userId, $bookId);
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId);
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
+        // Access is checked through the service first, so this lookup only
+        // needs to ensure the book is still active and readable.
+        $book = $this->books->findActiveBookById($bookId);
 
         if ($book === null) {
             return $this->failNotFound('Book not found.');

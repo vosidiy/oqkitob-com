@@ -11,7 +11,8 @@ export function fetchBookTypes() {
 }
 
 export function fetchBookById(bookId) {
-  // Lightweight fallback used by BookView when a direct book URL is not found in the shared list.
+  // Fallback-only endpoint used after BookView has already tried the warmed
+  // sidebar/store metadata path for direct URLs or stale local cache cases.
   return apiClient.get(`/books/${bookId}`)
 }
 
