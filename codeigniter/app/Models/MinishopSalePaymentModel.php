@@ -22,6 +22,9 @@ class MinishopSalePaymentModel extends Model
     ];
     protected $useTimestamps    = false;
 
+    /**
+     * Newest-first ordering matches the usual "recent payments" view.
+     */
     public function findBySale(string $saleId): array
     {
         return $this->select([
@@ -39,6 +42,9 @@ class MinishopSalePaymentModel extends Model
             ->findAll();
     }
 
+    /**
+     * Sale-scoped lookup for payment edits or deletes.
+     */
     public function findExistingByIdAndSale(string $saleId, string $paymentId): ?array
     {
         if ($saleId === '' || $paymentId === '') {
@@ -52,6 +58,9 @@ class MinishopSalePaymentModel extends Model
         return $payment ?: null;
     }
 
+    /**
+     * Summary helpers use this to refresh the parent sale's cached paid total.
+     */
     public function sumAmountBySale(string $saleId): float
     {
         if ($saleId === '') {

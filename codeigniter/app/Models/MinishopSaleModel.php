@@ -31,6 +31,9 @@ class MinishopSaleModel extends Model
     ];
     protected $useTimestamps    = false;
 
+    /**
+     * Default sales list ordered newest first for history screens.
+     */
     public function findByBook(string $bookId): array
     {
         return $this->select([
@@ -56,6 +59,9 @@ class MinishopSaleModel extends Model
             ->findAll();
     }
 
+    /**
+     * Book-scoped lookup for detail pages and write operations.
+     */
     public function findExistingByIdAndBook(string $bookId, string $saleId): ?array
     {
         if ($bookId === '' || $saleId === '') {
@@ -70,6 +76,10 @@ class MinishopSaleModel extends Model
         return $sale ?: null;
     }
 
+    /**
+     * Lightweight projection for reporting flows that do not need notes or
+     * creator metadata.
+     */
     public function findOneForReporting(string $bookId, string $saleId): ?array
     {
         if ($bookId === '' || $saleId === '') {

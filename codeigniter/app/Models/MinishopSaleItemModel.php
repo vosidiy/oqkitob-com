@@ -22,6 +22,10 @@ class MinishopSaleItemModel extends Model
     ];
     protected $useTimestamps    = false;
 
+    /**
+     * Sale items are stored as snapshots, so ordering by ID preserves the
+     * original insert sequence well enough for MVP detail views.
+     */
     public function findBySale(string $saleId): array
     {
         return $this->select([

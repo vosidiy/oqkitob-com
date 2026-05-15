@@ -43,6 +43,7 @@ import { isNotFoundError, isUnauthorizedError } from '@/api/errors'
 import { fetchBookById } from '@/api/books-api'
 import { useBooksStore } from '@/stores/books-store'
 import FinanceApp from '@/views/book-types/finance/FinanceApp.vue'
+import MinishopApp from '@/views/book-types/minishop/MinishopApp.vue'
 import NotesApp from '@/views/book-types/notes/NotesApp.vue'
 import TodoApp from '@/views/book-types/todo/TodoApp.vue'
 
@@ -52,6 +53,7 @@ const BOOK_NOT_FOUND_MESSAGE = 'Book not found.'
 // BookView only chooses the correct mini app. Each child app owns its own data fetch.
 const componentByType = {
   finance: FinanceApp,
+  minishop: MinishopApp,
   notes: NotesApp,
   todo: TodoApp,
 }

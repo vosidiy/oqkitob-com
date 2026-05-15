@@ -6,6 +6,21 @@ use CodeIgniter\Model;
 
 class MinishopProductModel extends Model
 {
+    private const LIST_COLUMNS = [
+        'id',
+        'book_id',
+        'created_by',
+        'category_id',
+        'name',
+        'sku',
+        'price',
+        'quantity',
+        'low_stock_alert',
+        'is_active',
+        'created_at',
+        'updated_at',
+    ];
+
     protected $table            = 'minishop_products';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
@@ -28,22 +43,14 @@ class MinishopProductModel extends Model
     ];
     protected $useTimestamps    = false;
 
+    /**
+     * Adds a computed low-stock flag so list endpoints do not need to
+     * duplicate the alert rule in PHP.
+     */
     public function findByBook(string $bookId, bool $activeOnly = false): array
     {
-        $query = $this->select([
-            'id',
-            'book_id',
-            'created_by',
-            'category_id',
-            'name',
-            'sku',
-            'price',
-            'quantity',
-            'low_stock_alert',
-            'is_active',
-            'created_at',
-            'updated_at',
-        ])->where('book_id', $bookId)
+        $query = $this->select(self::LIST_COLUMNS)
+            ->where('book_id', $bookId)
             ->where('deleted_at', null)
             ->select('(low_stock_alert IS NOT NULL AND quantity <= low_stock_alert) AS is_low_stock', false);
 
@@ -55,6 +62,9 @@ class MinishopProductModel extends Model
             ->findAll();
     }
 
+    /**
+     * Book-scoped lookup for sale creation and stock updates.
+     */
     public function findExistingByIdAndBook(string $bookId, string $productId): ?array
     {
         if ($bookId === '' || $productId === '') {
@@ -62,6 +72,25 @@ class MinishopProductModel extends Model
         }
 
         $product = $this->where('id', $productId)
+            ->where('book_id', $bookId)
+            ->where('deleted_at', null)
+            ->first();
+
+        return $product ?: null;
+    }
+
+    /**
+     * Returns one list-shaped product row after create requests.
+     */
+    public function findListRowByIdAndBook(string $bookId, string $productId): ?array
+    {
+        if ($bookId === '' || $productId === '') {
+            return null;
+        }
+
+        $product = $this->select(self::LIST_COLUMNS)
+            ->select('(low_stock_alert IS NOT NULL AND quantity <= low_stock_alert) AS is_low_stock', false)
+            ->where('id', $productId)
             ->where('book_id', $bookId)
             ->where('deleted_at', null)
             ->first();

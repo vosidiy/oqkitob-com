@@ -6,6 +6,11 @@ use CodeIgniter\Model;
 
 class MinishopCategoryModel extends Model
 {
+    private const SELECTION_COLUMNS = [
+        'id',
+        'name',
+    ];
+
     protected $table            = 'minishop_categories';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
@@ -23,6 +28,9 @@ class MinishopCategoryModel extends Model
     ];
     protected $useTimestamps    = false;
 
+    /**
+     * Returns active categories in the order the UI will usually render them.
+     */
     public function findByBook(string $bookId): array
     {
         return $this->select([
@@ -40,6 +48,9 @@ class MinishopCategoryModel extends Model
             ->findAll();
     }
 
+    /**
+     * Book-scoped lookup so callers cannot accidentally cross books.
+     */
     public function findExistingByIdAndBook(string $bookId, string $categoryId): ?array
     {
         if ($bookId === '' || $categoryId === '') {
@@ -52,5 +63,18 @@ class MinishopCategoryModel extends Model
             ->first();
 
         return $category ?: null;
+    }
+
+    /**
+     * Lightweight category options for product-create forms.
+     */
+    public function findSelectionByBook(string $bookId): array
+    {
+        return $this->select(self::SELECTION_COLUMNS)
+            ->where('book_id', $bookId)
+            ->where('deleted_at', null)
+            ->orderBy('sort_order', 'ASC')
+            ->orderBy('name', 'ASC')
+            ->findAll();
     }
 }

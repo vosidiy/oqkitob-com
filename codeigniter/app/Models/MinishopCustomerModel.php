@@ -26,6 +26,9 @@ class MinishopCustomerModel extends Model
     ];
     protected $useTimestamps    = false;
 
+    /**
+     * Basic customer list for the current minishop book.
+     */
     public function findByBook(string $bookId): array
     {
         return $this->select([
@@ -45,6 +48,10 @@ class MinishopCustomerModel extends Model
             ->findAll();
     }
 
+    /**
+     * Aggregates current due amounts from non-deleted sales so debt follow-up
+     * screens can render customer balances in one query.
+     */
     public function findByBookWithBalanceSummary(string $bookId): array
     {
         return $this->select([
@@ -71,6 +78,9 @@ class MinishopCustomerModel extends Model
             ->findAll();
     }
 
+    /**
+     * Book-scoped lookup for sale ownership and reminder updates.
+     */
     public function findExistingByIdAndBook(string $bookId, string $customerId): ?array
     {
         if ($bookId === '' || $customerId === '') {
