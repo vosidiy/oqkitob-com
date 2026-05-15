@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS users (
     last_login_at DATETIME DEFAULT NULL,
     plan ENUM('free', 'monthly', 'yearly') NOT NULL DEFAULT 'free',
     license_expires_at DATETIME DEFAULT NULL,
-    created_at DATETIME DEFAULT NULL,
-    updated_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uq_users_email (email),
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS user_email_verifications (
     code VARCHAR(10) NOT NULL,
     expires_at DATETIME NOT NULL,
     used_at DATETIME DEFAULT NULL,
-    created_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_user_email_verifications_user_id (user_id),
     KEY idx_user_email_verifications_expires_at (expires_at),
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     token_hash VARCHAR(255) NOT NULL,
     expires_at DATETIME NOT NULL,
     used_at DATETIME DEFAULT NULL,
-    created_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_password_reset_tokens_user_id (user_id),
     KEY idx_password_reset_tokens_expires_at (expires_at),
@@ -80,8 +80,8 @@ CREATE TABLE IF NOT EXISTS book_types (
     name VARCHAR(100) NOT NULL,
     description VARCHAR(255) DEFAULT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
-    created_at DATETIME DEFAULT NULL,
-    updated_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (type_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -151,8 +151,8 @@ CREATE TABLE IF NOT EXISTS todos (
     due_at DATETIME DEFAULT NULL,
     completed_at DATETIME DEFAULT NULL,
     position INT NOT NULL DEFAULT 0,
-    created_at DATETIME DEFAULT NULL,
-    updated_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     KEY idx_todos_book_id (book_id),
@@ -178,8 +178,8 @@ CREATE TABLE IF NOT EXISTS finance_categories (
     name VARCHAR(255) NOT NULL,
     type ENUM('income', 'expense') NOT NULL,
     color VARCHAR(20) DEFAULT NULL,
-    created_at DATETIME DEFAULT NULL,
-    updated_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     KEY idx_finance_categories_book_id (book_id),
@@ -204,8 +204,8 @@ CREATE TABLE IF NOT EXISTS finance_transactions (
     transaction_date DATE NOT NULL,
     note TEXT DEFAULT NULL,
     reference VARCHAR(100) DEFAULT NULL,
-    created_at DATETIME DEFAULT NULL,
-    updated_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     KEY idx_finance_transactions_book_id (book_id),
@@ -224,6 +224,164 @@ CREATE TABLE IF NOT EXISTS finance_transactions (
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS minishop_categories (
+    id CHAR(36) NOT NULL,
+    book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
+    name VARCHAR(255) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_minishop_categories_book_id (book_id),
+    KEY idx_minishop_categories_created_by (created_by),
+    KEY idx_minishop_categories_book_deleted (book_id, deleted_at),
+    KEY idx_minishop_categories_book_sort (book_id, sort_order),
+    CONSTRAINT fk_minishop_categories_book
+        FOREIGN KEY (book_id) REFERENCES books(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_minishop_categories_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS minishop_products (
+    id CHAR(36) NOT NULL,
+    book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
+    category_id CHAR(36) DEFAULT NULL,
+    name VARCHAR(255) NOT NULL,
+    sku VARCHAR(100) DEFAULT NULL,
+    price DECIMAL(15,2) NOT NULL,
+    quantity DECIMAL(10,3) NOT NULL DEFAULT 0.000,
+    low_stock_alert DECIMAL(10,3) DEFAULT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_minishop_products_book_id (book_id),
+    KEY idx_minishop_products_created_by (created_by),
+    KEY idx_minishop_products_category_id (category_id),
+    KEY idx_minishop_products_book_category (book_id, category_id),
+    KEY idx_minishop_products_book_active (book_id, is_active),
+    KEY idx_minishop_products_book_deleted (book_id, deleted_at),
+    KEY idx_minishop_products_book_quantity (book_id, quantity),
+    CONSTRAINT fk_minishop_products_book
+        FOREIGN KEY (book_id) REFERENCES books(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_minishop_products_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_minishop_products_category
+        FOREIGN KEY (category_id) REFERENCES minishop_categories(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS minishop_customers (
+    id CHAR(36) NOT NULL,
+    book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) DEFAULT NULL,
+    note TEXT DEFAULT NULL,
+    reminder_at DATETIME DEFAULT NULL,
+    reminder_note VARCHAR(255) DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_minishop_customers_book_id (book_id),
+    KEY idx_minishop_customers_created_by (created_by),
+    KEY idx_minishop_customers_book_deleted (book_id, deleted_at),
+    KEY idx_minishop_customers_book_reminder (book_id, reminder_at),
+    KEY idx_minishop_customers_book_phone (book_id, phone),
+    CONSTRAINT fk_minishop_customers_book
+        FOREIGN KEY (book_id) REFERENCES books(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_minishop_customers_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS minishop_sales (
+    id CHAR(36) NOT NULL,
+    book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
+    customer_id CHAR(36) DEFAULT NULL,
+    currency_code CHAR(3) NOT NULL,
+    subtotal_amount DECIMAL(15,2) NOT NULL,
+    discount_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    total_amount DECIMAL(15,2) NOT NULL,
+    paid_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    due_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    payment_status ENUM('unpaid', 'partial', 'paid') NOT NULL DEFAULT 'unpaid',
+    note TEXT DEFAULT NULL,
+    sold_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_minishop_sales_book_id (book_id),
+    KEY idx_minishop_sales_created_by (created_by),
+    KEY idx_minishop_sales_customer_id (customer_id),
+    KEY idx_minishop_sales_book_sold_at (book_id, sold_at),
+    KEY idx_minishop_sales_book_customer (book_id, customer_id),
+    KEY idx_minishop_sales_book_payment_status (book_id, payment_status),
+    KEY idx_minishop_sales_book_deleted (book_id, deleted_at),
+    CONSTRAINT fk_minishop_sales_book
+        FOREIGN KEY (book_id) REFERENCES books(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_minishop_sales_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_minishop_sales_customer
+        FOREIGN KEY (customer_id) REFERENCES minishop_customers(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS minishop_sale_items (
+    id CHAR(36) NOT NULL,
+    sale_id CHAR(36) NOT NULL,
+    product_id CHAR(36) DEFAULT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    product_sku VARCHAR(100) DEFAULT NULL,
+    quantity DECIMAL(10,3) NOT NULL,
+    unit_price DECIMAL(15,2) NOT NULL,
+    line_total DECIMAL(15,2) NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_minishop_sale_items_sale_id (sale_id),
+    KEY idx_minishop_sale_items_product_id (product_id),
+    CONSTRAINT fk_minishop_sale_items_sale
+        FOREIGN KEY (sale_id) REFERENCES minishop_sales(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_minishop_sale_items_product
+        FOREIGN KEY (product_id) REFERENCES minishop_products(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS minishop_sale_payments (
+    id CHAR(36) NOT NULL,
+    sale_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
+    currency_code CHAR(3) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    paid_at DATETIME NOT NULL,
+    note VARCHAR(255) DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_minishop_sale_payments_sale_id (sale_id),
+    KEY idx_minishop_sale_payments_created_by (created_by),
+    KEY idx_minishop_sale_payments_paid_at (paid_at),
+    CONSTRAINT fk_minishop_sale_payments_sale
+        FOREIGN KEY (sale_id) REFERENCES minishop_sales(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_minishop_sale_payments_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 ALTER TABLE users
     ADD CONSTRAINT fk_users_default_book
     FOREIGN KEY (default_book_id) REFERENCES books(id)
@@ -233,7 +391,8 @@ INSERT INTO book_types (type_key, name, description, is_active, created_at, upda
 VALUES
     ('notes', 'Notes', 'Book type for note taking', 1, NOW(), NOW()),
     ('todo', 'Todo', 'Book type for task management', 1, NOW(), NOW()),
-    ('finance', 'Finance', 'Book type for income and expense tracking', 1, NOW(), NOW())
+    ('finance', 'Finance', 'Book type for income and expense tracking', 1, NOW(), NOW()),
+    ('minishop', 'Minishop', 'Book type for small shop sales and inventory tracking', 1, NOW(), NOW())
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     description = VALUES(description),

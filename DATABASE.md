@@ -72,6 +72,7 @@ Initial values:
 - `notes`
 - `todo`
 - `finance`
+- `minishop`
 
 Future values can be added later:
 
@@ -208,6 +209,12 @@ users
       -> todos
       -> finance_categories
       -> finance_transactions
+      -> minishop_categories
+      -> minishop_products
+      -> minishop_customers
+      -> minishop_sales
+      -> minishop_sale_items
+      -> minishop_sale_payments
 
 users
   -> user_email_verifications
