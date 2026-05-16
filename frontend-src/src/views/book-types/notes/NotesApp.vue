@@ -1,73 +1,74 @@
 <template>
-  <!-- #AppNotes -->
-  <div class="d-flex flex-col h-full w-full">
+  <main class="min-h-100 overflow-y-scroll py-5">
+    <div class="container">
 
-    <header class="d-flex h-14 mobile:h-auto mobile:py-2 shadow-sm border-bottom flex-shrink-0 bg-base px-5 align-items-center gap-1">
-      <div class="min-w-50 mobile:min-w-auto mr-auto">
-        <h5 class="text-xl text-capitalize">Personal Notes </h5>
-        <p class="text-secondary text-sm"></p>
+      <div v-if="errorMessage" class="alert alert-danger" role="alert">
+        {{ errorMessage }}
       </div>
-    </header>
-    <section class="min-h-100 overflow-y-scroll py-5">
-      <div class="container">
-        <button type="button" class="btn btn-dark" @click="openCreateDialog">  Create Note </button>
-        <div v-if="errorMessage" class="alert alert-danger" role="alert">
-          {{ errorMessage }}
-        </div>
-        <div v-if="isLoading" class="text-secondary">Loading notes...</div>
-        <div v-else-if="notes.length === 0" class="text-secondary">No notes yet.</div>
+      
+      <div v-if="isLoading" class="mt-10 text-secondary">
+          <p class="skeleton"> <b> Loading...</b> <b>Wait...</b>  <b> ... </b> </p>
+      </div>
+      <div v-else-if="notes.length === 0" class="mt-10 text-lg text-secondary"> No notes yet.  Click “Add new note” to get started. </div>
 
-        <div v-else class="d-grid grid-template-cols-4 mobile:grid-template-cols-1 tablet:grid-template-cols-2 gap-5">
-          <article v-for="item in notes" :key="item.id" class="card shadow-sm p-5 cursor-pointer bg-yellow-100 hover:border-color-yellow-600 border-color-yellow-300" style="flex-basis: 240px;">
-            <div style="height: 130px;" :class="getNoteCardClass(item.color)">
-                <h4 class="h6 mb-0">{{ item.title || 'Untitled note' }}</h4>
-                <span v-if="isPinned(item)" class="badge text-bg-secondary">Pinned</span>
-                <p v-if="item.content" class="card-text small text-body-secondary flex-grow-1 mb-3">
-                  {{ item.content }}
-                </p>
-                <p v-else class="small"> --- </p>
-                <div class="d-flex flex-wrap gap-2 mt-auto">
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-default"
-                    @click="openEditDialog(item)"
-                    :disabled="isNoteBusy(item.id)"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-default"
-                    @click="handleTogglePin(item)"
-                    :disabled="isNoteBusy(item.id)"
-                  >
-                    {{ isPinned(item) ? 'Unpin' : 'Pin' }}
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-default"
-                    @click="handleArchiveNote(item)"
-                    :disabled="isNoteBusy(item.id)"
-                  >
-                    Archive
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm default"
-                    @click="handleDeleteNote(item)"
-                    :disabled="isNoteBusy(item.id)"
-                  >
-                    Delete
-                  </button>
-                </div>
-            </div>
-          </article>
-        </div>
-      </div> 
-      <!-- container .//end -->
-    </section>
-  </div>
-  <!-- #AppNotes -->
+      <div v-else class="d-grid grid-template-cols-4 mobile:grid-template-cols-1 tablet:grid-template-cols-2 gap-5">
+
+        <article  @click="openCreateDialog" class="card min-h-50 cursor-text border-dashed hover:border-color-neutral-600 shadow p-7" style="flex-basis: 240px;">
+          <h5 class="font-medium text-secondary mb-2"> Add new note </h5>
+          <div class="text-muted text-lg"> ✍️ Enter note details </div>
+        </article>
+
+        <article v-for="item in notes" :key="item.id" class="card shadow-sm p-5 cursor-pointer bg-yellow-100 hover:border-color-yellow-600 border-color-yellow-300" style="flex-basis: 240px;">
+          <div style="height: 130px;" :class="getNoteCardClass(item.color)">
+              <h4 class="h6 mb-0">{{ item.title || 'Untitled note' }}</h4>
+              <span v-if="isPinned(item)" class="badge text-bg-secondary">Pinned</span>
+              <p v-if="item.content" class="card-text small text-body-secondary flex-grow-1 mb-3">
+                {{ item.content }}
+              </p>
+              <p v-else class="small"> --- </p>
+              <div class="d-flex flex-wrap gap-2 mt-auto">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-default"
+                  @click="openEditDialog(item)"
+                  :disabled="isNoteBusy(item.id)"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-default"
+                  @click="handleTogglePin(item)"
+                  :disabled="isNoteBusy(item.id)"
+                >
+                  {{ isPinned(item) ? 'Unpin' : 'Pin' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-default"
+                  @click="handleArchiveNote(item)"
+                  :disabled="isNoteBusy(item.id)"
+                >
+                  Archive
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm default"
+                  @click="handleDeleteNote(item)"
+                  :disabled="isNoteBusy(item.id)"
+                >
+                  Delete
+                </button>
+              </div>
+          </div>
+        </article>
+      </div>
+
+      
+
+    </div> 
+    <!-- container .//end -->
+  </main>
 
   <dialog
       ref="createDialog"

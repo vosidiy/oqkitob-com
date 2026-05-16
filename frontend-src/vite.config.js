@@ -3,14 +3,14 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import { viteSingleFile } from 'vite-plugin-singlefile' // optional to keep js in html
+// import { viteSingleFile } from 'vite-plugin-singlefile' // optional to keep js in html
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
-    viteSingleFile(), // optional to keep js in html
+   //  viteSingleFile(), // optional to keep js in html
   ],
   base: '/',
   resolve: {
@@ -19,8 +19,9 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: '../', // was outDir: '../dist',
-    emptyOutDir: false,
+    outDir: '../dist', 
+    emptyOutDir: true,
+    // assetsDir: 'assets',   // ← hashed JS/CSS goes into root assets/
   },
   server: {
     proxy: {

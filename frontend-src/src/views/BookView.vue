@@ -1,9 +1,16 @@
 <template>
-  <div class="card">
+  <div class="d-flex flex-col h-full w-full">
+     <header class="d-flex h-14 mobile:h-auto mobile:py-2 shadow-sm border-bottom flex-shrink-0 bg-base px-5 align-items-center gap-1">
+      <div class="min-w-50 mobile:min-w-auto mr-auto">
+        <h5 class="text-xl text-capitalize"> {{ book.title }}  </h5>
+        <p class="text-secondary text-sm"> {{ book.type_key }} book | <span v-if="book.description">{{ book.description }}</span> </p>
+      </div>
+    </header>
+
     <div class="card-body">
       <div
         v-if="errorMessage"
-        class="alert mb-0"
+        class="alert"
         :class="errorMessage === BOOK_NOT_FOUND_MESSAGE ? 'alert-warning' : 'alert-danger'"
         role="alert"
       >
@@ -13,15 +20,6 @@
       <div v-else-if="isLoadingBook && !book" class="text-secondary">Loading book...</div>
 
       <template v-else-if="book">
-        <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
-          <div>
-            <h2 class="h5 mb-1">{{ book.title }}</h2>
-            <div class="small text-secondary text-capitalize">{{ book.type_key }} book</div>
-          </div>
-        </div>
-
-        <div v-if="book.description" class="text-secondary mb-3">{{ book.description }}</div>
-
         <component :is="activeComponent" v-if="activeComponent" :key="book.id" :book="book" />
 
         <div v-else class="alert alert-secondary mb-0" role="alert">
