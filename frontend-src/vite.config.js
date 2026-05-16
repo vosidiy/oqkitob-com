@@ -3,12 +3,14 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import { viteSingleFile } from 'vite-plugin-singlefile' // optional to keep js in html
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    viteSingleFile(), // optional to keep js in html
   ],
   base: '/',
   resolve: {
@@ -17,8 +19,8 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: '../dist',
-    emptyOutDir: true,
+    outDir: '../', // was outDir: '../dist',
+    emptyOutDir: false,
   },
   server: {
     proxy: {

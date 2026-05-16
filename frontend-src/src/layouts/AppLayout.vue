@@ -1,79 +1,95 @@
 <template>
   <div class="min-vh-100 bg-light">
-    <header class="border-bottom bg-white">
-      <div class="container d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 py-3">
-        <div>
-          <h1 class="h3 mb-1">Dashboard</h1>
-          <p class="text-secondary mb-0">Your books and account overview.</p>
-        </div>
-        <button type="button" class="btn btn-outline-dark" @click="handleLogout" :disabled="isLoggingOut">
-          <span v-if="isLoggingOut">Logging out...</span>
-          <span v-else>Logout</span>
-        </button>
-      </div>
-    </header>
-
-    <main class="container py-4">
-      <div v-if="errorMessage" class="alert alert-danger" role="alert">
-        {{ errorMessage }}
-      </div>
-
-      <div class="row g-4">
-        <aside class="col-lg-4 col-xl-3">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="border rounded p-3 mb-3 bg-light">
-                <div class="small text-secondary">Signed in as</div>
-                <div class="fw-semibold">{{ user?.name || '-' }}</div>
-                <div class="small text-secondary">{{ user?.email || '-' }}</div>
-              </div>
-
-              <h2 class="h5 mb-3">Books</h2>
-
-              <div v-if="booksStore.isLoading" class="text-secondary">Loading books...</div>
-
-              <div v-else-if="booksStore.books.length === 0" class="text-secondary">
-                No books available yet.
-              </div>
-
-              <div v-else class="list-group">
-                <RouterLink
-                  v-for="book in booksStore.books"
-                  :key="book.id"
-                  :to="{ name: 'book-detail', params: { bookId: book.id } }"
-                  class="list-group-item list-group-item-action"
-                  :class="{ active: selectedBookId === book.id }"
-                >
-                  <div class="fw-semibold">{{ book.title }}</div>
-                  <div class="small text-capitalize" :class="selectedBookId === book.id ? 'text-white-50' : 'text-secondary'">
-                    {{ book.type_key }}
-                  </div>
-                  <div
-                    v-if="book.description"
-                    class="small mt-1"
-                    :class="selectedBookId === book.id ? 'text-white-50' : 'text-secondary'"
-                  >
-                    {{ book.description }}
-                  </div>
-                </RouterLink>
-              </div>
-
-              <div class="border-top mt-3 pt-3">
-                <button type="button" class="btn btn-dark w-100" @click="openCreateBookDialog">
-                  Create new book
-                </button>
-              </div>
-            </div>
+      <aside class="col-3 h-full min-w-80 mobile:max-w-full max-w-100 d-flex  flex-col  flex-shrink-0  bg-secondary border-right mobile:col-12">
+        <section class="w-full border-bottom h-14 flex-shrink-0">
+          <div class="d-flex p-1 px-2 align-items-center flex-grow gap-4 flex-row">
+            <nav class="flex-grow">
+              <div class="small text-secondary">Signed in as</div>
+              <div class="font-semibold">{{ user?.name || '-' }}</div>
+              <div class="small text-secondary">{{ user?.email || '-' }}</div>
+            </nav>
+            <button onclick="themeSwitcher()" class="btn btn-icon btn-plain mr-3 text-secondary">
+                <span class="d-none dark:d-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="align-middle" fill="none" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </span>
+                <span class="dark:d-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="align-middle" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </span>
+            </button>
           </div>
-        </aside>
-
-        <section class="col-lg-8 col-xl-9">
-          <RouterView :key="routerViewKey" />
         </section>
-      </div>
-    </main>
+          
+        <section class="overflow-y-auto scrollbar-thin flex-grow p-4">
+          <div class="card-body">
 
-    <dialog
+            <div v-if="booksStore.isLoading" class="text-secondary">Loading books...</div>
+
+            <div v-else-if="booksStore.books.length === 0" class="text-secondary">
+              No books available yet.
+            </div>
+
+            <div v-else class="mb-4">
+              <RouterLink
+                v-for="book in booksStore.books"
+                :key="book.id"
+                :to="{ name: 'book-detail', params: { bookId: book.id } }"
+                class="card group border-transparent bg-raised hover:border-color-neutral-400 group d-flex flex-row relative p-3 mb-2 mobile:py-1"
+                :class="{ active: selectedBookId === book.id }"
+              >
+                <div class="w-18 rounded overflow-hidden mobile:w-12" style="max-height:105px;">
+                    <img src="/img/book-finance-open.png" width="80" alt="Book" class="d-none group-hover:d-block mobile:h-12 mobile:w-10">
+                    <img src="/img/book-finance.png" width="80" alt="Book" class="d-block group-hover:d-none mobile:h-12 mobile:w-10">
+                </div>
+                <div class="p-3 mobile:p-1" data-book-id="{{ book.id }}">
+                    <h6 class="mb-1 mobile:mb-0 text-capitalize">  {{ book.title }}  </h6>
+                    <p class="text-secondary">  {{ book.type_key }} </p>
+                    <div
+                      v-if="book.description"
+                      class="small mt-1"
+                      :class="selectedBookId === book.id ? 'text-white-50' : 'text-secondary'"
+                    >
+                      {{ book.description }}
+                    </div>
+                </div>
+                
+              </RouterLink>
+            </div>
+            <button class="btn btn-default w-full mt-2" @click="openCreateBookDialog"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-text-icon lucide-book-text"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path><path d="M8 11h8"></path><path d="M8 7h6"></path></svg> Create book </button>
+
+          </div>
+        </section>
+        <section class="mt-auto border-top border-color-neutral-300 p-4 mobile:d-none">
+          <!-- sidebar-bottom -->
+          <div class="d-flex justify-content-between">
+                <a href="#" class="hover:opacity-80 d-flex text-decoration-none align-items-center m-0">
+                    <img src="/img/logo.svg" alt="" height="32">
+                    <div style="font-size:22px;" class="font-semibold ml-1">Oq<span class="text-secondary">kitob</span> </div>
+                </a>
+                <div class="d-flex flex-nowrap">
+                    <a href="https://t.me/websoft1990" target="_blank" class="btn mr-1 text-secondary btn-plain border">
+                        Yordam
+                    </a>
+                    <button type="button" class="btn btn-outline-dark" @click="handleLogout" :disabled="isLoggingOut">
+                      <span v-if="isLoggingOut">Logging out...</span>
+                      <span v-else>Logout</span>
+                    </button>
+                </div>
+          </div>
+          <!-- sidebar-bottom end.// -->
+        </section>
+      </aside>
+
+      <main class="flex-grow h-full">
+        <div v-if="errorMessage" class="alert alert-danger" role="alert">
+          {{ errorMessage }}
+        </div>
+          
+        <RouterView :key="routerViewKey" />
+      </main>
+  </div>
+
+
+  <dialog
       ref="createBookDialog"
       class="border rounded shadow p-0"
       @cancel="handleCreateBookDialogCancel"
@@ -161,7 +177,7 @@
         </div>
       </form>
     </dialog>
-  </div>
+
 </template>
 
 <script setup>
