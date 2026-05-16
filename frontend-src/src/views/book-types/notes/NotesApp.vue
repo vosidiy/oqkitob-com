@@ -13,58 +13,34 @@
 
       <div v-else class="d-grid grid-template-cols-4 mobile:grid-template-cols-1 tablet:grid-template-cols-2 gap-5">
 
-        <article  @click="openCreateDialog" class="card min-h-50 cursor-text border-dashed hover:border-color-neutral-600 shadow p-7" style="flex-basis: 240px;">
+        <article @click="openCreateDialog" class="card min-h-50 cursor-text border-dashed hover:border-color-neutral-600 shadow p-7" style="flex-basis: 240px;">
           <h5 class="font-medium text-secondary mb-2"> Add new note </h5>
           <div class="text-muted text-lg"> ✍️ Enter note details </div>
         </article>
 
-        <article v-for="item in notes" :key="item.id" class="card shadow-sm p-5 cursor-pointer bg-yellow-100 hover:border-color-yellow-600 border-color-yellow-300" style="flex-basis: 240px;">
-          <div style="height: 130px;" :class="getNoteCardClass(item.color)">
-              <h4 class="h6 mb-0">{{ item.title || 'Untitled note' }}</h4>
-              <span v-if="isPinned(item)" class="badge text-bg-secondary">Pinned</span>
-              <p v-if="item.content" class="card-text small text-body-secondary flex-grow-1 mb-3">
-                {{ item.content }}
-              </p>
-              <p v-else class="small"> --- </p>
-              <div class="d-flex flex-wrap gap-2 mt-auto">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-default"
-                  @click="openEditDialog(item)"
-                  :disabled="isNoteBusy(item.id)"
-                >
-                  Edit
+        <article v-for="item in notes" :key="item.id" class="card group hover:border-color-neutral-600 shadow-sm" :class="getNoteCardClass(item.color)">
+            <div class="p-5 cursor-pointer" style="height: 160px;" @click="openEditDialog(item)" :disabled="isNoteBusy(item.id)">
+                <h5 class="font-medium mb-2">{{ item.title || 'Untitled note' }}</h5>
+                <div v-if="item.content" class="opacity-70 overflow-hidden">
+                  {{ item.content }}
+                </div>
+                <p v-else class="text-muted"> --- </p>
+            </div>
+            <div class="d-flex p-2 gap-1">
+                <button type="button"  class="btn btn-sm btn-icon btn-neutral" @click="handleArchiveNote(item)" :disabled="isNoteBusy(item.id)">
+                  🗑️
                 </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-default"
-                  @click="handleTogglePin(item)"
-                  :disabled="isNoteBusy(item.id)"
-                >
-                  {{ isPinned(item) ? 'Unpin' : 'Pin' }}
+                <button type="button" class="btn btn-sm btn-icon  btn-neutral"
+                    @click="handleDeleteNote(item)" :disabled="isNoteBusy(item.id)">
+                    ❌
                 </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-default"
-                  @click="handleArchiveNote(item)"
-                  :disabled="isNoteBusy(item.id)"
-                >
-                  Archive
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm default"
-                  @click="handleDeleteNote(item)"
-                  :disabled="isNoteBusy(item.id)"
-                >
-                  Delete
+                <button type="button" class="btn btn-sm btn-icon" :class="isPinned(item) ? 'btn-default' : 'btn-neutral'" 
+                  @click="handleTogglePin(item)" :disabled="isNoteBusy(item.id)">
+                    📌
                 </button>
               </div>
-          </div>
         </article>
       </div>
-
-      
 
     </div> 
     <!-- container .//end -->
@@ -72,7 +48,6 @@
 
   <dialog
       ref="createDialog"
-      class="border rounded shadow p-0"
       @cancel="handleCreateDialogCancel"
       @close="handleCreateDialogClose"
     >
@@ -153,7 +128,6 @@
 
     <dialog
       ref="editDialog"
-      class="border rounded shadow p-0"
       @cancel="handleEditDialogCancel"
       @close="handleEditDialogClose"
     >
@@ -191,7 +165,6 @@
               :disabled="isUpdatingNote"
             ></textarea>
           </div>
-
           <div class="mb-0">
             <div class="form-label mb-2">Color</div>
             <div class="vstack gap-2">
@@ -220,7 +193,7 @@
           </div>
         </div>
 
-        <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
+        <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">          
           <button type="button" class="btn btn-outline-secondary" @click="closeEditDialog" :disabled="isUpdatingNote">
             Cancel
           </button>
@@ -591,16 +564,16 @@ function isPinned(note) {
 
 function getNoteCardClass(color) {
   switch (color) {
-    case 'yellow':
-      return ['bg-warning-subtle', 'border-warning-subtle']
+    case 'purple':
+      return ['bg-purple-100', 'border-purple-red-300']
     case 'blue':
-      return ['bg-primary-subtle', 'border-primary-subtle']
+      return ['bg-blue-100', 'border-color-blue-300']
     case 'green':
-      return ['bg-success-subtle', 'border-success-subtle']
+      return ['bg-green-100', 'border-color-green-300']
     case 'red':
-      return ['bg-danger-subtle', 'border-danger-subtle']
+      return ['bg-red-100', 'border-color-red-300']
     default:
-      return ['bg-white']
+      return ['bg-yellow-100', 'border-color-yellow-300']
   }
 }
 </script>

@@ -2,34 +2,28 @@
   <div class="d-flex flex-col h-full w-full">
      <header class="d-flex h-14 mobile:h-auto mobile:py-2 shadow-sm border-bottom flex-shrink-0 bg-base px-5 align-items-center gap-1">
       <div class="min-w-50 mobile:min-w-auto mr-auto">
-        <h5 class="text-xl text-capitalize"> {{ book.title }}  </h5>
+        <h5 class="text-xl text-capitalize"> {{ book.title }}   </h5>
         <p class="text-secondary text-sm"> {{ book.type_key }} book | <span v-if="book.description">{{ book.description }}</span> </p>
       </div>
     </header>
 
-    <div class="card-body">
-      <div
-        v-if="errorMessage"
-        class="alert"
-        :class="errorMessage === BOOK_NOT_FOUND_MESSAGE ? 'alert-warning' : 'alert-danger'"
-        role="alert"
-      >
-        {{ errorMessage }}
+
+    <div v-if="errorMessage" class="alert" :class="errorMessage === BOOK_NOT_FOUND_MESSAGE ? 'alert-warning' : 'alert-danger'" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <div v-else-if="isLoadingBook && !book" class="text-secondary">Loading book...</div>
+
+    <template v-else-if="book">
+      <component :is="activeComponent" v-if="activeComponent" :key="book.id" :book="book" />
+
+      <div v-else class="alert alert-secondary" role="alert">
+        This book type is not supported yet.
       </div>
+    </template>
 
-      <div v-else-if="isLoadingBook && !book" class="text-secondary">Loading book...</div>
-
-      <template v-else-if="book">
-        <component :is="activeComponent" v-if="activeComponent" :key="book.id" :book="book" />
-
-        <div v-else class="alert alert-secondary mb-0" role="alert">
-          This book type is not supported yet.
-        </div>
-      </template>
-
-      <div v-else class="alert alert-warning mb-0" role="alert">
-        {{ BOOK_NOT_FOUND_MESSAGE }}
-      </div>
+    <div v-else class="alert alert-warning" role="alert">
+      {{ BOOK_NOT_FOUND_MESSAGE }}
     </div>
   </div>
 </template>
