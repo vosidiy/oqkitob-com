@@ -20,3 +20,11 @@ export function createBookRequest(payload) {
   // Create a new user-owned book and return the sidebar-ready metadata row.
   return apiClient.post('/books', payload)
 }
+
+export function archiveBookRequest(bookId) {
+  return apiClient.post(`/books/${bookId}/archive`)
+}
+
+export function deleteBookRequest(bookId) {
+  return apiClient.delete(`/books/${bookId}`)
+}

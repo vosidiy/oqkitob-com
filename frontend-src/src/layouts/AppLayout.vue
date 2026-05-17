@@ -176,13 +176,74 @@
       </form>
   </dialog>
 
+  <dialog
+    ref="bookSettingsDialog"
+    class="border rounded shadow p-0"
+    @cancel="handleBookSettingsDialogCancel"
+    @close="handleBookSettingsDialogClose"
+  >
+    <div class="border-bottom px-4 py-3">
+      <h2 class="h5 mb-1">Book settings</h2>
+      <p class="text-secondary mb-0">
+        Settings for "{{ activeBookForSettings?.title || 'this book' }}" will live here.
+      </p>
+    </div>
+
+    <div class="px-4 py-3">
+      <div v-if="bookSettingsErrorMessage" class="alert alert-danger mb-3" role="alert">
+        {{ bookSettingsErrorMessage }}
+      </div>
+
+      <p class="text-secondary mb-3">Choose a book-level action.</p>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button
+          type="button"
+          class="btn btn-outline"
+          :disabled="!hasActiveBookForSettings || isBookSettingsActionPending"
+          @click="handleArchiveBook"
+        >
+          <span v-if="activeBookSettingsAction === 'archive'">Archiving...</span>
+          <span v-else>Archive book</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline text-red"
+          :disabled="!hasActiveBookForSettings || isBookSettingsActionPending"
+          @click="handleDeleteBook"
+        >
+          <span v-if="activeBookSettingsAction === 'delete'">Deleting...</span>
+          <span v-else>Delete book</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="border-top px-4 py-3 d-flex justify-content-end">
+      <button
+        type="button"
+        class="btn btn-outline"
+        :disabled="isBookSettingsActionPending"
+        @click="closeBookSettingsDialog"
+      >
+        Close
+      </button>
+    </div>
+  </dialog>
+
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
-import { createBookRequest, fetchBookTypes } from '@/api/books-api'
+import {
+  archiveBookRequest,
+  createBookRequest,
+  deleteBookRequest,
+  fetchBookTypes,
+} from '@/api/books-api'
 import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
+import { useBookSettingsDialog } from '@/composables/book-settings-dialog'
 import { authStore } from '@/stores/auth'
 import { useBooksStore } from '@/stores/books-store'
 
@@ -193,11 +254,20 @@ const booksStore = useBooksStore()
 const errorMessage = ref('')
 const isLoggingOut = ref(false)
 const createBookDialog = ref(null)
+const bookSettingsDialog = ref(null)
 const bookTypes = ref([])
 const hasLoadedBookTypes = ref(false)
 const isLoadingBookTypes = ref(false)
 const isCreatingBook = ref(false)
 const createBookErrorMessage = ref('')
+const bookSettingsErrorMessage = ref('')
+const activeBookSettingsAction = ref('')
+const {
+  activeBook: activeBookForSettings,
+  isOpen: isBookSettingsDialogOpen,
+  closeBookSettingsDialog,
+  clearBookSettingsDialog,
+} = useBookSettingsDialog()
 
 const createBookForm = reactive({
   title: '',
@@ -207,6 +277,10 @@ const createBookForm = reactive({
 
 const user = computed(() => authStore.state.user)
 const selectedBookId = computed(() => String(route.params.bookId ?? ''))
+const hasActiveBookForSettings = computed(() => {
+  return typeof activeBookForSettings.value?.id === 'string' && activeBookForSettings.value.id.trim() !== ''
+})
+const isBookSettingsActionPending = computed(() => activeBookSettingsAction.value !== '')
 const isCreateBookSubmitDisabled = computed(() => {
   return (
     isLoadingBookTypes.value ||
@@ -225,6 +299,25 @@ const routerViewKey = computed(() => {
   }
 
   return String(route.name ?? route.path)
+})
+
+watch(isBookSettingsDialogOpen, (isOpen) => {
+  const dialog = bookSettingsDialog.value
+
+  if (!dialog) {
+    return
+  }
+
+  if (isOpen) {
+    if (!dialog.open) {
+      dialog.showModal()
+    }
+    return
+  }
+
+  if (dialog.open) {
+    dialog.close()
+  }
 })
 
 onMounted(async () => {
@@ -289,6 +382,90 @@ function handleCreateBookDialogClose() {
 function handleCreateBookDialogCancel(event) {
   if (isCreatingBook.value) {
     event.preventDefault()
+  }
+}
+
+function handleBookSettingsDialogCancel(event) {
+  event.preventDefault()
+
+  if (isBookSettingsActionPending.value) {
+    return
+  }
+
+  closeBookSettingsDialog()
+}
+
+function handleBookSettingsDialogClose() {
+  resetBookSettingsDialogState()
+  clearBookSettingsDialog()
+}
+
+function resetBookSettingsDialogState() {
+  bookSettingsErrorMessage.value = ''
+  activeBookSettingsAction.value = ''
+}
+
+async function handleArchiveBook() {
+  const bookId = String(activeBookForSettings.value?.id ?? '').trim()
+
+  if (bookId === '' || isBookSettingsActionPending.value) {
+    return
+  }
+
+  if (!window.confirm('Archive this book?')) {
+    return
+  }
+
+  bookSettingsErrorMessage.value = ''
+  activeBookSettingsAction.value = 'archive'
+
+  try {
+    await archiveBookRequest(bookId)
+    closeBookSettingsDialog()
+    await booksStore.fetchBooks(true)
+    await router.replace({ name: 'dashboard-home' })
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeBookSettingsDialog()
+      router.replace({ name: 'login' })
+      return
+    }
+
+    bookSettingsErrorMessage.value = getApiErrorMessage(error, 'Unable to archive book right now.')
+  } finally {
+    activeBookSettingsAction.value = ''
+  }
+}
+
+async function handleDeleteBook() {
+  const bookId = String(activeBookForSettings.value?.id ?? '').trim()
+
+  if (bookId === '' || isBookSettingsActionPending.value) {
+    return
+  }
+
+  if (!window.confirm('Delete this book?')) {
+    return
+  }
+
+  bookSettingsErrorMessage.value = ''
+  activeBookSettingsAction.value = 'delete'
+
+  try {
+    await deleteBookRequest(bookId)
+    closeBookSettingsDialog()
+    await booksStore.fetchBooks(true)
+    await router.replace({ name: 'dashboard-home' })
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeBookSettingsDialog()
+      router.replace({ name: 'login' })
+      return
+    }
+
+    bookSettingsErrorMessage.value = getApiErrorMessage(error, 'Unable to delete book right now.')
+  } finally {
+    activeBookSettingsAction.value = ''
   }
 }
 

@@ -60,7 +60,18 @@ const router = createRouter({
           },
         },
         {
-          path: 'books/:bookId',
+          path: 'books/:bookId/main',
+          redirect: (to) => ({
+            name: 'book-detail',
+            params: {
+              bookId: to.params.bookId,
+            },
+          }),
+        },
+        {
+          // Keep :page optional so /home/books/:bookId remains the canonical
+          // default page URL for every future multi-tab book.
+          path: 'books/:bookId/:page?',
           name: 'book-detail',
           component: BookView,
         },

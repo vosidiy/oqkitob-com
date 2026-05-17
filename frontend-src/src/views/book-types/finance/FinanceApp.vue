@@ -1,43 +1,48 @@
 <template>
-  <div>
-    <h3 class="h6 mb-3">Transactions</h3>
+  <div class="d-flex flex-col h-full w-full">
+    <BookPageHeader :book="book" />
 
-    <div v-if="isLoading" class="text-secondary">Loading transactions...</div>
+    <div class="p-5">
+      <h3 class="h6 mb-3">Transactions</h3>
 
-    <div v-else-if="errorMessage" class="alert alert-danger" role="alert">
-      {{ errorMessage }}
-    </div>
+      <div v-if="isLoading" class="text-secondary">Loading transactions...</div>
 
-    <div v-else-if="transactions.length === 0" class="text-secondary">No transactions yet.</div>
+      <div v-else-if="errorMessage" class="alert alert-danger" role="alert">
+        {{ errorMessage }}
+      </div>
 
-    <div v-else class="table-responsive">
-      <table class="table table-sm align-middle mb-0">
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Type</th>
-            <th scope="col">Amount</th>
-            <th scope="col">Note</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in transactions" :key="item.id">
-            <td>{{ item.transaction_date }}</td>
-            <td class="text-capitalize">{{ item.type }}</td>
-            <td>{{ item.amount }} {{ item.currency_code }}</td>
-            <td>{{ item.note || '-' }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else-if="transactions.length === 0" class="text-secondary">No transactions yet.</div>
+
+      <div v-else class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Type</th>
+              <th scope="col">Amount</th>
+              <th scope="col">Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in transactions" :key="item.id">
+              <td>{{ item.transaction_date }}</td>
+              <td class="text-capitalize">{{ item.type }}</td>
+              <td>{{ item.amount }} {{ item.currency_code }}</td>
+              <td>{{ item.note || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { isUnauthorizedError } from '@/api/errors'
 import { fetchFinanceTransactions } from '@/api/finance'
+import BookPageHeader from '@/components/BookPageHeader.vue'
 
 const props = defineProps({
   book: {
@@ -46,13 +51,30 @@ const props = defineProps({
   },
 })
 
+const route = useRoute()
 const router = useRouter()
 
 const transactions = ref([])
 const isLoading = ref(true)
 const errorMessage = ref('')
+const hasStartedLoadingTransactions = ref(false)
 
-onMounted(async () => {
+watch(() => route.params.page, async (page) => {
+  if (page) {
+    await router.replace({
+      name: 'book-detail',
+      params: {
+        bookId: props.book.id,
+      },
+    })
+    return
+  }
+
+  if (hasStartedLoadingTransactions.value) {
+    return
+  }
+
+  hasStartedLoadingTransactions.value = true
   isLoading.value = true
   errorMessage.value = ''
 
@@ -69,5 +91,5 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-})
+}, { immediate: true })
 </script>

@@ -1,42 +1,5 @@
 <template>
   <div class="d-flex flex-col h-full w-full">
-     <header class="d-flex h-14 mobile:h-auto mobile:py-2 shadow-sm border-bottom border-color-neutral-300 flex-shrink-0 bg-base px-5 align-items-center gap-1">
-      <div class="min-w-50 mobile:min-w-auto mobile:flex-grow mobile:mb-2">
-        <h5 class="text-xl text-capitalize">
-          {{ book?.title || (isLoadingBook ? 'Loading book...' : 'Book') }}
-        </h5>
-        <p class="text-secondary text-sm">
-          <template v-if="book">
-            {{ book.type_key }} book
-            <span v-if="book.description"> | {{ book.description }}</span>
-          </template>
-          <template v-else-if="isLoadingBook">
-            Please wait while the selected book is loading.
-          </template>
-          <template v-else>
-            Book details are unavailable.
-          </template>
-        </p>
-      </div>
-      <nav class="nav-tabs font-medium mx-auto mobile:order-4 mobile:w-full mobile:flex-nowrap">
-        <a class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0 active" href="#"> Page entry  </a>
-        <a class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0" href="#"> Page second </a>
-        <a class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0" href="#"> Page other </a>
-      </nav>
-      <div class="d-flex justify-content-end gap-1 min-w-50 mobile:min-w-auto mobile:mb-2">
-        <div class="relative">
-          <button type="button" class="btn btn-default px-2 gap-1">
-            Setting &#9662;
-          </button>
-          <nav class="dropdown right-0" style="display: none;">
-            <button class="dropdown-item">Book settings</button>
-            <button type="button" class="dropdown-item text-red">Delete book</button>
-          </nav>
-        </div>
-      </div>
-    </header>
-
-
     <div v-if="errorMessage" class="alert" :class="errorMessage === BOOK_NOT_FOUND_MESSAGE ? 'alert-warning' : 'alert-danger'" role="alert">
       {{ errorMessage }}
     </div>

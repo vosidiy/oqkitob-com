@@ -129,4 +129,51 @@ class BooksController extends AuthenticatedApiController
             'book' => $book,
         ], 201);
     }
+
+    public function archive(string $bookId)
+    {
+        $userId = $this->currentUserId();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId);
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
+        $archived = $this->books->update($bookId, [
+            'is_archived' => 1,
+        ]);
+
+        if ($archived === false) {
+            return $this->failServerError('Unable to archive book right now.');
+        }
+
+        return $this->respond([
+            'message' => 'Book archived successfully.',
+            'bookId' => $bookId,
+            'is_archived' => 1,
+        ]);
+    }
+
+    public function delete(string $bookId)
+    {
+        $userId = $this->currentUserId();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId);
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
+        $deletedAt = date('Y-m-d H:i:s');
+        $deleted = $this->books->delete($bookId);
+
+        if ($deleted === false) {
+            return $this->failServerError('Unable to delete book right now.');
+        }
+
+        return $this->respond([
+            'message' => 'Book deleted successfully.',
+            'bookId' => $bookId,
+            'deleted_at' => $deletedAt,
+        ]);
+    }
 }

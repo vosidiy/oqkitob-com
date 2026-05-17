@@ -1,6 +1,9 @@
 <template>
-  <main class="min-h-100 overflow-y-scroll py-5">
-    <div class="container">
+  <div class="d-flex flex-col h-full w-full">
+    <BookPageHeader :book="book" />
+
+    <main class="min-h-100 overflow-y-scroll py-5 flex-1">
+      <div class="container">
 
       <div v-if="errorMessage" class="alert alert-danger" role="alert">
         {{ errorMessage }}
@@ -42,11 +45,11 @@
         </article>
       </div>
 
-    </div> 
-    <!-- container .//end -->
-  </main>
+      </div>
+      <!-- container .//end -->
+    </main>
 
-  <dialog
+    <dialog
       ref="createDialog"
       @cancel="handleCreateDialogCancel"
       @close="handleCreateDialogClose"
@@ -204,12 +207,12 @@
         </div>
       </form>
     </dialog>
-
+  </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
 import {
   archiveNoteRequest,
@@ -220,6 +223,7 @@ import {
   unpinNoteRequest,
   updateNoteRequest,
 } from '@/api/notes'
+import BookPageHeader from '@/components/BookPageHeader.vue'
 
 const props = defineProps({
   book: {
@@ -228,6 +232,7 @@ const props = defineProps({
   },
 })
 
+const route = useRoute()
 const router = useRouter()
 
 const colorOptions = [
@@ -249,6 +254,7 @@ const activeNoteActionId = ref('')
 const createErrorMessage = ref('')
 const editErrorMessage = ref('')
 const editingNoteId = ref('')
+const hasStartedLoadingNotes = ref(false)
 
 const createForm = reactive({
   title: '',
@@ -262,9 +268,24 @@ const editForm = reactive({
   color: '',
 })
 
-onMounted(async () => {
+watch(() => route.params.page, async (page) => {
+  if (page) {
+    await router.replace({
+      name: 'book-detail',
+      params: {
+        bookId: props.book.id,
+      },
+    })
+    return
+  }
+
+  if (hasStartedLoadingNotes.value) {
+    return
+  }
+
+  hasStartedLoadingNotes.value = true
   await loadNotes()
-})
+}, { immediate: true })
 
 async function loadNotes() {
   isLoading.value = true
