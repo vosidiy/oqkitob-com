@@ -109,7 +109,13 @@
               <div class="row  gap-x-2">
                 <div class="col-auto">
                   <div class="d-flex flex-row">
-                    <button class="btn btn-icon btn-default rounded-0"> ➖ </button>
+                    <button
+                      type="button"
+                      class="btn btn-icon btn-default rounded-0"
+                      @click="decrementCartItem(item)"
+                    >
+                      ➖
+                    </button>
                     <input
                       :id="`cart-quantity-${item.productId}`"
                       :value="item.quantityInput"
@@ -120,7 +126,13 @@
                       @input="emit('update-cart-item-quantity', item.productId, $event.target.value)"
                       @blur="emit('normalize-cart-item-quantity', item.productId)"
                     >
-                    <button class="btn btn-icon btn-default rounded-0"> ➕ </button>
+                    <button
+                      type="button"
+                      class="btn btn-icon btn-default rounded-0"
+                      @click="incrementCartItem(item)"
+                    >
+                      ➕
+                    </button>
                   </div>
                 </div>
                 <div class="col-6">
@@ -132,7 +144,7 @@
                       type="number"
                       class="form-control rounded-0"
                       min="0"
-                      step="0.01"
+                      step="1"
                       @input="emit('update-cart-item-price', item.productId, $event.target.value)"
                       @blur="emit('normalize-cart-item-price', item.productId)"
                     >
@@ -170,6 +182,9 @@
         </div>
       </section>
       <section class="px-4  py-2 border-top">
+        <div v-if="saleErrorMessage" class="alert alert-danger mb-3" role="alert">
+          {{ saleErrorMessage }}
+        </div>
         
         <div class="d-flex mb-1 text-sm justify-content-end gap-3 align-items-center">
           <p class="text-secondary">Discounted: </p>
@@ -203,8 +218,14 @@
             >
           </div>
         </div>
-        <button type="button" class="btn btn-primary w-full" @click="emit('complete-sale-placeholder')">
-          Complete Sale
+        <button
+          type="button"
+          class="btn btn-primary w-full"
+          :disabled="cartItems.length === 0 || isSavingSale"
+          @click="emit('complete-sale-placeholder')"
+        >
+          <span v-if="isSavingSale">Saving sale...</span>
+          <span v-else>Complete Sale</span>
         </button>
       </section>
     </aside>
@@ -265,6 +286,14 @@ defineProps({
     type: String,
     required: true,
   },
+  saleErrorMessage: {
+    type: String,
+    required: true,
+  },
+  isSavingSale: {
+    type: Boolean,
+    required: true,
+  },
   paymentStatusClass: {
     type: String,
     required: true,
@@ -315,6 +344,22 @@ function updateSelectedCategoryId(event) {
 function handlePaidInput(event) {
   emit('mark-paid-manually-edited')
   emit('update-paid-input', event.target.value)
+}
+
+function decrementCartItem(item) {
+  const currentQuantity = Number.parseFloat(String(item.quantityInput ?? '1')) || 1
+  const nextQuantity = Math.max(1, currentQuantity - 1)
+
+  emit('update-cart-item-quantity', item.productId, String(nextQuantity))
+  emit('normalize-cart-item-quantity', item.productId)
+}
+
+function incrementCartItem(item) {
+  const currentQuantity = Number.parseFloat(String(item.quantityInput ?? '1')) || 1
+  const nextQuantity = currentQuantity + 1
+
+  emit('update-cart-item-quantity', item.productId, String(nextQuantity))
+  emit('normalize-cart-item-quantity', item.productId)
 }
 
 function isLowStock(product) {

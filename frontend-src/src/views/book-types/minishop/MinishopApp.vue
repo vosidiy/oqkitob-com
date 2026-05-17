@@ -17,6 +17,13 @@
           Sales
         </RouterLink>
         <RouterLink
+          :to="{ name: 'book-detail', params: { bookId: book.id, page: 'customers' } }"
+          class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
+          :class="{ active: activePageKey === 'customers' }"
+        >
+          Customers
+        </RouterLink>
+        <RouterLink
           :to="{ name: 'book-detail', params: { bookId: book.id, page: 'reports' } }"
           class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
           :class="{ active: activePageKey === 'reports' }"
@@ -39,11 +46,13 @@
       :filtered-products="filteredProducts"
       :is-loading-categories="isLoadingCategories"
       :is-loading-products="isLoadingProducts"
+      :is-saving-sale="isSavingSale"
       :no-category-filter-value="NO_CATEGORY_FILTER_VALUE"
       :paid-input="paidInput"
       :payment-status-class="paymentStatusClass"
       :payment-status-message="paymentStatusMessage"
       :products="products"
+      :sale-error-message="saleErrorMessage"
       :selected-category-id="selectedCategoryId"
       :subtotal="subtotal"
       :total="total"
@@ -63,7 +72,9 @@
       @mark-paid-manually-edited="markPaidManuallyEdited"
     />
 
-    <SalesTab v-else-if="activePageKey === 'sales'" />
+    <SalesTab v-else-if="activePageKey === 'sales'" :book="book" />
+
+    <CustomersTab v-else-if="activePageKey === 'customers'" />
 
     <ReportsTab v-else-if="activePageKey === 'reports'" />
 
@@ -191,6 +202,128 @@
         </div>
       </form>
     </dialog>
+
+    <dialog
+      ref="debtConfirmDialog"
+      class="border rounded shadow p-0"
+      @cancel="handleDebtConfirmDialogCancel"
+      @close="handleDebtConfirmDialogClose"
+    >
+      <div class="border-bottom px-4 py-3">
+        <h2 class="h5 mb-1">Confirm debt sale</h2>
+        <p class="text-secondary mb-0">
+          This sale still has {{ formatMoneyValue(remainingAmount) }} remaining.
+        </p>
+      </div>
+
+      <div class="px-4 py-3">
+        <p class="mb-0">Continue and save this sale as debt?</p>
+      </div>
+
+      <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
+        <button
+          type="button"
+          class="btn btn-outline"
+          :disabled="isSavingSale"
+          @click="closeDebtConfirmDialog"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          :disabled="isSavingSale"
+          @click="confirmDebtSale"
+        >
+          <span v-if="isSavingSale">Saving...</span>
+          <span v-else>Confirm</span>
+        </button>
+      </div>
+    </dialog>
+
+    <dialog
+      ref="receiptDialog"
+      class="border rounded shadow p-0"
+      @cancel="handleReceiptDialogCancel"
+      @close="handleReceiptDialogClose"
+    >
+      <div class="border-bottom px-4 py-3">
+        <h2 class="h5 mb-1">Sale saved</h2>
+        <p class="text-secondary mb-0">
+          Receipt for {{ receiptState?.sale?.id || 'this sale' }}
+        </p>
+      </div>
+
+      <div v-if="receiptState" class="px-4 py-3" id="minishop-receipt-content">
+        <div class="mb-3">
+          <div><strong>Book:</strong> {{ book.title }}</div>
+          <div><strong>Receipt:</strong> {{ receiptState.sale.id }}</div>
+          <div><strong>Sold at:</strong> {{ receiptState.sale.sold_at }}</div>
+          <div><strong>Currency:</strong> {{ receiptState.sale.currency_code }}</div>
+        </div>
+
+        <div class="mb-3">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in receiptState.items" :key="item.id">
+                <td>{{ item.product_name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_price }}</td>
+                <td>{{ item.line_total }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex flex-col gap-1">
+          <div class="d-flex justify-content-between">
+            <span>Subtotal</span>
+            <strong>{{ receiptState.sale.subtotal_amount }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Discount</span>
+            <strong>- {{ receiptState.sale.discount_amount }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Total</span>
+            <strong>{{ receiptState.sale.total_amount }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Paid</span>
+            <strong>{{ formatMoneyValue(receiptState.tenderedAmount) }}</strong>
+          </div>
+          <div v-if="receiptState.changeAmount > 0" class="d-flex justify-content-between text-green">
+            <span>Return change</span>
+            <strong>{{ formatMoneyValue(receiptState.changeAmount) }}</strong>
+          </div>
+          <div v-else-if="Number(receiptState.sale.due_amount) > 0" class="d-flex justify-content-between text-orange">
+            <span>Remaining debt</span>
+            <strong>{{ receiptState.sale.due_amount }}</strong>
+          </div>
+          <div v-else class="d-flex justify-content-between text-green">
+            <span>Status</span>
+            <strong>Paid in full</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline" @click="printReceipt">
+          Print receipt
+        </button>
+        <button type="button" class="btn btn-primary" @click="closeReceiptDialog">
+          OK
+        </button>
+      </div>
+    </dialog>
   </div>
 </template>
 
@@ -200,16 +333,19 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
 import {
   createMinishopProduct,
+  createMinishopSale,
   fetchMinishopCategories,
   fetchMinishopProducts,
 } from '@/api/minishop'
 import BookPageHeader from '@/components/BookPageHeader.vue'
+import CustomersTab from '@/views/book-types/minishop/CustomersTab.vue'
 import MainTab from '@/views/book-types/minishop/MainTab.vue'
 import ReportsTab from '@/views/book-types/minishop/ReportsTab.vue'
 import SalesTab from '@/views/book-types/minishop/SalesTab.vue'
 
 const NO_CATEGORY_FILTER_VALUE = '__no_category__'
 const pageComponentByKey = {
+  customers: CustomersTab,
   main: MainTab,
   reports: ReportsTab,
   sales: SalesTab,
@@ -226,21 +362,26 @@ const route = useRoute()
 const router = useRouter()
 
 const createProductDialog = ref(null)
+const debtConfirmDialog = ref(null)
+const receiptDialog = ref(null)
 const products = ref([])
 const categories = ref([])
 const cartItems = ref([])
 const isLoadingProducts = ref(false)
 const isLoadingCategories = ref(false)
 const isCreatingProduct = ref(false)
+const isSavingSale = ref(false)
 const hasLoadedMainData = ref(false)
 const isHydratingMainData = ref(false)
 const errorMessage = ref('')
 const categoryErrorMessage = ref('')
 const createProductErrorMessage = ref('')
+const saleErrorMessage = ref('')
 const selectedCategoryId = ref('')
 const discountInput = ref('0.00')
 const paidInput = ref('0.00')
 const isPaidManuallyEdited = ref(false)
+const receiptState = ref(null)
 
 const createProductForm = reactive({
   name: '',
@@ -354,6 +495,14 @@ const paymentStatusClass = computed(() => {
   }
 
   return 'text-green'
+})
+
+const normalizedSaleItemsPayload = computed(() => {
+  return normalizedCartItems.value.map((item) => ({
+    product_id: item.productId,
+    quantity: item.quantity,
+    unit_price: item.unitPrice,
+  }))
 })
 
 watch(subtotal, (nextSubtotal) => {
@@ -497,7 +646,18 @@ function normalizePaidInput() {
 }
 
 function handleCompleteSalePlaceholder() {
-  window.alert('Complete Sale will be connected to backend later.')
+  if (cartItems.value.length === 0 || isSavingSale.value) {
+    return
+  }
+
+  saleErrorMessage.value = ''
+
+  if (remainingAmount.value > 0) {
+    openDebtConfirmDialog()
+    return
+  }
+
+  void saveSale()
 }
 
 function handleCreateProductDialogClose() {
@@ -508,6 +668,249 @@ function handleCreateProductDialogCancel(event) {
   if (isCreatingProduct.value) {
     event.preventDefault()
   }
+}
+
+function openDebtConfirmDialog() {
+  if (!debtConfirmDialog.value?.open) {
+    debtConfirmDialog.value?.showModal()
+  }
+}
+
+function closeDebtConfirmDialog() {
+  if (debtConfirmDialog.value?.open) {
+    debtConfirmDialog.value.close()
+  }
+}
+
+function handleDebtConfirmDialogCancel(event) {
+  if (isSavingSale.value) {
+    event.preventDefault()
+  }
+}
+
+function handleDebtConfirmDialogClose() {
+  if (!isSavingSale.value) {
+    saleErrorMessage.value = ''
+  }
+}
+
+function confirmDebtSale() {
+  void saveSale()
+}
+
+function openReceiptDialog() {
+  if (!receiptDialog.value?.open) {
+    receiptDialog.value?.showModal()
+  }
+}
+
+function closeReceiptDialog() {
+  if (receiptDialog.value?.open) {
+    receiptDialog.value.close()
+  }
+}
+
+function handleReceiptDialogCancel(event) {
+  event.preventDefault()
+  closeReceiptDialog()
+}
+
+function handleReceiptDialogClose() {
+  receiptState.value = null
+}
+
+async function saveSale() {
+  if (normalizedSaleItemsPayload.value.length === 0 || isSavingSale.value) {
+    return
+  }
+
+  saleErrorMessage.value = ''
+  isSavingSale.value = true
+
+  const tenderedAmount = paidAmount.value
+
+  try {
+    const { data } = await createMinishopSale(props.book.id, {
+      currency_code: 'UZS',
+      discount_amount: discountAmount.value,
+      paid_amount: tenderedAmount,
+      items: normalizedSaleItemsPayload.value,
+    })
+
+    const savedSale = data.sale ?? null
+    const savedItems = Array.isArray(data.items) ? data.items : []
+
+    if (!savedSale) {
+      throw new Error('Sale response did not include receipt data.')
+    }
+
+    receiptState.value = {
+      sale: savedSale,
+      items: savedItems,
+      tenderedAmount,
+      changeAmount: Math.max(tenderedAmount - parseNonNegativeAmount(savedSale.total_amount, 0), 0),
+    }
+
+    cartItems.value = []
+    resetCheckoutState()
+    closeDebtConfirmDialog()
+    await loadProducts()
+    openReceiptDialog()
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeDebtConfirmDialog()
+      closeReceiptDialog()
+      await router.replace({ name: 'login' })
+      return
+    }
+
+    saleErrorMessage.value = getApiErrorMessage(error, 'Unable to save sale right now.')
+  } finally {
+    isSavingSale.value = false
+  }
+}
+
+function printReceipt() {
+  if (!receiptState.value) {
+    return
+  }
+
+  const receiptWindow = window.open('', '_blank', 'width=720,height=900')
+
+  if (!receiptWindow) {
+    saleErrorMessage.value = 'Unable to open the receipt preview window.'
+    return
+  }
+
+  receiptWindow.document.write(buildReceiptHtml())
+  receiptWindow.document.close()
+  receiptWindow.focus()
+  receiptWindow.print()
+}
+
+function buildReceiptHtml() {
+  const receipt = receiptState.value
+
+  if (!receipt) {
+    return '<html><body></body></html>'
+  }
+
+  const itemRows = receipt.items.map((item) => {
+    return `
+      <tr>
+        <td>${escapeReceiptText(item.product_name)}</td>
+        <td>${escapeReceiptText(item.quantity)}</td>
+        <td>${escapeReceiptText(item.unit_price)}</td>
+        <td>${escapeReceiptText(item.line_total)}</td>
+      </tr>
+    `
+  }).join('')
+
+  const statusMarkup = receipt.changeAmount > 0
+    ? `
+      <div class="summary-row success">
+        <span>Return change</span>
+        <strong>${escapeReceiptText(formatMoneyValue(receipt.changeAmount))}</strong>
+      </div>
+    `
+    : parseNonNegativeAmount(receipt.sale.due_amount, 0) > 0
+      ? `
+        <div class="summary-row warning">
+          <span>Remaining debt</span>
+          <strong>${escapeReceiptText(receipt.sale.due_amount)}</strong>
+        </div>
+      `
+      : `
+        <div class="summary-row success">
+          <span>Status</span>
+          <strong>Paid in full</strong>
+        </div>
+      `
+
+  return `
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <title>Receipt ${escapeReceiptText(receipt.sale.id)}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            color: #111827;
+            margin: 24px;
+          }
+          h1 {
+            font-size: 22px;
+            margin: 0 0 8px;
+          }
+          .meta,
+          .summary {
+            margin-top: 16px;
+          }
+          .meta div,
+          .summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 8px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+          }
+          th,
+          td {
+            border-bottom: 1px solid #d1d5db;
+            padding: 8px 0;
+            text-align: left;
+          }
+          .success {
+            color: #166534;
+          }
+          .warning {
+            color: #b45309;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Sale receipt</h1>
+        <div class="meta">
+          <div><span>Book</span><strong>${escapeReceiptText(props.book.title)}</strong></div>
+          <div><span>Receipt</span><strong>${escapeReceiptText(receipt.sale.id)}</strong></div>
+          <div><span>Sold at</span><strong>${escapeReceiptText(receipt.sale.sold_at)}</strong></div>
+          <div><span>Currency</span><strong>${escapeReceiptText(receipt.sale.currency_code)}</strong></div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>${itemRows}</tbody>
+        </table>
+        <div class="summary">
+          <div class="summary-row"><span>Subtotal</span><strong>${escapeReceiptText(receipt.sale.subtotal_amount)}</strong></div>
+          <div class="summary-row"><span>Discount</span><strong>- ${escapeReceiptText(receipt.sale.discount_amount)}</strong></div>
+          <div class="summary-row"><span>Total</span><strong>${escapeReceiptText(receipt.sale.total_amount)}</strong></div>
+          <div class="summary-row"><span>Paid</span><strong>${escapeReceiptText(formatMoneyValue(receipt.tenderedAmount))}</strong></div>
+          ${statusMarkup}
+        </div>
+      </body>
+    </html>
+  `
+}
+
+function escapeReceiptText(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
 }
 
 async function loadCategories() {
