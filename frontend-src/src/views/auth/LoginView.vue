@@ -1,7 +1,7 @@
 <template>
-  <div class="card border-0 shadow-sm">
-    <div class="card-body p-4 p-md-5">
-      <h1 class="h3 fw-bold mb-2">Login</h1>
+  <div class="card shadow-sm">
+    <div class="card-body p-4">
+      <h1 class="text-3xl font-bold mb-2">Login</h1>
       <p class="text-secondary mb-4">Sign in to continue to your books dashboard.</p>
 
       <div v-if="errorMessage" class="alert alert-danger" role="alert">
@@ -15,7 +15,7 @@
             id="email"
             v-model.trim="form.email"
             type="email"
-            class="form-control form-control-lg"
+            class="form-control"
             placeholder="you@example.com"
             autocomplete="email"
           >
@@ -27,17 +27,17 @@
             id="password"
             v-model="form.password"
             type="password"
-            class="form-control form-control-lg"
+            class="form-control"
             placeholder="Enter your password"
             autocomplete="current-password"
           >
         </div>
 
         <div class="small text-secondary mb-4">
-          Demo password for seeded users: <span class="fw-semibold">Demo123!</span>
+          Demo password for seeded users: <span class="font-semibold">Demo123!</span>
         </div>
 
-        <button type="submit" class="btn btn-dark btn-lg w-100" :disabled="isSubmitting">
+        <button type="submit" class="btn btn-primary btn-lg w-full" :disabled="isSubmitting">
           <span v-if="isSubmitting">Logging in...</span>
           <span v-else>Login</span>
         </button>

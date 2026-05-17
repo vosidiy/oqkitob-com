@@ -115,10 +115,10 @@
         </div>
 
         <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
-          <button type="button" class="btn btn-outline-secondary" @click="closeCreateDialog" :disabled="isCreatingNote">
+          <button type="button" class="btn btn-outline" @click="closeCreateDialog" :disabled="isCreatingNote">
             Cancel
           </button>
-          <button type="submit" class="btn btn-dark" :disabled="isCreatingNote">
+          <button type="submit" class="btn btn-primary" :disabled="isCreatingNote">
             <span v-if="isCreatingNote">Saving...</span>
             <span v-else>Save</span>
           </button>
@@ -194,10 +194,10 @@
         </div>
 
         <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">          
-          <button type="button" class="btn btn-outline-secondary" @click="closeEditDialog" :disabled="isUpdatingNote">
+          <button type="button" class="btn btn-outline" @click="closeEditDialog" :disabled="isUpdatingNote">
             Cancel
           </button>
-          <button type="submit" class="btn btn-dark" :disabled="isUpdatingNote">
+          <button type="submit" class="btn btn-primary" :disabled="isUpdatingNote">
             <span v-if="isUpdatingNote">Saving...</span>
             <span v-else>Save</span>
           </button>

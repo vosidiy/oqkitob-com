@@ -69,7 +69,7 @@
                 <a href="https://t.me/websoft1990" target="_blank" class="btn mr-1 text-secondary btn-plain border">
                     Yordam
                 </a>
-                <button type="button" class="btn btn-outline-dark" @click="handleLogout" :disabled="isLoggingOut">
+                <button type="button" class="btn btn-outline" @click="handleLogout" :disabled="isLoggingOut">
                   <span v-if="isLoggingOut">Logging out...</span>
                   <span v-else>Logout</span>
                 </button>
@@ -165,10 +165,10 @@
         </div>
 
         <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
-          <button type="button" class="btn btn-outline-secondary" @click="closeCreateBookDialog" :disabled="isCreatingBook">
+          <button type="button" class="btn btn-outline" @click="closeCreateBookDialog" :disabled="isCreatingBook">
             Cancel
           </button>
-          <button type="submit" class="btn btn-dark" :disabled="isCreateBookSubmitDisabled">
+          <button type="submit" class="btn btn-primary" :disabled="isCreateBookSubmitDisabled">
             <span v-if="isCreatingBook">Creating...</span>
             <span v-else>Create</span>
           </button>

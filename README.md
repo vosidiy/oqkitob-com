@@ -17,7 +17,20 @@ maps to dedicated database tables and dedicated frontend/backend behavior.
 | Backend   | CodeIgniter 4 (JSON API only)     |
 | Database  | MySQL                             |
 | Auth      | Same-origin cookie sessions       |
-| Styling   | Bootstrap (MVP phase)             |
+| Styling   | `assets/final.min.css` + `assets/custom.css` |
+
+## CSS Library
+
+The project now uses the local `assets/final.min.css` library for basic UI styling.
+
+- Bootstrap CDN is no longer the source of component styles for the app or public pages.
+- Use the library's basic component classes for buttons, cards, forms, and alerts.
+- Preferred classes in this repo:
+  - buttons: `btn`, `btn-primary`, `btn-outline`, `btn-neutral`, `btn-sm`, `btn-lg`
+  - cards: `card`, `card-body`
+  - forms: `form-label`, `form-control`, `form-select`, `form-check`
+  - alerts: `alert`, `alert-danger`, `alert-warning`, `alert-info`, `alert-success`
+- Keep styling simple in templates. Avoid adding Bootstrap-only variants such as `btn-dark`, `btn-outline-dark`, `btn-outline-secondary`, `form-control-lg`, or other complex responsive Bootstrap classes when working on these basic surfaces.
 
 
 ## Project Structure
@@ -192,9 +205,9 @@ This is a minimal but reasonable MVP setup for same-origin cookie auth.
 
 From `db.sql`:
 
-- `ali@example.com`
-- `malika@example.com`
-- `jasur@example.com`
+- `vosidiy@gmail.com`
+- `test@example.com`
+- `demo@example.com`
 - shared password: `123`
 
 ## Reference Files
