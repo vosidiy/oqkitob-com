@@ -66,6 +66,25 @@ class MinishopCategoryModel extends Model
     }
 
     /**
+     * Book-scoped lookup by category name for inline product-create flows.
+     */
+    public function findExistingByNameAndBook(string $bookId, string $name): ?array
+    {
+        $normalizedName = trim($name);
+
+        if ($bookId === '' || $normalizedName === '') {
+            return null;
+        }
+
+        $category = $this->where('book_id', $bookId)
+            ->where('name', $normalizedName)
+            ->where('deleted_at', null)
+            ->first();
+
+        return $category ?: null;
+    }
+
+    /**
      * Lightweight category options for product-create forms.
      */
     public function findSelectionByBook(string $bookId): array

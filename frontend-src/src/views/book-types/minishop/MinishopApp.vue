@@ -52,6 +52,7 @@
       :payment-status-class="paymentStatusClass"
       :payment-status-message="paymentStatusMessage"
       :products="products"
+      :sale-note-input="saleNoteInput"
       :sale-error-message="saleErrorMessage"
       :selected-category-id="selectedCategoryId"
       :subtotal="subtotal"
@@ -63,9 +64,11 @@
       @normalize-discount-input="normalizeDiscountInput"
       @normalize-paid-input="normalizePaidInput"
       @open-create-product="openCreateProductDialog"
+      @open-edit-product="openEditProductDialog"
       @remove-cart-item="removeCartItem"
       @update-cart-item-price="updateCartItemPrice"
       @update-cart-item-quantity="updateCartItemQuantity"
+      @update-sale-note-input="saleNoteInput = $event"
       @update:selected-category-id="selectedCategoryId = $event"
       @update-discount-input="discountInput = $event"
       @update-paid-input="paidInput = $event"
@@ -80,127 +83,290 @@
 
     <dialog
       ref="createProductDialog"
-      class="border rounded shadow p-0"
       @cancel="handleCreateProductDialogCancel"
       @close="handleCreateProductDialogClose"
     >
-      <form class="m-0" @submit.prevent="handleCreateProduct">
-        <div class="border-bottom px-4 py-3">
-          <h2 class="h5 mb-1">Create product</h2>
-          <p class="text-secondary mb-0">Add a product to this minishop book.</p>
-        </div>
+      <header class="dialog-header">
+        <h5>Create product</h5>
+        <button class="btn btn-icon" 
+            @click="closeCreateProductDialog"
+            :disabled="isCreatingProduct">
+            <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <form  @submit.prevent="handleCreateProduct">
+            
+            <div v-if="createProductErrorMessage" class="alert alert-danger" role="alert">
+              {{ createProductErrorMessage }}
+            </div>
 
-        <div class="px-4 py-3">
-          <div v-if="createProductErrorMessage" class="alert alert-danger" role="alert">
-            {{ createProductErrorMessage }}
+            <div class="mb-4">
+              <label class="form-label" for="create-product-name">Name</label>
+              <input
+                id="create-product-name"
+                v-model.trim="createProductForm.name"
+                type="text"
+                class="form-control"
+                placeholder="Enter product name"
+                :disabled="isCreatingProduct"
+                required
+              >
+            </div>
+
+            <div class="row  gap-3">
+              <div class="col-6 mb-4">
+                <label class="form-label" for="create-product-category">Category</label>
+                <select
+                  id="create-product-category"
+                  v-model="createProductForm.category_id"
+                  class="form-select"
+                  :disabled="isCreatingProduct || isLoadingCategories"
+                >
+                  <option value="">--- No category ---</option>
+                  <option :value="CREATE_CATEGORY_OPTION_VALUE">+ Add new category</option>
+                  <option
+                    v-for="category in categories"
+                    :key="category.id"
+                    :value="category.id"
+                  >
+                    {{ category.name }}
+                  </option>
+                </select>
+                <input
+                  v-if="isCreateProductNewCategorySelected"
+                  id="create-product-new-category"
+                  v-model.trim="createProductForm.new_category_name"
+                  type="text"
+                  class="form-control mt-3"
+                  placeholder="Enter new category name"
+                  :disabled="isCreatingProduct"
+                >
+              </div>
+              <div class="col-6 mb-4">
+                <label class="form-label" for="create-product-sku">SKU / Kod</label>
+                <input
+                  id="create-product-sku"
+                  v-model.trim="createProductForm.sku"
+                  type="text"
+                  class="form-control"
+                  placeholder="Optional SKU"
+                  :disabled="isCreatingProduct"
+                >
+              </div>
+            </div>
+
+            <div class="row gap-3">
+              <div class="col-6 mb-4">
+                <label class="form-label" for="create-product-price">Price</label>
+                <input
+                  id="create-product-price"
+                  v-model.trim="createProductForm.price"
+                  type="number"
+                  class="form-control"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  :disabled="isCreatingProduct"
+                  required
+                >
+              </div>
+              <div class="col-3 mb-4">
+                <label class="form-label" for="create-product-quantity">Quantity</label>
+                <input
+                  id="create-product-quantity"
+                  v-model.trim="createProductForm.quantity"
+                  type="number"
+                  class="form-control"
+                  min="0"
+                  step="0.001"
+                  placeholder="0"
+                  :disabled="isCreatingProduct"
+                  required
+                >
+              </div>
+              <div class="col-3 mb-4">
+                <label class="form-label" for="create-product-low-stock-alert">Low-stock alert</label>
+                <input
+                  id="create-product-low-stock-alert"
+                  v-model.trim="createProductForm.low_stock_alert"
+                  type="number"
+                  class="form-control"
+                  min="0"
+                  step="0.001"
+                  placeholder="Optional threshold"
+                  :disabled="isCreatingProduct"
+                >
+              </div>
+            </div>
+
+            <div class="pt-4 d-flex gap-2">
+              <button type="submit" class="btn btn-primary" :disabled="isCreateProductSubmitDisabled">
+                <span v-if="isCreatingProduct">Saving...</span>
+                <span v-else>Create</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-default"
+                @click="closeCreateProductDialog"
+                :disabled="isCreatingProduct"
+              >
+                Cancel
+              </button>
+              
+            </div>
+        </form>
+      </div> <!-- dialog-body.// -->
+    </dialog>
+
+    <dialog
+      ref="editProductDialog"
+      @cancel="handleEditProductDialogCancel"
+      @close="handleEditProductDialogClose"
+    >
+      <header class="dialog-header">
+        <h5>Edit product</h5>
+        <button
+          class="btn btn-icon"
+          @click="closeEditProductDialog"
+          :disabled="isUpdatingProduct || isDeactivatingProduct"
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <form @submit.prevent="handleUpdateProduct">
+          <div v-if="editProductErrorMessage" class="alert alert-danger" role="alert">
+            {{ editProductErrorMessage }}
           </div>
 
-          <div class="mb-3">
-            <label class="form-label" for="create-product-name">Name</label>
+          <div class="mb-4">
+            <label class="form-label" for="edit-product-name">Name</label>
             <input
-              id="create-product-name"
-              v-model.trim="createProductForm.name"
+              id="edit-product-name"
+              v-model.trim="editProductForm.name"
               type="text"
               class="form-control"
               placeholder="Enter product name"
-              :disabled="isCreatingProduct"
+              :disabled="isUpdatingProduct || isDeactivatingProduct"
               required
             >
           </div>
 
-          <div class="mb-3">
-            <label class="form-label" for="create-product-category">Category</label>
-            <select
-              id="create-product-category"
-              v-model="createProductForm.category_id"
-              class="form-select"
-              :disabled="isCreatingProduct || isLoadingCategories"
-            >
-              <option value="">No category</option>
-              <option
-                v-for="category in categories"
-                :key="category.id"
-                :value="category.id"
+          <div class="row gap-3">
+            <div class="col-6 mb-4">
+              <label class="form-label" for="edit-product-category">Category</label>
+              <select
+                id="edit-product-category"
+                v-model="editProductForm.category_id"
+                class="form-select"
+                :disabled="isUpdatingProduct || isDeactivatingProduct || isLoadingCategories"
               >
-                {{ category.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="create-product-sku">SKU</label>
-            <input
-              id="create-product-sku"
-              v-model.trim="createProductForm.sku"
-              type="text"
-              class="form-control"
-              placeholder="Optional SKU"
-              :disabled="isCreatingProduct"
-            >
-          </div>
-
-          <div class="row g-3">
-            <div class="col-12 col-sm-6">
-              <label class="form-label" for="create-product-price">Price</label>
+                <option value="">No category</option>
+                <option :value="CREATE_CATEGORY_OPTION_VALUE">+ Add new category</option>
+                <option
+                  v-for="category in categories"
+                  :key="category.id"
+                  :value="category.id"
+                >
+                  {{ category.name }}
+                </option>
+              </select>
               <input
-                id="create-product-price"
-                v-model.trim="createProductForm.price"
+                v-if="isEditProductNewCategorySelected"
+                id="edit-product-new-category"
+                v-model.trim="editProductForm.new_category_name"
+                type="text"
+                class="form-control mt-3"
+                placeholder="Enter new category name"
+                :disabled="isUpdatingProduct || isDeactivatingProduct"
+              >
+            </div>
+            <div class="col-6 mb-4">
+              <label class="form-label" for="edit-product-sku">SKU / Kod</label>
+              <input
+                id="edit-product-sku"
+                v-model.trim="editProductForm.sku"
+                type="text"
+                class="form-control"
+                placeholder="Optional SKU"
+                :disabled="isUpdatingProduct || isDeactivatingProduct"
+              >
+            </div>
+          </div>
+
+          <div class="row gap-3">
+            <div class="col-6 mb-4">
+              <label class="form-label" for="edit-product-price">Price</label>
+              <input
+                id="edit-product-price"
+                v-model.trim="editProductForm.price"
                 type="number"
                 class="form-control"
                 min="0"
-                step="0.01"
+                step="1"
                 placeholder="0.00"
-                :disabled="isCreatingProduct"
+                :disabled="isUpdatingProduct || isDeactivatingProduct"
                 required
               >
             </div>
-
-            <div class="col-12 col-sm-6">
-              <label class="form-label" for="create-product-quantity">Quantity</label>
+            <div class="col-3 mb-4">
+              <label class="form-label" for="edit-product-quantity">Quantity</label>
               <input
-                id="create-product-quantity"
-                v-model.trim="createProductForm.quantity"
+                id="edit-product-quantity"
+                v-model.trim="editProductForm.quantity"
+                type="number"
+                class="form-control"
+                min="0"
+                step="1"
+                placeholder="0"
+                :disabled="isUpdatingProduct || isDeactivatingProduct"
+                required
+              >
+            </div>
+            <div class="col-3 mb-4">
+              <label class="form-label" for="edit-product-low-stock-alert">Low-stock alert</label>
+              <input
+                id="edit-product-low-stock-alert"
+                v-model.trim="editProductForm.low_stock_alert"
                 type="number"
                 class="form-control"
                 min="0"
                 step="0.001"
-                placeholder="0"
-                :disabled="isCreatingProduct"
-                required
+                placeholder="Optional threshold"
+                :disabled="isUpdatingProduct || isDeactivatingProduct"
               >
             </div>
           </div>
 
-          <div class="mt-3 mb-0">
-            <label class="form-label" for="create-product-low-stock-alert">Low-stock alert</label>
-            <input
-              id="create-product-low-stock-alert"
-              v-model.trim="createProductForm.low_stock_alert"
-              type="number"
-              class="form-control"
-              min="0"
-              step="0.001"
-              placeholder="Optional threshold"
-              :disabled="isCreatingProduct"
-            >
-          </div>
-        </div>
+          <div class="pt-4 d-flex justify-content-between gap-2">
+              <button type="submit" class="btn btn-primary" :disabled="isEditProductSubmitDisabled">
+                <span v-if="isUpdatingProduct">Saving...</span>
+                <span v-else>Save changes</span>
+              </button>
 
-        <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
-          <button
-            type="button"
-            class="btn btn-outline"
-            @click="closeCreateProductDialog"
-            :disabled="isCreatingProduct"
-          >
-            Cancel
-          </button>
-          <button type="submit" class="btn btn-primary" :disabled="isCreateProductSubmitDisabled">
-            <span v-if="isCreatingProduct">Saving...</span>
-            <span v-else>Create</span>
-          </button>
-        </div>
-      </form>
+              <button
+                type="button"
+                class="btn btn-default"
+                @click="closeEditProductDialog"
+                :disabled="isUpdatingProduct || isDeactivatingProduct"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-red-subtle ml-auto"
+                :disabled="isUpdatingProduct || isDeactivatingProduct || editingProductId === ''"
+                @click="handleDeactivateProduct"
+              >
+                <span v-if="isDeactivatingProduct">Deactivating...</span>
+                <span v-else>Deactivate</span>
+              </button>
+              
+          </div>
+        </form>
+      </div>
     </dialog>
 
     <dialog
@@ -334,8 +500,10 @@ import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
 import {
   createMinishopProduct,
   createMinishopSale,
+  deactivateMinishopProduct,
   fetchMinishopCategories,
   fetchMinishopProducts,
+  updateMinishopProduct,
 } from '@/api/minishop'
 import BookPageHeader from '@/components/BookPageHeader.vue'
 import CustomersTab from '@/views/book-types/minishop/CustomersTab.vue'
@@ -344,6 +512,7 @@ import ReportsTab from '@/views/book-types/minishop/ReportsTab.vue'
 import SalesTab from '@/views/book-types/minishop/SalesTab.vue'
 
 const NO_CATEGORY_FILTER_VALUE = '__no_category__'
+const CREATE_CATEGORY_OPTION_VALUE = '__create_category__'
 const pageComponentByKey = {
   customers: CustomersTab,
   main: MainTab,
@@ -362,6 +531,7 @@ const route = useRoute()
 const router = useRouter()
 
 const createProductDialog = ref(null)
+const editProductDialog = ref(null)
 const debtConfirmDialog = ref(null)
 const receiptDialog = ref(null)
 const products = ref([])
@@ -370,22 +540,38 @@ const cartItems = ref([])
 const isLoadingProducts = ref(false)
 const isLoadingCategories = ref(false)
 const isCreatingProduct = ref(false)
+const isUpdatingProduct = ref(false)
+const isDeactivatingProduct = ref(false)
 const isSavingSale = ref(false)
 const hasLoadedMainData = ref(false)
 const isHydratingMainData = ref(false)
 const errorMessage = ref('')
 const categoryErrorMessage = ref('')
 const createProductErrorMessage = ref('')
+const editProductErrorMessage = ref('')
 const saleErrorMessage = ref('')
 const selectedCategoryId = ref('')
 const discountInput = ref('0.00')
 const paidInput = ref('0.00')
+const saleNoteInput = ref('')
 const isPaidManuallyEdited = ref(false)
 const receiptState = ref(null)
+const editingProductId = ref('')
 
 const createProductForm = reactive({
   name: '',
   category_id: '',
+  new_category_name: '',
+  sku: '',
+  price: '',
+  quantity: '5',
+  low_stock_alert: '2',
+})
+
+const editProductForm = reactive({
+  name: '',
+  category_id: '',
+  new_category_name: '',
   sku: '',
   price: '',
   quantity: '',
@@ -394,12 +580,29 @@ const createProductForm = reactive({
 
 const normalizedPageParam = computed(() => String(route.params.page ?? '').trim())
 const activePageKey = computed(() => normalizedPageParam.value === '' ? 'main' : normalizedPageParam.value)
+const isCreateProductNewCategorySelected = computed(() => {
+  return createProductForm.category_id === CREATE_CATEGORY_OPTION_VALUE
+})
+const isEditProductNewCategorySelected = computed(() => {
+  return editProductForm.category_id === CREATE_CATEGORY_OPTION_VALUE
+})
 const isCreateProductSubmitDisabled = computed(() => {
   return (
     isCreatingProduct.value ||
     createProductForm.name === '' ||
     createProductForm.price === '' ||
     createProductForm.quantity === ''
+  )
+})
+
+const isEditProductSubmitDisabled = computed(() => {
+  return (
+    isUpdatingProduct.value ||
+    isDeactivatingProduct.value ||
+    editingProductId.value === '' ||
+    editProductForm.name === '' ||
+    editProductForm.price === '' ||
+    editProductForm.quantity === ''
   )
 })
 
@@ -522,6 +725,18 @@ watch(total, (nextTotal) => {
   }
 }, { immediate: true })
 
+watch(() => createProductForm.category_id, (nextCategoryId) => {
+  if (nextCategoryId !== CREATE_CATEGORY_OPTION_VALUE) {
+    createProductForm.new_category_name = ''
+  }
+})
+
+watch(() => editProductForm.category_id, (nextCategoryId) => {
+  if (nextCategoryId !== CREATE_CATEGORY_OPTION_VALUE) {
+    editProductForm.new_category_name = ''
+  }
+})
+
 watch(normalizedPageParam, async (page) => {
   if (page !== '' && !(page in pageComponentByKey)) {
     await router.replace({
@@ -566,9 +781,35 @@ async function openCreateProductDialog() {
   }
 }
 
+async function openEditProductDialog(product) {
+  editProductErrorMessage.value = ''
+  await ensureMainDataLoaded()
+
+  editingProductId.value = String(product?.id ?? '')
+  editProductForm.name = String(product?.name ?? '')
+  editProductForm.category_id = String(product?.category_id ?? '')
+  editProductForm.new_category_name = ''
+  editProductForm.sku = String(product?.sku ?? '')
+  editProductForm.price = String(product?.price ?? '')
+  editProductForm.quantity = String(product?.quantity ?? '')
+  editProductForm.low_stock_alert = product?.low_stock_alert == null
+    ? ''
+    : String(product.low_stock_alert)
+
+  if (!editProductDialog.value?.open) {
+    editProductDialog.value?.showModal()
+  }
+}
+
 function closeCreateProductDialog() {
   if (createProductDialog.value?.open) {
     createProductDialog.value.close()
+  }
+}
+
+function closeEditProductDialog() {
+  if (editProductDialog.value?.open) {
+    editProductDialog.value.close()
   }
 }
 
@@ -670,6 +911,16 @@ function handleCreateProductDialogCancel(event) {
   }
 }
 
+function handleEditProductDialogClose() {
+  resetEditProductForm()
+}
+
+function handleEditProductDialogCancel(event) {
+  if (isUpdatingProduct.value || isDeactivatingProduct.value) {
+    event.preventDefault()
+  }
+}
+
 function openDebtConfirmDialog() {
   if (!debtConfirmDialog.value?.open) {
     debtConfirmDialog.value?.showModal()
@@ -733,7 +984,9 @@ async function saveSale() {
     const { data } = await createMinishopSale(props.book.id, {
       currency_code: 'UZS',
       discount_amount: discountAmount.value,
+      note: normalizeOptionalInput(saleNoteInput.value),
       paid_amount: tenderedAmount,
+      sold_at: makeLocalDateTimeString(),
       items: normalizedSaleItemsPayload.value,
     })
 
@@ -924,6 +1177,7 @@ async function loadCategories() {
   } catch (error) {
     if (isUnauthorizedError(error)) {
       closeCreateProductDialog()
+      closeEditProductDialog()
       router.replace({ name: 'login' })
       return false
     }
@@ -941,10 +1195,11 @@ async function loadProducts() {
 
   try {
     const { data } = await fetchMinishopProducts(props.book.id)
-    products.value = data.products ?? []
+    products.value = sortProducts(data.products ?? [])
     return true
   } catch (error) {
     if (isUnauthorizedError(error)) {
+      closeEditProductDialog()
       router.replace({ name: 'login' })
       return false
     }
@@ -967,7 +1222,10 @@ async function handleCreateProduct() {
   try {
     const { data } = await createMinishopProduct(props.book.id, {
       name: createProductForm.name,
-      category_id: createProductForm.category_id,
+      category_id: isCreateProductNewCategorySelected.value ? '' : createProductForm.category_id,
+      new_category_name: isCreateProductNewCategorySelected.value
+        ? createProductForm.new_category_name
+        : '',
       sku: createProductForm.sku,
       price: createProductForm.price,
       quantity: createProductForm.quantity,
@@ -975,11 +1233,10 @@ async function handleCreateProduct() {
     })
 
     if (data.product) {
-      products.value = [...products.value, data.product].sort((leftProduct, rightProduct) => {
-        return String(leftProduct.name ?? '').localeCompare(String(rightProduct.name ?? ''))
-      })
+      upsertProduct(data.product)
     }
 
+    await loadCategories()
     closeCreateProductDialog()
   } catch (error) {
     if (isUnauthorizedError(error)) {
@@ -994,15 +1251,116 @@ async function handleCreateProduct() {
   }
 }
 
+async function handleUpdateProduct() {
+  if (isEditProductSubmitDisabled.value) {
+    return
+  }
+
+  editProductErrorMessage.value = ''
+  isUpdatingProduct.value = true
+
+  try {
+    const { data } = await updateMinishopProduct(props.book.id, editingProductId.value, {
+      name: editProductForm.name,
+      category_id: isEditProductNewCategorySelected.value ? '' : editProductForm.category_id,
+      new_category_name: isEditProductNewCategorySelected.value
+        ? editProductForm.new_category_name
+        : '',
+      sku: editProductForm.sku,
+      price: editProductForm.price,
+      quantity: editProductForm.quantity,
+      low_stock_alert: editProductForm.low_stock_alert,
+    })
+
+    if (data.product) {
+      upsertProduct(data.product)
+    }
+
+    await loadCategories()
+    closeEditProductDialog()
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeEditProductDialog()
+      router.replace({ name: 'login' })
+      return
+    }
+
+    editProductErrorMessage.value = getApiErrorMessage(error, 'Unable to update product right now.')
+  } finally {
+    isUpdatingProduct.value = false
+  }
+}
+
+async function handleDeactivateProduct() {
+  if (editingProductId.value === '' || isUpdatingProduct.value || isDeactivatingProduct.value) {
+    return
+  }
+
+  if (!window.confirm('Deactivate this product?')) {
+    return
+  }
+
+  editProductErrorMessage.value = ''
+  isDeactivatingProduct.value = true
+
+  try {
+    await deactivateMinishopProduct(props.book.id, editingProductId.value)
+    removeProductFromList(editingProductId.value)
+    removeCartItem(editingProductId.value)
+    closeEditProductDialog()
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeEditProductDialog()
+      router.replace({ name: 'login' })
+      return
+    }
+
+    editProductErrorMessage.value = getApiErrorMessage(error, 'Unable to deactivate product right now.')
+  } finally {
+    isDeactivatingProduct.value = false
+  }
+}
+
 function resetCreateProductForm() {
   createProductForm.name = ''
   createProductForm.category_id = ''
+  createProductForm.new_category_name = ''
   createProductForm.sku = ''
   createProductForm.price = ''
   createProductForm.quantity = ''
   createProductForm.low_stock_alert = ''
   createProductErrorMessage.value = ''
   isCreatingProduct.value = false
+}
+
+function resetEditProductForm() {
+  editProductForm.name = ''
+  editProductForm.category_id = ''
+  editProductForm.new_category_name = ''
+  editProductForm.sku = ''
+  editProductForm.price = ''
+  editProductForm.quantity = ''
+  editProductForm.low_stock_alert = ''
+  editProductErrorMessage.value = ''
+  editingProductId.value = ''
+  isUpdatingProduct.value = false
+  isDeactivatingProduct.value = false
+}
+
+function upsertProduct(product) {
+  const nextProducts = products.value.filter((item) => item.id !== product.id)
+  nextProducts.push(product)
+  products.value = sortProducts(nextProducts)
+}
+
+function removeProductFromList(productId) {
+  products.value = products.value.filter((item) => item.id !== productId)
+}
+
+function sortProducts(items) {
+  return [...items].sort((leftProduct, rightProduct) => {
+    return String(leftProduct.name ?? '').localeCompare(String(rightProduct.name ?? ''))
+  })
 }
 
 function findCartItem(productId) {
@@ -1012,7 +1370,14 @@ function findCartItem(productId) {
 function resetCheckoutState() {
   discountInput.value = '0.00'
   paidInput.value = '0.00'
+  saleNoteInput.value = ''
   isPaidManuallyEdited.value = false
+}
+
+function normalizeOptionalInput(value) {
+  const normalizedValue = String(value ?? '').trim()
+
+  return normalizedValue === '' ? null : normalizedValue
 }
 
 function parsePositiveQuantity(value, fallback) {
@@ -1035,5 +1400,16 @@ function formatQuantityValue(value) {
   const formattedQuantity = parsePositiveQuantity(value, 1).toFixed(3)
 
   return formattedQuantity.replace(/\.?0+$/, '')
+}
+
+function makeLocalDateTimeString(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 </script>

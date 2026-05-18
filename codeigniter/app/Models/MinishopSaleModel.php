@@ -34,9 +34,9 @@ class MinishopSaleModel extends Model
     /**
      * Default sales list ordered newest first for history screens.
      */
-    public function findByBook(string $bookId): array
+    public function findByBook(string $bookId, ?string $soldFrom = null, ?string $soldTo = null): array
     {
-        return $this->select([
+        $query = $this->select([
             'id',
             'book_id',
             'created_by',
@@ -53,8 +53,17 @@ class MinishopSaleModel extends Model
             'created_at',
             'updated_at',
         ])->where('book_id', $bookId)
-            ->where('deleted_at', null)
-            ->orderBy('sold_at', 'DESC')
+            ->where('deleted_at', null);
+
+        if ($soldFrom !== null) {
+            $query->where('sold_at >=', $soldFrom);
+        }
+
+        if ($soldTo !== null) {
+            $query->where('sold_at <=', $soldTo);
+        }
+
+        return $query->orderBy('sold_at', 'DESC')
             ->orderBy('created_at', 'DESC')
             ->findAll();
     }

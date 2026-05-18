@@ -8,6 +8,8 @@ use App\Models\MinishopSaleItemModel;
 use App\Models\MinishopSaleModel;
 use CodeIgniter\Database\BaseConnection;
 use Config\Database;
+use DateInterval;
+use DateTimeImmutable;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -18,9 +20,22 @@ use RuntimeException;
  * GET /api/books/{bookId}/minishop/sales
  * GET /api/books/{bookId}/minishop/sales/{saleId}
  * POST /api/books/{bookId}/minishop/sales
+ * PUT /api/books/{bookId}/minishop/sales/{saleId}/payment-summary
+ * DELETE /api/books/{bookId}/minishop/sales/{saleId}
  */
 class MinishopSalesController extends AuthenticatedApiController
 {
+    private const ALLOWED_FILTERS = [
+        'today',
+        'yesterday',
+        'last_10_days',
+        'last_20_days',
+        'last_30_days',
+        'previous_month',
+        'this_year',
+        'all_time',
+    ];
+
     private BaseConnection $db;
 
     public function __construct(
@@ -43,8 +58,12 @@ class MinishopSalesController extends AuthenticatedApiController
             return $this->failNotFound('Book not found.');
         }
 
+        $filter = $this->normalizeFilterTime((string) $this->request->getGet('filter_time'));
+        $localNow = $this->parseLocalDateTime((string) $this->request->getGet('local_now')) ?? new DateTimeImmutable();
+        $range = $this->makeSalesDateRange($filter, $localNow);
+
         return $this->respond([
-            'sales' => $this->sales->findByBook($bookId),
+            'sales' => $this->sales->findByBook($bookId, $range['sold_from'], $range['sold_to']),
         ]);
     }
 
@@ -94,6 +113,60 @@ class MinishopSalesController extends AuthenticatedApiController
             'sale' => $result['sale'],
             'items' => $result['items'],
         ], 201);
+    }
+
+    public function updatePaymentSummary(string $bookId, string $saleId)
+    {
+        $userId = $this->currentUserIdAndCloseSession();
+        $payload = $this->getSalePayload();
+
+        try {
+            $sale = $this->updateSalePaymentSummary($userId, $bookId, $saleId, $payload);
+        } catch (InvalidArgumentException $exception) {
+            return $this->respond([
+                'message' => $exception->getMessage(),
+            ], 422);
+        } catch (RuntimeException $exception) {
+            if ($exception->getMessage() === 'Book not found.') {
+                return $this->failNotFound('Book not found.');
+            }
+
+            if ($exception->getMessage() === 'Sale not found.') {
+                return $this->failNotFound('Sale not found.');
+            }
+
+            return $this->failServerError($exception->getMessage());
+        }
+
+        return $this->respond([
+            'message' => 'Payment summary updated successfully.',
+            'sale' => $sale,
+        ]);
+    }
+
+    public function delete(string $bookId, string $saleId)
+    {
+        $userId = $this->currentUserIdAndCloseSession();
+
+        try {
+            $result = $this->deleteSale($userId, $bookId, $saleId);
+        } catch (RuntimeException $exception) {
+            if ($exception->getMessage() === 'Book not found.') {
+                return $this->failNotFound('Book not found.');
+            }
+
+            if ($exception->getMessage() === 'Sale not found.') {
+                return $this->failNotFound('Sale not found.');
+            }
+
+            return $this->failServerError($exception->getMessage());
+        }
+
+        return $this->respond([
+            'message' => 'Sale deleted successfully.',
+            'saleId' => $result['saleId'],
+            'deleted_at' => $result['deleted_at'],
+        ]);
     }
 
     private function getSalePayload(): array
@@ -160,7 +233,7 @@ class MinishopSalesController extends AuthenticatedApiController
         $totalAmount = round($subtotalAmount - $discountAmount, 2);
         $summary = $this->makePaymentSummary($totalAmount, $paidAmount);
         $saleId = $this->newUuid();
-        $soldAt = $soldAt !== '' ? $soldAt : $timestamp;
+        $soldAt = $this->normalizeSoldAt($soldAt) ?? $timestamp;
 
         $this->db->transException(true)->transStart();
 
@@ -238,6 +311,127 @@ class MinishopSalesController extends AuthenticatedApiController
             $this->db->transRollback();
             throw $exception;
         }
+    }
+
+    private function deleteSale(string $userId, string $bookId, string $saleId): array
+    {
+        $this->requireOwnedMinishopBook($userId, $bookId);
+
+        $sale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
+
+        if ($sale === null) {
+            throw new RuntimeException('Sale not found.');
+        }
+
+        $items = $this->saleItems->findBySale($saleId);
+        $timestamp = $this->utcNow();
+
+        $this->db->transException(true)->transStart();
+
+        try {
+            foreach ($items as $item) {
+                $productId = trim((string) ($item['product_id'] ?? ''));
+
+                if ($productId === '') {
+                    continue;
+                }
+
+                $product = $this->products->findExistingByIdAndBook($bookId, $productId);
+
+                if ($product === null) {
+                    throw new RuntimeException(sprintf(
+                        'Unable to restore stock because product "%s" is no longer available.',
+                        (string) ($item['product_name'] ?? 'Unknown product')
+                    ));
+                }
+
+                $restoredQuantity = round(
+                    $this->normalizeQuantity($product['quantity'] ?? 0)
+                    + $this->normalizeQuantity($item['quantity'] ?? 0),
+                    3
+                );
+
+                $updated = $this->products->update($productId, [
+                    'quantity' => $this->formatQuantity($restoredQuantity),
+                    'updated_at' => $timestamp,
+                ]);
+
+                if ($updated === false) {
+                    throw new RuntimeException('Unable to restore product stock right now.');
+                }
+            }
+
+            $deleted = $this->sales->update($saleId, [
+                'deleted_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+
+            if ($deleted === false) {
+                throw new RuntimeException('Unable to delete sale right now.');
+            }
+
+            $this->db->transComplete();
+
+            return [
+                'saleId' => $saleId,
+                'deleted_at' => $timestamp,
+            ];
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+    }
+
+    private function updateSalePaymentSummary(string $userId, string $bookId, string $saleId, array $payload): array
+    {
+        $this->requireOwnedMinishopBook($userId, $bookId);
+
+        $sale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
+
+        if ($sale === null) {
+            throw new RuntimeException('Sale not found.');
+        }
+
+        $subtotalAmount = $this->normalizeMoney($sale['subtotal_amount'] ?? 0);
+        $discountAmount = $this->normalizeMoney($payload['discount_amount'] ?? 0);
+        $paidAmount = $this->normalizeMoney($payload['paid_amount'] ?? 0);
+
+        if ($discountAmount < 0) {
+            throw new InvalidArgumentException('Discount amount cannot be negative.');
+        }
+
+        if ($paidAmount < 0) {
+            throw new InvalidArgumentException('Paid amount cannot be negative.');
+        }
+
+        if ($discountAmount > $subtotalAmount) {
+            throw new InvalidArgumentException('Discount amount cannot exceed subtotal.');
+        }
+
+        $totalAmount = round($subtotalAmount - $discountAmount, 2);
+        $summary = $this->makePaymentSummary($totalAmount, $paidAmount);
+        $timestamp = $this->utcNow();
+
+        $updated = $this->sales->update($saleId, [
+            'discount_amount' => $this->formatMoney($discountAmount),
+            'total_amount' => $this->formatMoney($totalAmount),
+            'paid_amount' => $this->formatMoney($summary['paid_amount']),
+            'due_amount' => $this->formatMoney($summary['due_amount']),
+            'payment_status' => $summary['payment_status'],
+            'updated_at' => $timestamp,
+        ]);
+
+        if ($updated === false) {
+            throw new RuntimeException('Unable to update sale payment summary right now.');
+        }
+
+        $updatedSale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
+
+        if ($updatedSale === null) {
+            throw new RuntimeException('Unable to load the updated sale right now.');
+        }
+
+        return $updatedSale;
     }
 
     private function normalizeSaleItems(string $bookId, array $items): array
@@ -318,6 +512,90 @@ class MinishopSalesController extends AuthenticatedApiController
         }
 
         return round($subtotal, 2);
+    }
+
+    private function normalizeFilterTime(string $filter): string
+    {
+        $normalizedFilter = trim($filter);
+
+        return in_array($normalizedFilter, self::ALLOWED_FILTERS, true)
+            ? $normalizedFilter
+            : 'today';
+    }
+
+    private function makeSalesDateRange(string $filter, DateTimeImmutable $localNow): array
+    {
+        return match ($filter) {
+            'all_time' => [
+                'sold_from' => null,
+                'sold_to' => null,
+            ],
+            'yesterday' => [
+                'sold_from' => $localNow->modify('-1 day')->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'sold_to' => $localNow->modify('-1 day')->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
+            ],
+            'last_10_days' => $this->makeRollingRange($localNow, 'P10D'),
+            'last_20_days' => $this->makeRollingRange($localNow, 'P20D'),
+            'last_30_days' => $this->makeRollingRange($localNow, 'P30D'),
+            'previous_month' => [
+                'sold_from' => $localNow->modify('first day of last month')->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'sold_to' => $localNow->modify('last day of last month')->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
+            ],
+            'this_year' => [
+                'sold_from' => $localNow->setDate((int) $localNow->format('Y'), 1, 1)->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'sold_to' => $localNow->setDate((int) $localNow->format('Y'), 12, 31)->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
+            ],
+            default => [
+                'sold_from' => $localNow->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'sold_to' => $localNow->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
+            ],
+        };
+    }
+
+    private function makeRollingRange(DateTimeImmutable $localNow, string $intervalSpec): array
+    {
+        return [
+            'sold_from' => $localNow->sub(new DateInterval($intervalSpec))->format('Y-m-d H:i:s'),
+            'sold_to' => $localNow->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    private function normalizeSoldAt(string $soldAt): ?string
+    {
+        $normalizedSoldAt = trim($soldAt);
+
+        if ($normalizedSoldAt === '') {
+            return null;
+        }
+
+        $parsedSoldAt = $this->parseLocalDateTime($normalizedSoldAt);
+
+        return $parsedSoldAt?->format('Y-m-d H:i:s');
+    }
+
+    private function parseLocalDateTime(string $value): ?DateTimeImmutable
+    {
+        $normalizedValue = trim($value);
+
+        if ($normalizedValue === '') {
+            return null;
+        }
+
+        $parsedValue = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $normalizedValue);
+        $parseErrors = DateTimeImmutable::getLastErrors();
+
+        if (
+            $parsedValue instanceof DateTimeImmutable
+            && ($parseErrors === false || ($parseErrors['warning_count'] === 0 && $parseErrors['error_count'] === 0))
+        ) {
+            return $parsedValue;
+        }
+
+        try {
+            return new DateTimeImmutable($normalizedValue);
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     private function makePaymentSummary(float $totalAmount, float $paidAmount): array

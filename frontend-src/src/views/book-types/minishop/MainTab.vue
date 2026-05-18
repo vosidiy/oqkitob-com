@@ -54,10 +54,16 @@
             :key="product.id"
             class="border-bottom"
           >
-            <div class="d-flex align-items-center px-4 hover:bg-neutral-100">
-              <div class="flex-1 overflow-hidden py-2">
-                <p class="font-medium">{{ product.name }}</p>
-                <p class="text-secondary">
+            <div class="d-flex flex-row gap-3 align-items-center px-4 hover:bg-neutral-100">
+              
+              <div role="button" class="flex-1  overflow-hidden py-2"
+                @click="emit('open-edit-product', product)"
+              >
+                <h6  class="font-medium mb-1"  
+                >
+                  {{ product.name }}
+              </h6>
+                <p>
                   {{ formatPrice(product.price) }} | Qty: {{ formatQuantity(product.quantity) }}
                   <span v-if="isLowStock(product)" class="text-red pl-1">
                     ⚠️ Low
@@ -90,8 +96,8 @@
       </section>
 
       <section class="px-2 flex-1 overflow-y-scroll">
-        <div v-if="cartItems.length === 0" class="text-secondary text-center min-h-100">
-          Add new products
+        <div v-if="cartItems.length === 0" class="text-secondary p-10 text-center">
+          👈 Selec products from the list <br> to create new sale
         </div>
 
         <div v-else class="d-flex flex-col">
@@ -157,6 +163,17 @@
                 </div>
               </div>
           </article>
+        </div>
+
+        <div v-if="cartItems.length > 0" class="p-3 mt-3">
+          <input
+            type="text"
+            name="note"
+            placeholder="Add notes"
+            class="form-control"
+            :value="saleNoteInput"
+            @input="emit('update-sale-note-input', $event.target.value)"
+          >
         </div>
       </section>
 
@@ -286,6 +303,10 @@ defineProps({
     type: String,
     required: true,
   },
+  saleNoteInput: {
+    type: String,
+    required: true,
+  },
   saleErrorMessage: {
     type: String,
     required: true,
@@ -328,9 +349,11 @@ const emit = defineEmits([
   'normalize-discount-input',
   'normalize-paid-input',
   'open-create-product',
+  'open-edit-product',
   'remove-cart-item',
   'update-cart-item-price',
   'update-cart-item-quantity',
+  'update-sale-note-input',
   'update:selectedCategoryId',
   'update-discount-input',
   'update-paid-input',
@@ -378,9 +401,3 @@ function formatQuantity(quantity) {
   return formattedQuantity.replace(/\.?0+$/, '')
 }
 </script>
-
-<style scoped>
-.minishop-product-list {
-  max-height: 28rem;
-}
-</style>
