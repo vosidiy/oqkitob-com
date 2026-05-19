@@ -20,6 +20,22 @@ export function fetchMinishopCategories(bookId) {
   return apiClient.get(`/books/${bookId}/minishop/categories`)
 }
 
+export function fetchMinishopCustomers(bookId, params = {}) {
+  return apiClient.get(`/books/${bookId}/minishop/customers`, { params })
+}
+
+export function fetchMinishopCustomer(bookId, customerId) {
+  return apiClient.get(`/books/${bookId}/minishop/customers/${customerId}`)
+}
+
+export function createMinishopCustomer(bookId, payload) {
+  return apiClient.post(`/books/${bookId}/minishop/customers`, payload)
+}
+
+export function updateMinishopCustomer(bookId, customerId, payload) {
+  return apiClient.put(`/books/${bookId}/minishop/customers/${customerId}`, payload)
+}
+
 export function createMinishopSale(bookId, payload) {
   return apiClient.post(`/books/${bookId}/minishop/sales`, payload)
 }

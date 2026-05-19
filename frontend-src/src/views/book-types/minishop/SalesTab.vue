@@ -53,6 +53,10 @@
                 <div>
                   <h6> {{ formatDateTime(sale.sold_at) }} </h6>
                   <small class="text-sm text-secondary">{{ sale.id }}</small>
+                  <p v-if="sale.customer_name" class="text-sm text-secondary mt-1 mb-0">
+                    {{ sale.customer_name }}
+                    <span v-if="sale.customer_phone"> · {{ sale.customer_phone }}</span>
+                  </p>
                   <p v-if="sale.note" class="text-sm text-secondary mt-1 mb-0">
                     {{ sale.note }}
                   </p>
@@ -92,7 +96,20 @@
             <div class="text-right mobile:text-left">
               <p class="mb-1"><strong>Sold at:</strong> {{ formatDateTime(selectedSale.sold_at) }}</p>
               <p class="mb-1"><strong>Currency:</strong> {{ selectedSale.currency_code }}</p>
+              <p class="mb-1">
+                <strong>Customer:</strong>
+                {{ selectedSale.customer_name || 'No customer' }}
+                <span v-if="selectedSale.customer_phone"> · {{ selectedSale.customer_phone }}</span>
+              </p>
               <p class="mb-3 text-capitalize"><strong>Status:</strong> {{ selectedSale.payment_status }}</p>
+              <button
+                type="button"
+                class="btn btn-default mr-2"
+                :disabled="isDeletingSelectedSale"
+                @click="clearSelectedSale"
+              >
+                Close
+              </button>
               <button
                 type="button"
                 class="btn btn-outline text-red"
@@ -127,6 +144,16 @@
           </div>
 
           <div class="d-flex flex-col gap-2">
+            <div
+              v-if="selectedSale.customer_name"
+              class="d-flex justify-content-between gap-3"
+            >
+              <span>Customer</span>
+              <strong class="text-right">
+                {{ selectedSale.customer_name }}
+                <span v-if="selectedSale.customer_phone"> · {{ selectedSale.customer_phone }}</span>
+              </strong>
+            </div>
             <div
               v-if="selectedSale.note"
               class="d-flex justify-content-between gap-3"
@@ -318,6 +345,10 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits([
+  'sales-changed',
+])
+
 const router = useRouter()
 
 const paymentDialog = ref(null)
@@ -444,6 +475,7 @@ async function handleDeleteSelectedSale() {
     const { data } = await deleteMinishopSale(props.book.id, saleId)
     removeSaleFromList(data.saleId ?? saleId)
     clearSelectedSale()
+    emit('sales-changed')
   } catch (error) {
     if (isUnauthorizedError(error)) {
       await router.replace({ name: 'login' })
@@ -527,6 +559,7 @@ async function handleUpdatePaymentSummary() {
     selectedSale.value = data.sale
     patchSaleInList(data.sale)
     closePaymentDialog()
+    emit('sales-changed')
   } catch (error) {
     if (isUnauthorizedError(error)) {
       closePaymentDialog()

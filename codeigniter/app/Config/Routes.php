@@ -38,6 +38,10 @@ $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->post('(:segment)/minishop/products', 'Api\MinishopProductsController::create/$1');
     $routes->put('(:segment)/minishop/products/(:segment)', 'Api\MinishopProductsController::update/$1/$2');
     $routes->post('(:segment)/minishop/products/(:segment)/deactivate', 'Api\MinishopProductsController::deactivate/$1/$2');
+    $routes->get('(:segment)/minishop/customers', 'Api\MinishopCustomersController::index/$1');
+    $routes->get('(:segment)/minishop/customers/(:segment)', 'Api\MinishopCustomersController::show/$1/$2');
+    $routes->post('(:segment)/minishop/customers', 'Api\MinishopCustomersController::create/$1');
+    $routes->put('(:segment)/minishop/customers/(:segment)', 'Api\MinishopCustomersController::update/$1/$2');
     $routes->get('(:segment)/minishop/sales', 'Api\MinishopSalesController::index/$1');
     $routes->get('(:segment)/minishop/sales/(:segment)', 'Api\MinishopSalesController::show/$1/$2');
     $routes->post('(:segment)/minishop/sales', 'Api\MinishopSalesController::create/$1');

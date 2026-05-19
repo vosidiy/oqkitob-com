@@ -36,35 +36,20 @@ class MinishopSaleModel extends Model
      */
     public function findByBook(string $bookId, ?string $soldFrom = null, ?string $soldTo = null): array
     {
-        $query = $this->select([
-            'id',
-            'book_id',
-            'created_by',
-            'customer_id',
-            'currency_code',
-            'subtotal_amount',
-            'discount_amount',
-            'total_amount',
-            'paid_amount',
-            'due_amount',
-            'payment_status',
-            'note',
-            'sold_at',
-            'created_at',
-            'updated_at',
-        ])->where('book_id', $bookId)
-            ->where('deleted_at', null);
+        $query = $this->makeSaleSummaryQuery()
+            ->where('minishop_sales.book_id', $bookId)
+            ->where('minishop_sales.deleted_at', null);
 
         if ($soldFrom !== null) {
-            $query->where('sold_at >=', $soldFrom);
+            $query->where('minishop_sales.sold_at >=', $soldFrom);
         }
 
         if ($soldTo !== null) {
-            $query->where('sold_at <=', $soldTo);
+            $query->where('minishop_sales.sold_at <=', $soldTo);
         }
 
-        return $query->orderBy('sold_at', 'DESC')
-            ->orderBy('created_at', 'DESC')
+        return $query->orderBy('minishop_sales.sold_at', 'DESC')
+            ->orderBy('minishop_sales.created_at', 'DESC')
             ->findAll();
     }
 
@@ -77,9 +62,10 @@ class MinishopSaleModel extends Model
             return null;
         }
 
-        $sale = $this->where('id', $saleId)
-            ->where('book_id', $bookId)
-            ->where('deleted_at', null)
+        $sale = $this->makeSaleSummaryQuery()
+            ->where('minishop_sales.id', $saleId)
+            ->where('minishop_sales.book_id', $bookId)
+            ->where('minishop_sales.deleted_at', null)
             ->first();
 
         return $sale ?: null;
@@ -95,23 +81,68 @@ class MinishopSaleModel extends Model
             return null;
         }
 
-        $sale = $this->select([
-            'id',
-            'book_id',
-            'customer_id',
-            'currency_code',
-            'subtotal_amount',
-            'discount_amount',
-            'total_amount',
-            'paid_amount',
-            'due_amount',
-            'payment_status',
-            'sold_at',
-        ])->where('id', $saleId)
-            ->where('book_id', $bookId)
-            ->where('deleted_at', null)
+        $sale = $this->makeSaleSummaryQuery([
+            'minishop_sales.id',
+            'minishop_sales.book_id',
+            'minishop_sales.customer_id',
+            'minishop_sales.currency_code',
+            'minishop_sales.subtotal_amount',
+            'minishop_sales.discount_amount',
+            'minishop_sales.total_amount',
+            'minishop_sales.paid_amount',
+            'minishop_sales.due_amount',
+            'minishop_sales.payment_status',
+            'minishop_sales.sold_at',
+            'minishop_customers.name AS customer_name',
+            'minishop_customers.phone AS customer_phone',
+        ])->where('minishop_sales.id', $saleId)
+            ->where('minishop_sales.book_id', $bookId)
+            ->where('minishop_sales.deleted_at', null)
             ->first();
 
         return $sale ?: null;
+    }
+
+    public function findByBookAndCustomer(string $bookId, string $customerId): array
+    {
+        if ($bookId === '' || $customerId === '') {
+            return [];
+        }
+
+        return $this->makeSaleSummaryQuery()
+            ->where('minishop_sales.book_id', $bookId)
+            ->where('minishop_sales.customer_id', $customerId)
+            ->where('minishop_sales.deleted_at', null)
+            ->orderBy('minishop_sales.sold_at', 'DESC')
+            ->orderBy('minishop_sales.created_at', 'DESC')
+            ->findAll();
+    }
+
+    private function makeSaleSummaryQuery(?array $columns = null): self
+    {
+        return $this->select($columns ?? [
+            'minishop_sales.id',
+            'minishop_sales.book_id',
+            'minishop_sales.created_by',
+            'minishop_sales.customer_id',
+            'minishop_sales.currency_code',
+            'minishop_sales.subtotal_amount',
+            'minishop_sales.discount_amount',
+            'minishop_sales.total_amount',
+            'minishop_sales.paid_amount',
+            'minishop_sales.due_amount',
+            'minishop_sales.payment_status',
+            'minishop_sales.note',
+            'minishop_sales.sold_at',
+            'minishop_sales.created_at',
+            'minishop_sales.updated_at',
+            'minishop_customers.name AS customer_name',
+            'minishop_customers.phone AS customer_phone',
+        ])->join(
+            'minishop_customers',
+            'minishop_customers.id = minishop_sales.customer_id'
+            . ' AND minishop_customers.deleted_at IS NULL',
+            'left'
+        );
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Controllers\Api;
 
 use App\Models\BookModel;
+use App\Models\MinishopCustomerModel;
 use App\Models\MinishopProductModel;
 use App\Models\MinishopSaleItemModel;
 use App\Models\MinishopSaleModel;
@@ -40,6 +41,7 @@ class MinishopSalesController extends AuthenticatedApiController
 
     public function __construct(
         private readonly BookModel $books = new BookModel(),
+        private readonly MinishopCustomerModel $customers = new MinishopCustomerModel(),
         private readonly MinishopProductModel $products = new MinishopProductModel(),
         private readonly MinishopSaleModel $sales = new MinishopSaleModel(),
         private readonly MinishopSaleItemModel $saleItems = new MinishopSaleItemModel(),
@@ -202,6 +204,7 @@ class MinishopSalesController extends AuthenticatedApiController
         $currencyCode = strtoupper(trim((string) ($payload['currency_code'] ?? '')));
         $discountAmount = $this->normalizeMoney($payload['discount_amount'] ?? 0);
         $paidAmount = $this->normalizeMoney($payload['paid_amount'] ?? 0);
+        $customerId = $this->normalizeOptionalId($payload['customer_id'] ?? null);
         $note = $this->normalizeOptionalString($payload['note'] ?? null);
         $items = $payload['items'] ?? null;
         $timestamp = $this->utcNow();
@@ -234,6 +237,13 @@ class MinishopSalesController extends AuthenticatedApiController
         $summary = $this->makePaymentSummary($totalAmount, $paidAmount);
         $saleId = $this->newUuid();
         $soldAt = $this->normalizeSoldAt($soldAt) ?? $timestamp;
+        $customer = $customerId !== null
+            ? $this->customers->findExistingByIdAndBook($bookId, $customerId)
+            : null;
+
+        if ($customerId !== null && $customer === null) {
+            throw new InvalidArgumentException('Please choose a valid customer.');
+        }
 
         $this->db->transException(true)->transStart();
 
@@ -242,7 +252,7 @@ class MinishopSalesController extends AuthenticatedApiController
                 'id' => $saleId,
                 'book_id' => $bookId,
                 'created_by' => $userId,
-                'customer_id' => null,
+                'customer_id' => $customerId,
                 'currency_code' => $currencyCode,
                 'subtotal_amount' => $this->formatMoney($subtotalAmount),
                 'discount_amount' => $this->formatMoney($discountAmount),
@@ -648,6 +658,13 @@ class MinishopSalesController extends AuthenticatedApiController
         $string = trim((string) ($value ?? ''));
 
         return $string !== '' ? $string : null;
+    }
+
+    private function normalizeOptionalId(mixed $value): ?string
+    {
+        $id = trim((string) ($value ?? ''));
+
+        return $id !== '' ? $id : null;
     }
 
     private function formatMoney(float $amount): string

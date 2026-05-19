@@ -55,14 +55,10 @@
             class="border-bottom"
           >
             <div class="d-flex flex-row gap-3 align-items-center px-4 hover:bg-neutral-100">
-              
-              <div role="button" class="flex-1  overflow-hidden py-2"
-                @click="emit('open-edit-product', product)"
-              >
-                <h6  class="font-medium mb-1"  
-                >
+              <div role="button" class="flex-1 overflow-hidden py-2" @click="emit('open-edit-product', product)">
+                <h6 class="font-medium mb-1">
                   {{ product.name }}
-              </h6>
+                </h6>
                 <p>
                   {{ formatPrice(product.price) }} | Qty: {{ formatQuantity(product.quantity) }}
                   <span v-if="isLowStock(product)" class="text-red pl-1">
@@ -101,67 +97,72 @@
         </div>
 
         <div v-else class="d-flex flex-col">
-          <article v-for="item in cartItems"  :key="item.productId" class="border-bottom px-2 hover:bg-neutral-100 border-color-neutral-500">
-              <div class="d-flex align-items-center py-1 border-bottom">
-                
-                <h6 class="flex-1 text-lg">{{ item.name }}</h6>
-                
-                <button type="button" class="btn btn-sm btn-icon btn-plain text-red"
-                  @click="emit('remove-cart-item', item.productId)">
-                  ✕
-                </button>
+          <article
+            v-for="item in cartItems"
+            :key="item.productId"
+            class="border-bottom px-2 hover:bg-neutral-100 border-color-neutral-500"
+          >
+            <div class="d-flex align-items-center py-1 border-bottom">
+              <h6 class="flex-1 text-lg">{{ item.name }}</h6>
 
-              </div>
-              <div class="row  gap-x-2">
-                <div class="col-auto">
-                  <div class="d-flex flex-row">
-                    <button
-                      type="button"
-                      class="btn btn-icon btn-default rounded-0"
-                      @click="decrementCartItem(item)"
-                    >
-                      ➖
-                    </button>
-                    <input
-                      :id="`cart-quantity-${item.productId}`"
-                      :value="item.quantityInput"
-                      type="number"
-                      class="form-control max-w-12 rounded-0"
-                      min="1"
-                      step="1"
-                      @input="emit('update-cart-item-quantity', item.productId, $event.target.value)"
-                      @blur="emit('normalize-cart-item-quantity', item.productId)"
-                    >
-                    <button
-                      type="button"
-                      class="btn btn-icon btn-default rounded-0"
-                      @click="incrementCartItem(item)"
-                    >
-                      ➕
-                    </button>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="d-flex flex-row">
-                    <span class="p-2 flex-shrink-0">Price:</span>
-                    <input
-                      :id="`cart-price-${item.productId}`"
-                      :value="item.unitPriceInput"
-                      type="number"
-                      class="form-control rounded-0"
-                      min="0"
-                      step="1"
-                      @input="emit('update-cart-item-price', item.productId, $event.target.value)"
-                      @blur="emit('normalize-cart-item-price', item.productId)"
-                    >
-                  </div>
-                </div>
-                <div class="col-auto flex-1">
-                  <p class="text-right p-2">
-                    = {{ formatPrice(cartLineTotalByProductId[item.productId] ?? 0) }}
-                  </p>
+              <button
+                type="button"
+                class="btn btn-sm btn-icon btn-plain text-red"
+                @click="emit('remove-cart-item', item.productId)"
+              >
+                ✕
+              </button>
+            </div>
+            <div class="row gap-x-2">
+              <div class="col-auto">
+                <div class="d-flex flex-row">
+                  <button
+                    type="button"
+                    class="btn btn-icon btn-default rounded-0"
+                    @click="decrementCartItem(item)"
+                  >
+                    ➖
+                  </button>
+                  <input
+                    :id="`cart-quantity-${item.productId}`"
+                    :value="item.quantityInput"
+                    type="number"
+                    class="form-control max-w-12 rounded-0"
+                    min="1"
+                    step="1"
+                    @input="emit('update-cart-item-quantity', item.productId, $event.target.value)"
+                    @blur="emit('normalize-cart-item-quantity', item.productId)"
+                  >
+                  <button
+                    type="button"
+                    class="btn btn-icon btn-default rounded-0"
+                    @click="incrementCartItem(item)"
+                  >
+                    ➕
+                  </button>
                 </div>
               </div>
+              <div class="col-6">
+                <div class="d-flex flex-row">
+                  <span class="p-2 flex-shrink-0">Price:</span>
+                  <input
+                    :id="`cart-price-${item.productId}`"
+                    :value="item.unitPriceInput"
+                    type="number"
+                    class="form-control rounded-0"
+                    min="0"
+                    step="1"
+                    @input="emit('update-cart-item-price', item.productId, $event.target.value)"
+                    @blur="emit('normalize-cart-item-price', item.productId)"
+                  >
+                </div>
+              </div>
+              <div class="col-auto flex-1">
+                <p class="text-right p-2">
+                  = {{ formatPrice(cartLineTotalByProductId[item.productId] ?? 0) }}
+                </p>
+              </div>
+            </div>
           </article>
         </div>
 
@@ -174,6 +175,49 @@
             :value="saleNoteInput"
             @input="emit('update-sale-note-input', $event.target.value)"
           >
+        </div>
+
+        <div v-if="cartItems.length > 0" class="px-3 pb-3">
+          <div class="border rounded p-3 bg-neutral-100">
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-2 mobile:flex-col mobile:align-items-start">
+              <label class="form-label mb-0" for="minishop-cart-customer">Customer</label>
+              <button
+                type="button"
+                class="btn btn-default btn-sm"
+                :disabled="isSavingSale"
+                @click="emit('open-create-customer')"
+              >
+                New customer
+              </button>
+            </div>
+
+            <select
+              id="minishop-cart-customer"
+              :value="selectedCustomerId"
+              class="form-select"
+              :disabled="isLoadingCustomers || isSavingSale"
+              @change="updateSelectedCustomerId"
+            >
+              <option value="">No customer</option>
+              <option v-for="customer in customers" :key="customer.id" :value="customer.id">
+                {{ formatCustomerOption(customer) }}
+              </option>
+            </select>
+
+            <p v-if="customerErrorMessage" class="text-red text-sm mt-2 mb-0">
+              {{ customerErrorMessage }}
+            </p>
+            <p v-else-if="isLoadingCustomers" class="text-secondary text-sm mt-2 mb-0">
+              Loading customers...
+            </p>
+            <p v-else-if="customers.length === 0" class="text-secondary text-sm mt-2 mb-0">
+              No customers yet. Create one if you want to link this sale.
+            </p>
+            <p v-else-if="selectedCustomer" class="text-secondary text-sm mt-2 mb-0">
+              Linked to {{ selectedCustomer.name }}
+              <span v-if="selectedCustomer.phone"> · {{ selectedCustomer.phone }}</span>
+            </p>
+          </div>
         </div>
       </section>
 
@@ -198,11 +242,12 @@
           <strong class="text-right">{{ formatPrice(subtotal) }}</strong>
         </div>
       </section>
-      <section class="px-4  py-2 border-top">
+
+      <section class="px-4 py-2 border-top">
         <div v-if="saleErrorMessage" class="alert alert-danger mb-3" role="alert">
           {{ saleErrorMessage }}
         </div>
-        
+
         <div class="d-flex mb-1 text-sm justify-content-end gap-3 align-items-center">
           <p class="text-secondary">Discounted: </p>
           <p class="text-right"> - {{ formatPrice(discountAmount) }}</p>
@@ -212,7 +257,7 @@
           <span class="text-lg">Total: </span>
           <strong class="text-lg">{{ formatPrice(total) }}</strong>
         </div>
-        
+
         <div class="mb-3 mt-2 gap-2 align-items-center d-flex">
           <div>
             <p v-if="paymentStatusMessage" class="font-semibold text-lg" :class="paymentStatusClass">
@@ -235,6 +280,7 @@
             >
           </div>
         </div>
+
         <button
           type="button"
           class="btn btn-primary w-full"
@@ -250,7 +296,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   cartItems: {
     type: Array,
     required: true,
@@ -271,6 +319,14 @@ defineProps({
     type: String,
     required: true,
   },
+  customerErrorMessage: {
+    type: String,
+    required: true,
+  },
+  customers: {
+    type: Array,
+    required: true,
+  },
   discountAmount: {
     type: Number,
     required: true,
@@ -288,6 +344,10 @@ defineProps({
     required: true,
   },
   isLoadingCategories: {
+    type: Boolean,
+    required: true,
+  },
+  isLoadingCustomers: {
     type: Boolean,
     required: true,
   },
@@ -331,6 +391,10 @@ defineProps({
     type: String,
     required: true,
   },
+  selectedCustomerId: {
+    type: String,
+    required: true,
+  },
   subtotal: {
     type: Number,
     required: true,
@@ -348,6 +412,7 @@ const emit = defineEmits([
   'normalize-cart-item-quantity',
   'normalize-discount-input',
   'normalize-paid-input',
+  'open-create-customer',
   'open-create-product',
   'open-edit-product',
   'remove-cart-item',
@@ -355,13 +420,22 @@ const emit = defineEmits([
   'update-cart-item-quantity',
   'update-sale-note-input',
   'update:selectedCategoryId',
+  'update:selectedCustomerId',
   'update-discount-input',
   'update-paid-input',
   'mark-paid-manually-edited',
 ])
 
+const selectedCustomer = computed(() => {
+  return props.customers.find((customer) => customer.id === props.selectedCustomerId) ?? null
+})
+
 function updateSelectedCategoryId(event) {
   emit('update:selectedCategoryId', event.target.value)
+}
+
+function updateSelectedCustomerId(event) {
+  emit('update:selectedCustomerId', event.target.value)
 }
 
 function handlePaidInput(event) {
@@ -383,6 +457,13 @@ function incrementCartItem(item) {
 
   emit('update-cart-item-quantity', item.productId, String(nextQuantity))
   emit('normalize-cart-item-quantity', item.productId)
+}
+
+function formatCustomerOption(customer) {
+  const name = String(customer?.name ?? '').trim()
+  const phone = String(customer?.phone ?? '').trim()
+
+  return phone !== '' ? `${name} (${phone})` : name
 }
 
 function isLowStock(product) {

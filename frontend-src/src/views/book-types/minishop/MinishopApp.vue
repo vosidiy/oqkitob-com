@@ -40,11 +40,14 @@
       :cart-quantity-by-product-id="cartQuantityByProductId"
       :categories="categories"
       :category-error-message="categoryErrorMessage"
+      :customer-error-message="customerErrorMessage"
+      :customers="customers"
       :discount-amount="discountAmount"
       :discount-input="discountInput"
       :error-message="errorMessage"
       :filtered-products="filteredProducts"
       :is-loading-categories="isLoadingCategories"
+      :is-loading-customers="isLoadingCustomers"
       :is-loading-products="isLoadingProducts"
       :is-saving-sale="isSavingSale"
       :no-category-filter-value="NO_CATEGORY_FILTER_VALUE"
@@ -55,6 +58,7 @@
       :sale-note-input="saleNoteInput"
       :sale-error-message="saleErrorMessage"
       :selected-category-id="selectedCategoryId"
+      :selected-customer-id="selectedCustomerId"
       :subtotal="subtotal"
       :total="total"
       @add-product-to-cart="addProductToCart"
@@ -63,6 +67,7 @@
       @normalize-cart-item-quantity="normalizeCartItemQuantity"
       @normalize-discount-input="normalizeDiscountInput"
       @normalize-paid-input="normalizePaidInput"
+      @open-create-customer="openCreateCustomerDialogFromCheckout"
       @open-create-product="openCreateProductDialog"
       @open-edit-product="openEditProductDialog"
       @remove-cart-item="removeCartItem"
@@ -70,16 +75,93 @@
       @update-cart-item-quantity="updateCartItemQuantity"
       @update-sale-note-input="saleNoteInput = $event"
       @update:selected-category-id="selectedCategoryId = $event"
+      @update:selected-customer-id="selectedCustomerId = $event"
       @update-discount-input="discountInput = $event"
       @update-paid-input="paidInput = $event"
       @mark-paid-manually-edited="markPaidManuallyEdited"
     />
 
-    <SalesTab v-else-if="activePageKey === 'sales'" :book="book" />
+    <SalesTab v-else-if="activePageKey === 'sales'" :book="book" @sales-changed="handleSalesChanged" />
 
-    <CustomersTab v-else-if="activePageKey === 'customers'" />
+    <CustomersTab
+      v-else-if="activePageKey === 'customers'"
+      :book="book"
+      @customers-changed="handleCustomersChanged"
+    />
 
     <ReportsTab v-else-if="activePageKey === 'reports'" />
+
+    <dialog
+      ref="createCustomerDialog"
+      @cancel="handleCreateCustomerDialogCancel"
+      @close="handleCreateCustomerDialogClose"
+    >
+      <header class="dialog-header">
+        <h5>Create customer</h5>
+        <button class="btn btn-icon" :disabled="isCreatingCustomer" @click="closeCreateCustomerDialog">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <form @submit.prevent="handleCreateCustomer">
+          <div v-if="createCustomerErrorMessage" class="alert alert-danger" role="alert">
+            {{ createCustomerErrorMessage }}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="create-customer-name">Name</label>
+            <input
+              id="create-customer-name"
+              v-model.trim="createCustomerForm.name"
+              type="text"
+              class="form-control"
+              placeholder="Enter customer name"
+              :disabled="isCreatingCustomer"
+              required
+            >
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="create-customer-phone">Phone</label>
+            <input
+              id="create-customer-phone"
+              v-model.trim="createCustomerForm.phone"
+              type="text"
+              class="form-control"
+              placeholder="Optional phone number"
+              :disabled="isCreatingCustomer"
+            >
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="create-customer-note">Note</label>
+            <textarea
+              id="create-customer-note"
+              v-model.trim="createCustomerForm.note"
+              class="form-control"
+              rows="4"
+              placeholder="Optional note"
+              :disabled="isCreatingCustomer"
+            ></textarea>
+          </div>
+
+          <div class="pt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary" :disabled="isCreateCustomerSubmitDisabled">
+              <span v-if="isCreatingCustomer">Saving...</span>
+              <span v-else>Create</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-default"
+              :disabled="isCreatingCustomer"
+              @click="closeCreateCustomerDialog"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </dialog>
 
     <dialog
       ref="createProductDialog"
@@ -426,6 +508,11 @@
           <div><strong>Receipt:</strong> {{ receiptState.sale.id }}</div>
           <div><strong>Sold at:</strong> {{ receiptState.sale.sold_at }}</div>
           <div><strong>Currency:</strong> {{ receiptState.sale.currency_code }}</div>
+          <div v-if="receiptState.sale.customer_name">
+            <strong>Customer:</strong>
+            {{ receiptState.sale.customer_name }}
+            <span v-if="receiptState.sale.customer_phone"> · {{ receiptState.sale.customer_phone }}</span>
+          </div>
         </div>
 
         <div class="mb-3">
@@ -498,10 +585,12 @@ import { computed, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
 import {
+  createMinishopCustomer,
   createMinishopProduct,
   createMinishopSale,
   deactivateMinishopProduct,
   fetchMinishopCategories,
+  fetchMinishopCustomers,
   fetchMinishopProducts,
   updateMinishopProduct,
 } from '@/api/minishop'
@@ -530,27 +619,35 @@ const props = defineProps({
 const route = useRoute()
 const router = useRouter()
 
+const createCustomerDialog = ref(null)
 const createProductDialog = ref(null)
 const editProductDialog = ref(null)
 const debtConfirmDialog = ref(null)
 const receiptDialog = ref(null)
 const products = ref([])
 const categories = ref([])
+const customers = ref([])
 const cartItems = ref([])
 const isLoadingProducts = ref(false)
 const isLoadingCategories = ref(false)
+const isLoadingCustomers = ref(false)
+const isCreatingCustomer = ref(false)
 const isCreatingProduct = ref(false)
 const isUpdatingProduct = ref(false)
 const isDeactivatingProduct = ref(false)
 const isSavingSale = ref(false)
 const hasLoadedMainData = ref(false)
+const hasLoadedCustomers = ref(false)
 const isHydratingMainData = ref(false)
 const errorMessage = ref('')
 const categoryErrorMessage = ref('')
+const customerErrorMessage = ref('')
+const createCustomerErrorMessage = ref('')
 const createProductErrorMessage = ref('')
 const editProductErrorMessage = ref('')
 const saleErrorMessage = ref('')
 const selectedCategoryId = ref('')
+const selectedCustomerId = ref('')
 const discountInput = ref('0.00')
 const paidInput = ref('0.00')
 const saleNoteInput = ref('')
@@ -566,6 +663,12 @@ const createProductForm = reactive({
   price: '',
   quantity: '5',
   low_stock_alert: '2',
+})
+
+const createCustomerForm = reactive({
+  name: '',
+  phone: '',
+  note: '',
 })
 
 const editProductForm = reactive({
@@ -593,6 +696,10 @@ const isCreateProductSubmitDisabled = computed(() => {
     createProductForm.price === '' ||
     createProductForm.quantity === ''
   )
+})
+
+const isCreateCustomerSubmitDisabled = computed(() => {
+  return isCreatingCustomer.value || createCustomerForm.name === ''
 })
 
 const isEditProductSubmitDisabled = computed(() => {
@@ -751,6 +858,10 @@ watch(normalizedPageParam, async (page) => {
   if (page === '' || page === 'main') {
     await ensureMainDataLoaded()
   }
+
+  if (page === '' || page === 'main') {
+    await ensureCustomersLoaded()
+  }
 }, { immediate: true })
 
 async function ensureMainDataLoaded() {
@@ -770,6 +881,14 @@ async function ensureMainDataLoaded() {
   } finally {
     isHydratingMainData.value = false
   }
+}
+
+async function ensureCustomersLoaded() {
+  if (hasLoadedCustomers.value || isLoadingCustomers.value) {
+    return
+  }
+
+  hasLoadedCustomers.value = await loadCustomers()
 }
 
 async function openCreateProductDialog() {
@@ -801,6 +920,15 @@ async function openEditProductDialog(product) {
   }
 }
 
+async function openCreateCustomerDialogFromCheckout() {
+  createCustomerErrorMessage.value = ''
+  await ensureCustomersLoaded()
+
+  if (!createCustomerDialog.value?.open) {
+    createCustomerDialog.value?.showModal()
+  }
+}
+
 function closeCreateProductDialog() {
   if (createProductDialog.value?.open) {
     createProductDialog.value.close()
@@ -810,6 +938,12 @@ function closeCreateProductDialog() {
 function closeEditProductDialog() {
   if (editProductDialog.value?.open) {
     editProductDialog.value.close()
+  }
+}
+
+function closeCreateCustomerDialog() {
+  if (createCustomerDialog.value?.open) {
+    createCustomerDialog.value.close()
   }
 }
 
@@ -921,6 +1055,16 @@ function handleEditProductDialogCancel(event) {
   }
 }
 
+function handleCreateCustomerDialogClose() {
+  resetCreateCustomerForm()
+}
+
+function handleCreateCustomerDialogCancel(event) {
+  if (isCreatingCustomer.value) {
+    event.preventDefault()
+  }
+}
+
 function openDebtConfirmDialog() {
   if (!debtConfirmDialog.value?.open) {
     debtConfirmDialog.value?.showModal()
@@ -970,6 +1114,10 @@ function handleReceiptDialogClose() {
   receiptState.value = null
 }
 
+async function handleSalesChanged() {
+  await refreshCustomerData()
+}
+
 async function saveSale() {
   if (normalizedSaleItemsPayload.value.length === 0 || isSavingSale.value) {
     return
@@ -983,6 +1131,7 @@ async function saveSale() {
   try {
     const { data } = await createMinishopSale(props.book.id, {
       currency_code: 'UZS',
+      customer_id: selectedCustomerId.value,
       discount_amount: discountAmount.value,
       note: normalizeOptionalInput(saleNoteInput.value),
       paid_amount: tenderedAmount,
@@ -1008,6 +1157,7 @@ async function saveSale() {
     resetCheckoutState()
     closeDebtConfirmDialog()
     await loadProducts()
+    await refreshCustomerData()
     openReceiptDialog()
   } catch (error) {
     if (isUnauthorizedError(error)) {
@@ -1133,6 +1283,10 @@ function buildReceiptHtml() {
           <div><span>Receipt</span><strong>${escapeReceiptText(receipt.sale.id)}</strong></div>
           <div><span>Sold at</span><strong>${escapeReceiptText(receipt.sale.sold_at)}</strong></div>
           <div><span>Currency</span><strong>${escapeReceiptText(receipt.sale.currency_code)}</strong></div>
+          ${receipt.sale.customer_name
+            ? `<div><span>Customer</span><strong>${escapeReceiptText(receipt.sale.customer_name)}${receipt.sale.customer_phone ? ` · ${escapeReceiptText(receipt.sale.customer_phone)}` : ''}</strong></div>`
+            : ''
+          }
         </div>
         <table>
           <thead>
@@ -1186,6 +1340,37 @@ async function loadCategories() {
     return false
   } finally {
     isLoadingCategories.value = false
+  }
+}
+
+async function loadCustomers() {
+  isLoadingCustomers.value = true
+  customerErrorMessage.value = ''
+
+  try {
+    const { data } = await fetchMinishopCustomers(props.book.id)
+    customers.value = sortCustomers(data.customers ?? [])
+    hasLoadedCustomers.value = true
+
+    if (
+      selectedCustomerId.value !== ''
+      && !customers.value.some((customer) => customer.id === selectedCustomerId.value)
+    ) {
+      selectedCustomerId.value = ''
+    }
+
+    return true
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeCreateCustomerDialog()
+      router.replace({ name: 'login' })
+      return false
+    }
+
+    customerErrorMessage.value = getApiErrorMessage(error, 'Unable to load customers right now.')
+    return false
+  } finally {
+    isLoadingCustomers.value = false
   }
 }
 
@@ -1248,6 +1433,42 @@ async function handleCreateProduct() {
     createProductErrorMessage.value = getApiErrorMessage(error, 'Unable to create product right now.')
   } finally {
     isCreatingProduct.value = false
+  }
+}
+
+async function handleCreateCustomer() {
+  if (isCreateCustomerSubmitDisabled.value) {
+    return
+  }
+
+  createCustomerErrorMessage.value = ''
+  isCreatingCustomer.value = true
+
+  try {
+    const { data } = await createMinishopCustomer(props.book.id, {
+      name: createCustomerForm.name,
+      phone: normalizeOptionalInput(createCustomerForm.phone),
+      note: normalizeOptionalInput(createCustomerForm.note),
+    })
+
+    if (!data.customer) {
+      throw new Error('Customer response did not include customer data.')
+    }
+
+    upsertCustomer(data.customer)
+    selectedCustomerId.value = data.customer.id
+    await loadCustomers()
+    closeCreateCustomerDialog()
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeCreateCustomerDialog()
+      router.replace({ name: 'login' })
+      return
+    }
+
+    createCustomerErrorMessage.value = getApiErrorMessage(error, 'Unable to create customer right now.')
+  } finally {
+    isCreatingCustomer.value = false
   }
 }
 
@@ -1333,6 +1554,14 @@ function resetCreateProductForm() {
   isCreatingProduct.value = false
 }
 
+function resetCreateCustomerForm() {
+  createCustomerForm.name = ''
+  createCustomerForm.phone = ''
+  createCustomerForm.note = ''
+  createCustomerErrorMessage.value = ''
+  isCreatingCustomer.value = false
+}
+
 function resetEditProductForm() {
   editProductForm.name = ''
   editProductForm.category_id = ''
@@ -1353,6 +1582,14 @@ function upsertProduct(product) {
   products.value = sortProducts(nextProducts)
 }
 
+function upsertCustomer(customer) {
+  const nextCustomers = customers.value.filter((item) => item.id !== customer.id)
+  nextCustomers.push(customer)
+  customers.value = sortCustomers(nextCustomers)
+  hasLoadedCustomers.value = true
+  customerErrorMessage.value = ''
+}
+
 function removeProductFromList(productId) {
   products.value = products.value.filter((item) => item.id !== productId)
 }
@@ -1363,11 +1600,26 @@ function sortProducts(items) {
   })
 }
 
+function sortCustomers(items) {
+  return [...items].sort((leftCustomer, rightCustomer) => {
+    return String(leftCustomer.name ?? '').localeCompare(String(rightCustomer.name ?? ''))
+  })
+}
+
+async function refreshCustomerData() {
+  return loadCustomers()
+}
+
+async function handleCustomersChanged() {
+  await refreshCustomerData()
+}
+
 function findCartItem(productId) {
   return cartItems.value.find((item) => item.productId === productId) ?? null
 }
 
 function resetCheckoutState() {
+  selectedCustomerId.value = ''
   discountInput.value = '0.00'
   paidInput.value = '0.00'
   saleNoteInput.value = ''
