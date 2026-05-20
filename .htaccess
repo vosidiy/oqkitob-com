@@ -2,12 +2,18 @@
   RewriteEngine On
   RewriteBase /
   
-  # If the request is for the /api folder, let it pass through
+  # Let the /api folder pass through completely untouched.
   RewriteRule ^api/ - [L]
 
-  # If the requested resource doesn't exist as a file or directory, 
-  # send everything else to index.html (Vue handles the rest)
+  # The root domain serves the static landing page.
+  RewriteRule ^$ index.html [L]
+
+  # Real files and directories, including static HTML and assets, are served directly.
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /index.html [L]
+
+  # Only extensionless clean URLs are routed to the SPA shell.
+  # Missing file-like URLs such as /missing.html or /assets/missing.js stay real 404s.
+  RewriteCond %{REQUEST_URI} !\.[^/]+$
+  RewriteRule . /app.html [L]
 </IfModule>

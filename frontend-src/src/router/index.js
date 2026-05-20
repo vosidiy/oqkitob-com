@@ -3,19 +3,20 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import GuestLayout from '@/layouts/GuestLayout.vue'
 import HomeView from '@/views/HomeView.vue'
 import BookView from '@/views/BookView.vue'
-import LandingPage from '@/views/LandingPage.vue'
 import LoginView from '@/views/auth/LoginView.vue'
 import RegisterView from '@/views/auth/RegisterView.vue'
 import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
 import { authStore } from '@/stores/auth'
+import NotFoundView from '@/views/NotFoundView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/',
-      name: 'landing',
-      component: LandingPage,
+      path: '/app.html',
+      redirect: {
+        name: 'login',
+      },
     },
     {
       path: '/',
@@ -44,9 +45,7 @@ const router = createRouter({
     {
       path: '/home',
       component: AppLayout,
-      meta: {
-        requiresAuth: true,
-      },
+      meta: {  requiresAuth: true,  },
       children: [
         {
           path: '',
@@ -75,7 +74,17 @@ const router = createRouter({
           name: 'book-detail',
           component: BookView,
         },
+        {
+          path: ':pathMatch(.*)*',
+          name: 'dashboard-not-found',
+          component: NotFoundView,
+        },
       ],
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundView,
     },
   ],
 })
