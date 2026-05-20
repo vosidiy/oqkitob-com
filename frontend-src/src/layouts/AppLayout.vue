@@ -1,4 +1,5 @@
 <template>
+<div class="d-flex h-full overflow-hidden mobile:flex-col">
   
   <aside class="col-3 h-full min-w-80 mobile:max-w-full max-w-100 d-flex  flex-col  flex-shrink-0  bg-secondary border-right mobile:col-12">
    
@@ -80,12 +81,18 @@
   </aside>
 
   <div class="flex-grow h-full">
+    <!-- main content -->
     <div v-if="errorMessage" class="alert alert-danger" role="alert">
       {{ errorMessage }}
     </div>
       
     <RouterView :key="routerViewKey" />
+
+    <!-- main content end.// -->
   </div>
+
+</div>
+
 
   <dialog
       ref="createBookDialog"
@@ -349,7 +356,7 @@ async function handleLogout() {
     // Logout also clears the shared books cache so the next session starts clean.
     await authStore.logout()
     booksStore.reset()
-    router.replace({ name: 'login' })
+    window.location.replace('/')
   } catch {
     errorMessage.value = 'Unable to log out right now.'
   } finally {
