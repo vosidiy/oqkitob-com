@@ -13,7 +13,7 @@
 			<div class="nav">
           <a class="nav-link" href="/">Asosiy</a>
           <a class="nav-link" href="/about.html">Haqimizda</a>
-          <a class="nav-link" href="/contact.html">Aloqa</a>
+          <a class="nav-link" href="/contact.html">Yordam</a>
           <a href="/login"  class="nav-link "> Kirish </a>
 			</div>
 

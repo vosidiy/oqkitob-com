@@ -34,7 +34,7 @@
     </div> <!-- container end.// -->
 </header>
 
-<section class="pt-20 bg-lower h-100vh bg-size-cover overflow-hidden mobile:h-auto mobile:overflow-initial" style="background-image:url(/images/bg-home.jpg);">
+<section class="pt-20 min-h-90vh bg-size-cover overflow-hidden mobile:h-auto mobile:overflow-initial  rectangle-pattern">
     <div class="container">
 
     <div class="row">
@@ -42,7 +42,7 @@
 
             <article class="mt-10 mobile:mt-0" style="max-width:680px">
                 <h1 class="text-5xl mobile:text-2xl mb-5 mobile:mb-2 font-bold">
-                    Sizning <span class="text-primary">"aqlli" kitobingiz</span> <br>  hisob-kitob yuritish <br> va ma'lumot saqlash uchun
+                    Sizning <span class="text-primary">aqlli kitobingiz</span> <br>  hisob-kitob yuritish <br> va ma'lumot saqlash uchun
                 </h1>
                 <div class="text-xl mobile:text-lg lh-lg mobile:d-none">
                     <span>⭐⭐⭐⭐⭐</span> <br> 
@@ -63,11 +63,12 @@
                 
                 <h4 class="text-xxl mb-6">Akkauntga kirish</h4>
 
-                <form action="#" method="POST" class="mb-4">
+                <form id="login_form-Landing" action="#" method="POST" class="mb-4">
                     <input type="hidden" name="_token" value="" autocomplete="off">                
+                    <div id="landing-login-error" class="alert alert-danger mb-4" role="alert" hidden></div>
                     <div class="mb-4">
-                        <label class="form-label font-medium">Telefon</label>
-                        <input type="email" name="email" class="form-control" value="+998" placeholder="Enter email" required> 
+                        <label class="form-label font-medium">Email</label>
+                        <input type="email" name="email" class="form-control" placeholder="Enter email" required> 
                     </div>
                     <div class="mb-2">
                         <label class="form-label font-medium">Parol</label>
@@ -90,7 +91,7 @@
                 </div>
                 <!-- line end.// -->
 
-                <a class="btn btn-default w-full" href="/register"> Ro'yxatdan o'tish </a>
+                <a class="btn btn-default w-full" href="/register"> Register </a>
 
 
             </div> <!-- card .//end -->
@@ -100,13 +101,9 @@
     </div> <!-- container .//end -->
 </section>
 
-<footer class="border-top">
+<footer class="border-top py-6">
     <div class="container">
-        <div class="nav">
-            <a class="nav-link" href="/about.html">About</a>
-            <a class="nav-link" href="/contact.html">Contact</a>
-            <a class="nav-link" href="/terms.html">Terms</a>
-        </div>
+        <p class="text-center text-secondary"> &copy; 2026 Oqkitob Organized books for everyday work</p>
     </div>
 </footer>
 
@@ -177,6 +174,125 @@ this_dialog.close();
 if(this_dialog.dataset.onclose == 'refresh') { window.location.reload(true); }
 return false;
 }
+
+const landingLoginForm = document.getElementById('login_form-Landing');
+const landingLoginError = document.getElementById('landing-login-error');
+const landingLoginSubmitButton = landingLoginForm ? landingLoginForm.querySelector('button[type="submit"]') : null;
+const landingLoginDefaultButtonText = landingLoginSubmitButton ? landingLoginSubmitButton.textContent : '';
+let landingLoginIsSubmitting = false;
+
+function setLandingLoginError(message) {
+  if (!landingLoginError) {
+    return;
+  }
+
+  const trimmedMessage = typeof message === 'string' ? message.trim() : '';
+
+  if (trimmedMessage === '') {
+    landingLoginError.hidden = true;
+    landingLoginError.textContent = '';
+    return;
+  }
+
+  landingLoginError.hidden = false;
+  landingLoginError.textContent = trimmedMessage;
+}
+
+function setLandingLoginSubmitting(isSubmitting) {
+  landingLoginIsSubmitting = isSubmitting;
+
+  if (landingLoginSubmitButton) {
+    landingLoginSubmitButton.disabled = isSubmitting;
+    landingLoginSubmitButton.textContent = isSubmitting ? 'Logging in...' : landingLoginDefaultButtonText;
+  }
+}
+
+function getLandingLoginErrorMessage(payload) {
+  if (payload && typeof payload.message === 'string' && payload.message.trim() !== '') {
+    return payload.message;
+  }
+
+  return 'Unable to sign in right now.';
+}
+
+async function checkLandingAuth() {
+  try {
+    const response = await fetch('/api/auth/me', {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (response.status === 401) {
+      return;
+    }
+
+    if (!response.ok) {
+      return;
+    }
+
+    const payload = await response.json();
+
+    if (payload && payload.user) {
+      window.location.assign('/home');
+    }
+  } catch (error) {
+    // Keep the landing page usable even if the auth probe fails.
+  }
+}
+
+async function handleLandingLoginSubmit(event) {
+  event.preventDefault();
+
+  if (!landingLoginForm || landingLoginIsSubmitting) {
+    return;
+  }
+
+  setLandingLoginError('');
+  setLandingLoginSubmitting(true);
+
+  const formData = new FormData(landingLoginForm);
+  const email = String(formData.get('email') || '').trim();
+  const password = String(formData.get('password') || '');
+
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      setLandingLoginError(getLandingLoginErrorMessage(payload));
+      return;
+    }
+
+    if (payload && payload.user) {
+      window.location.assign('/home');
+      return;
+    }
+
+    setLandingLoginError(getLandingLoginErrorMessage(payload));
+  } catch (error) {
+    setLandingLoginError('Unable to sign in right now.');
+  } finally {
+    setLandingLoginSubmitting(false);
+  }
+}
+
+if (landingLoginForm) {
+  landingLoginForm.addEventListener('submit', handleLandingLoginSubmit);
+}
+
+checkLandingAuth();
 </script>
 
 

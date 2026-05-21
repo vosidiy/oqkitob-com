@@ -53,9 +53,9 @@ oqkitob-com/
 │       └── main.js
 ├── dist/                               # Vite build output
 ├── index.html                          # Root-served SPA entry
-├── README.md
-├── ARCHITECTURE.md
-└── db.sql
+├── docs/README.md
+├── docs/ARCHITECTURE.md
+└── docs/db.sql
 ```
 
 ## Current Frontend Structure
@@ -212,10 +212,10 @@ From `db.sql`:
 
 ## Reference Files
 
-- [ARCHITECTURE.md](/Applications/MAMP/htdocs/oqkitob-com/ARCHITECTURE.md)
-- [DATABASE.md](/Applications/MAMP/htdocs/oqkitob-com/DATABASE.md)
-- [schema.sql](/Applications/MAMP/htdocs/oqkitob-com/schema.sql)
-- [db.sql](/Applications/MAMP/htdocs/oqkitob-com/db.sql)
+- [ARCHITECTURE.md](/Applications/MAMP/htdocs/oqkitob-com/docs/ARCHITECTURE.md)
+- [DATABASE.md](/Applications/MAMP/htdocs/oqkitob-com/docs/DATABASE.md)
+- [schema.sql](/Applications/MAMP/htdocs/oqkitob-com/docs/schema.sql)
+- [db.sql](/Applications/MAMP/htdocs/oqkitob-com/docs/db.sql)
 
 ## For testing (important)
 

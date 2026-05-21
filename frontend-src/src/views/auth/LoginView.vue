@@ -28,8 +28,20 @@
         <div class="mb-3">
           <label class="form-label" for="password">Password</label>
           <div class="relative d-flex">
-              <input id="password" v-model="form.password" type="password"  class="form-control" placeholder="Enter your password" autocomplete="current-password">
-              <button type="button" onclick="showHidePassword('password')" class="btn absolute text-muted right-0 btn-icon"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> </button>
+              <input
+                id="password"
+                v-model="form.password"
+                :type="isPasswordVisible ? 'text' : 'password'"
+                class="form-control"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+              >
+              <button
+                type="button"
+                class="btn absolute text-muted right-0 btn-icon"
+                :aria-label="isPasswordVisible ? 'Hide password' : 'Show password'"
+                @click="togglePasswordVisibility"
+              > <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> </button>
           </div>
         </div>
         <div class="mb-5">
@@ -44,7 +56,7 @@
 
   </article>
 
-  <RouterLink :to="{ name: 'register' }" class="btn btn-default w-full">  Ro'yxatdan o'tish </RouterLink>
+  <RouterLink :to="{ name: 'register' }" class="btn btn-default w-full">  Create account  </RouterLink>
 
   <p class="text-center text-secondary my-8"> Yordam kerak bo'lsa bog'laning: <br> <a href="https://t.me/websift1990"> Telegram chat </a> </p>
 </div> <!-- container .//end -->
@@ -66,6 +78,7 @@ const form = reactive({
 
 const errorMessage = ref('')
 const isSubmitting = ref(false)
+const isPasswordVisible = ref(false)
 
 async function handleSubmit() {
   errorMessage.value = ''
@@ -89,20 +102,8 @@ function getLoginErrorMessage(error) {
   return getApiErrorMessage(error, 'Unable to sign in right now.')
 }
 
-
-
-
-// Show hide password
-function showHidePassword(fieldId) {
-  // 1. Get the input field element using its ID
-  const passwordField = document.getElementById(fieldId);
-
-  // 2. Check the current type and toggle it
-  if (passwordField.type === "password") {
-      passwordField.type = "text";
-  } else {
-      passwordField.type = "password";
-  }
+function togglePasswordVisibility() {
+  isPasswordVisible.value = !isPasswordVisible.value
 }
 
 </script>
