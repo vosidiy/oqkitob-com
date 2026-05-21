@@ -209,6 +209,27 @@
           <p class="text-secondary mb-0">
             {{ $t('minishop.sales.selectSaleHint') }}
           </p>
+          <div class="mt-5 pt-4 border-top text-left">
+            <h4 class="h6 mb-4">{{ salesSummaryTitle }}</h4>
+            <div class="d-flex flex-col gap-3">
+              <div class="d-flex justify-content-between gap-3">
+                <span>{{ $t('minishop.sales.summaryCount') }}</span>
+                <strong>{{ salesSummaryCount }}</strong>
+              </div>
+              <div class="d-flex justify-content-between gap-3">
+                <span>{{ $t('minishop.sales.summaryTotalAmount') }}</span>
+                <strong>{{ formatMoney(salesSummaryTotalAmount) }}</strong>
+              </div>
+              <div class="d-flex justify-content-between gap-3">
+                <span>{{ $t('minishop.sales.summaryPaidAmount') }}</span>
+                <strong>{{ formatMoney(salesSummaryPaidAmount) }}</strong>
+              </div>
+              <div class="d-flex justify-content-between gap-3 text-orange">
+                <span>{{ $t('minishop.sales.summaryDueAmount') }}</span>
+                <strong>{{ formatMoney(salesSummaryDueAmount) }}</strong>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -399,6 +420,37 @@ const paymentSummaryRemainingAmount = computed(() => {
   return paymentSummaryPaidAmount.value < paymentSummaryTotal.value
     ? paymentSummaryTotal.value - paymentSummaryPaidAmount.value
     : 0
+})
+
+const salesFilterLabelKeys = {
+  all_time: 'minishop.sales.filters.allTime',
+  last_10_days: 'minishop.sales.filters.last10Days',
+  last_20_days: 'minishop.sales.filters.last20Days',
+  last_30_days: 'minishop.sales.filters.last30Days',
+  previous_month: 'minishop.sales.filters.previousMonth',
+  this_year: 'minishop.sales.filters.thisYear',
+  today: 'minishop.sales.filters.today',
+  yesterday: 'minishop.sales.filters.yesterday',
+}
+
+const salesSummaryCount = computed(() => sales.value.length)
+
+const salesSummaryTotalAmount = computed(() => {
+  return sumSaleAmounts('total_amount')
+})
+
+const salesSummaryPaidAmount = computed(() => {
+  return sumSaleAmounts('paid_amount')
+})
+
+const salesSummaryDueAmount = computed(() => {
+  return sumSaleAmounts('due_amount')
+})
+
+const salesSummaryTitle = computed(() => {
+  return t('minishop.sales.summaryTitle', {
+    filter: t(salesFilterLabelKeys[selectedFilterTime.value] ?? salesFilterLabelKeys.today),
+  })
 })
 
 watch([() => props.book.id, selectedFilterTime], async () => {
@@ -628,6 +680,12 @@ function formatDateTime(value) {
   }
 
   return parsedDate.toLocaleString()
+}
+
+function sumSaleAmounts(fieldName) {
+  return sales.value.reduce((total, sale) => {
+    return total + (Number(sale?.[fieldName]) || 0)
+  }, 0)
 }
 
 function parseNonNegativeAmount(value, fallback) {
