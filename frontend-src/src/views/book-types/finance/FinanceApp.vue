@@ -3,24 +3,24 @@
     <BookPageHeader :book="book" />
 
     <div class="p-5">
-      <h3 class="h6 mb-3">Transactions</h3>
+      <h3 class="h6 mb-3">{{ $t('finance.title') }}</h3>
 
-      <div v-if="isLoading" class="text-secondary">Loading transactions...</div>
+      <div v-if="isLoading" class="text-secondary">{{ $t('finance.loading') }}</div>
 
       <div v-else-if="errorMessage" class="alert alert-danger" role="alert">
         {{ errorMessage }}
       </div>
 
-      <div v-else-if="transactions.length === 0" class="text-secondary">No transactions yet.</div>
+      <div v-else-if="transactions.length === 0" class="text-secondary">{{ $t('finance.empty') }}</div>
 
       <div v-else class="table-responsive">
         <table class="table table-sm align-middle mb-0">
           <thead>
             <tr>
-              <th scope="col">Date</th>
-              <th scope="col">Type</th>
-              <th scope="col">Amount</th>
-              <th scope="col">Note</th>
+              <th scope="col">{{ $t('common.fields.date') }}</th>
+              <th scope="col">{{ $t('common.fields.type') }}</th>
+              <th scope="col">{{ $t('common.fields.amount') }}</th>
+              <th scope="col">{{ $t('common.fields.note') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -40,6 +40,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { isUnauthorizedError } from '@/api/errors'
 import { fetchFinanceTransactions } from '@/api/finance'
 import BookPageHeader from '@/components/BookPageHeader.vue'
@@ -53,6 +54,7 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const transactions = ref([])
 const isLoading = ref(true)
@@ -87,7 +89,7 @@ watch(() => route.params.page, async (page) => {
       return
     }
 
-    errorMessage.value = 'Unable to load transactions.'
+    errorMessage.value = t('finance.unableLoad')
   } finally {
     isLoading.value = false
   }

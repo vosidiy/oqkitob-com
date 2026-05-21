@@ -4,7 +4,7 @@
       <header class="d-flex h-16 gap-2 align-items-center justify-content-between px-4 py-3 border-bottom">
         <div>
           <button class="btn btn-primary-subtle" @click="emit('open-create-product')">
-            Create product
+            {{ $t('minishop.main.createProduct') }}
           </button>
         </div>
 
@@ -16,8 +16,8 @@
             :disabled="isLoadingCategories || categories.length === 0"
             @change="updateSelectedCategoryId"
           >
-            <option value="">All categories</option>
-            <option :value="noCategoryFilterValue">-- No category --</option>
+            <option value="">{{ $t('minishop.main.allCategories') }}</option>
+            <option :value="noCategoryFilterValue">-- {{ $t('minishop.main.noCategory') }} --</option>
             <option
               v-for="category in categories"
               :key="category.id"
@@ -38,14 +38,14 @@
           {{ errorMessage }}
         </div>
 
-        <div v-if="isLoadingProducts" class="text-secondary">Loading products...</div>
+        <div v-if="isLoadingProducts" class="text-secondary">{{ $t('minishop.main.loadingProducts') }}</div>
 
         <div v-else-if="products.length === 0" class="text-secondary">
-          No products yet.
+          {{ $t('minishop.main.noProducts') }}
         </div>
 
         <div v-else-if="filteredProducts.length === 0" class="text-secondary">
-          No products match this category.
+          {{ $t('minishop.main.noProductsInCategory') }}
         </div>
 
         <ul v-else class="mb-0">
@@ -60,9 +60,9 @@
                   {{ product.name }}
                 </h6>
                 <p>
-                  {{ formatPrice(product.price) }} | Qty: {{ formatQuantity(product.quantity) }}
+                  {{ formatPrice(product.price) }} | {{ $t('minishop.main.quantityShort') }}: {{ formatQuantity(product.quantity) }}
                   <span v-if="isLowStock(product)" class="text-red pl-1">
-                    ⚠️ Low
+                    ⚠️ {{ $t('minishop.main.low') }}
                   </span>
                 </p>
               </div>
@@ -70,9 +70,9 @@
               <div>
                 <button class="btn btn-neutral" @click="emit('add-product-to-cart', product)">
                   <span v-if="(cartQuantityByProductId[product.id] ?? 0) > 0">
-                    Added ({{ formatQuantity(cartQuantityByProductId[product.id]) }})
+                    {{ $t('minishop.main.added', { count: formatQuantity(cartQuantityByProductId[product.id]) }) }}
                   </span>
-                  <span v-else>Add to cart</span>
+                  <span v-else>{{ $t('minishop.main.addToCart') }}</span>
                 </button>
               </div>
             </div>
@@ -84,16 +84,16 @@
     <aside class="d-flex flex-col w-full h-full flex-1">
       <section class="px-4 py-3 border-bottom">
         <div class="d-flex justify-content-between align-items-center gap-2">
-          <h4 class="mb-0">New sale</h4>
+          <h4 class="mb-0">{{ $t('minishop.main.newSale') }}</h4>
           <div class="small text-secondary">
-            {{ cartItems.length }} {{ cartItems.length === 1 ? 'item' : 'items' }}
+            {{ $t('minishop.main.itemCount', { count: cartItems.length }) }}
           </div>
         </div>
       </section>
 
       <section class="px-2 flex-1 overflow-y-scroll">
         <div v-if="cartItems.length === 0" class="text-secondary p-10 text-center">
-          👈 Selec products from the list <br> to create new sale
+          👈 {{ $t('minishop.main.emptyCart') }}
         </div>
 
         <div v-else class="d-flex flex-col">
@@ -144,7 +144,7 @@
               </div>
               <div class="col-6">
                 <div class="d-flex flex-row">
-                  <span class="p-2 flex-shrink-0">Price:</span>
+                  <span class="p-2 flex-shrink-0">{{ $t('common.fields.price') }}:</span>
                   <input
                     :id="`cart-price-${item.productId}`"
                     :value="item.unitPriceInput"
@@ -170,7 +170,7 @@
           <input
             type="text"
             name="note"
-            placeholder="Add notes"
+            :placeholder="$t('minishop.main.addNotes')"
             class="form-control"
             :value="saleNoteInput"
             @input="emit('update-sale-note-input', $event.target.value)"
@@ -180,14 +180,14 @@
         <div v-if="cartItems.length > 0" class="px-3 pb-3">
           <div class="border rounded p-3 bg-neutral-100">
             <div class="d-flex justify-content-between align-items-center gap-2 mb-2 mobile:flex-col mobile:align-items-start">
-              <label class="form-label mb-0" for="minishop-cart-customer">Customer</label>
+              <label class="form-label mb-0" for="minishop-cart-customer">{{ $t('common.fields.customer') }}</label>
               <button
                 type="button"
                 class="btn btn-default btn-sm"
                 :disabled="isSavingSale"
                 @click="emit('open-create-customer')"
               >
-                New customer
+                {{ $t('minishop.main.newCustomer') }}
               </button>
             </div>
 
@@ -198,7 +198,7 @@
               :disabled="isLoadingCustomers || isSavingSale"
               @change="updateSelectedCustomerId"
             >
-              <option value="">No customer</option>
+              <option value="">{{ $t('minishop.main.noCustomer') }}</option>
               <option v-for="customer in customers" :key="customer.id" :value="customer.id">
                 {{ formatCustomerOption(customer) }}
               </option>
@@ -208,13 +208,13 @@
               {{ customerErrorMessage }}
             </p>
             <p v-else-if="isLoadingCustomers" class="text-secondary text-sm mt-2 mb-0">
-              Loading customers...
+              {{ $t('minishop.main.loadingCustomers') }}
             </p>
             <p v-else-if="customers.length === 0" class="text-secondary text-sm mt-2 mb-0">
-              No customers yet. Create one if you want to link this sale.
+              {{ $t('minishop.main.noCustomers') }}
             </p>
             <p v-else-if="selectedCustomer" class="text-secondary text-sm mt-2 mb-0">
-              Linked to {{ selectedCustomer.name }}
+              {{ $t('minishop.main.linkedTo', { name: selectedCustomer.name }) }}
               <span v-if="selectedCustomer.phone"> · {{ selectedCustomer.phone }}</span>
             </p>
           </div>
@@ -223,7 +223,7 @@
 
       <section class="py-2 px-4 d-flex align-items-center bg-neutral-200 justify-content-between border-top">
         <div class="d-flex align-items-center gap-2 flex-row">
-          <label for="minishop-cart-discount">Discount sum: </label>
+          <label for="minishop-cart-discount">{{ $t('minishop.main.discountSum') }}:</label>
           <div>
             <input
               id="minishop-cart-discount"
@@ -238,7 +238,7 @@
           </div>
         </div>
         <div class="d-flex justify-content-end gap-3 align-items-center">
-          <span>Subtotal:</span>
+          <span>{{ $t('common.fields.subtotal') }}:</span>
           <strong class="text-right">{{ formatPrice(subtotal) }}</strong>
         </div>
       </section>
@@ -249,12 +249,12 @@
         </div>
 
         <div class="d-flex mb-1 text-sm justify-content-end gap-3 align-items-center">
-          <p class="text-secondary">Discounted: </p>
+          <p class="text-secondary">{{ $t('minishop.main.discounted') }}:</p>
           <p class="text-right"> - {{ formatPrice(discountAmount) }}</p>
         </div>
 
         <div class="d-flex mb-1 justify-content-end gap-3 align-items-center">
-          <span class="text-lg">Total: </span>
+          <span class="text-lg">{{ $t('minishop.main.total') }}:</span>
           <strong class="text-lg">{{ formatPrice(total) }}</strong>
         </div>
 
@@ -265,7 +265,7 @@
             </p>
           </div>
           <div class="flex-1 text-right">
-            <label class="mb-0 font-semibold text-lg" for="minishop-cart-paid">Paid:</label>
+            <label class="mb-0 font-semibold text-lg" for="minishop-cart-paid">{{ $t('minishop.main.paid') }}:</label>
           </div>
           <div class="col-4">
             <input
@@ -287,8 +287,8 @@
           :disabled="cartItems.length === 0 || isSavingSale"
           @click="emit('complete-sale-placeholder')"
         >
-          <span v-if="isSavingSale">Saving sale...</span>
-          <span v-else>Complete Sale</span>
+          <span v-if="isSavingSale">{{ $t('common.states.saving') }}</span>
+          <span v-else>{{ $t('minishop.main.completeSale') }}</span>
         </button>
       </section>
     </aside>

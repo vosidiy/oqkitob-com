@@ -13,7 +13,7 @@ maps to dedicated database tables and dedicated frontend/backend behavior.
 
 | Layer     | Technology                        |
 |-----------|-----------------------------------|
-| Frontend  | Vue 3, Vite, Vue Router, Axios    |
+| Frontend  | Vue 3, Vite, Vue Router, Axios, Vue I18n |
 | Backend   | CodeIgniter 4 (JSON API only)     |
 | Database  | MySQL                             |
 | Auth      | Same-origin cookie sessions       |
@@ -44,6 +44,8 @@ oqkitob-com/
 │   └── src/
 │       ├── api/                        # Axios client + domain API helpers
 │       ├── components/                 # Reusable UI components only
+│       ├── composables/                # Shared app-side behavior helpers
+│       ├── i18n/                       # Locale config, messages, and helpers
 │       ├── layouts/                    # AppLayout and GuestLayout
 │       ├── router/                     # Vue Router config and guards
 │       ├── stores/                     # Auth store + books Pinia store
@@ -64,11 +66,11 @@ oqkitob-com/
   - authenticated shell for `/home`
   - loads the shared books list for the sidebar
   - hosts the native create-book dialog for the sidebar
+  - owns the authenticated language picker
   - remounts the book page when `bookId` changes
 - `frontend-src/src/layouts/GuestLayout.vue`
   - minimal guest shell for auth pages
-- `frontend-src/src/views/LandingPage.vue`
-  - public landing page at `/`
+  - owns the guest-page language picker
 - `frontend-src/src/views/HomeView.vue`
   - dashboard overview at `/home`
 - `frontend-src/src/views/BookView.vue`
@@ -77,18 +79,23 @@ oqkitob-com/
   - `NotesApp.vue`
   - `TodoApp.vue`
   - `FinanceApp.vue`
+  - `MinishopApp.vue`
   - each child app fetches and renders its own type-specific data
+- `frontend-src/src/i18n/*`
+  - `index.js`
+  - `messages.js`
+  - locale bootstrap, persistence, and fallback handling for `uz`, `en`, and `ru`
 
 ## Routing
 
 Frontend routes:
 
-- `/` -> public landing page
+- `/app.html` -> redirects to `login`
 - `/login` -> guest auth page
 - `/register` -> guest scaffold page
 - `/forgot-password` -> guest scaffold page
 - `/home` -> authenticated dashboard home
-- `/home/books/:bookId` -> authenticated selected-book page
+- `/home/books/:bookId/:page?` -> authenticated selected-book page
 
 Route guards use `authStore.ensureChecked()`:
 
@@ -111,7 +118,7 @@ The frontend currently uses a mixed state approach:
     - `login(payload)`
     - `logout()`
 
-- `frontend-src/src/stores/books.js`
+- `frontend-src/src/stores/books-store.js`
   - Pinia setup store via `useBooksStore()`
   - owns the shared books list only
   - state:
@@ -125,6 +132,29 @@ The frontend currently uses a mixed state approach:
 
 The books store keeps a module-scoped `listPromise` so concurrent sidebar/detail loads reuse the same `/books` request.
 
+## Frontend Localization
+
+The SPA now has a shared `vue-i18n` layer.
+
+- supported locales:
+  - `uz`
+  - `en`
+  - `ru`
+- default locale:
+  - `uz`
+- fallback locale:
+  - `en`
+- persisted locale key:
+  - `oqkitob_locale`
+
+Behavior:
+
+- authenticated and guest layouts both expose a language picker
+- invalid or corrupt stored locale values fall back to English
+- missing translation keys also fall back to English
+- current scope covers visible frontend UI strings only
+- backend-sent error messages are still rendered as returned by the API
+
 ## Frontend API Layer
 
 Frontend API helpers live under `frontend-src/src/api/`.
@@ -137,11 +167,13 @@ Frontend API helpers live under `frontend-src/src/api/`.
   - `loginRequest`
   - `logoutRequest`
   - `fetchCurrentUserRequest`
-- `books.js`
+- `books-api.js`
   - `fetchBooksList()`
   - `fetchBookTypes()`
   - `fetchBookById(bookId)`
   - `createBookRequest(payload)`
+- `minishop.js`
+  - minishop products, customers, sales, and payment summary helpers
 - `notes.js`
   - `fetchNotes(bookId)`
 - `todos.js`
@@ -165,6 +197,7 @@ Each book mini app then fetches its own content on mount:
 - notes -> `/api/books/{bookId}/notes`
 - todo -> `/api/books/{bookId}/todos`
 - finance -> `/api/books/{bookId}/finance`
+- minishop -> `/api/books/{bookId}/minishop/*`
 
 The sidebar also owns book creation:
 

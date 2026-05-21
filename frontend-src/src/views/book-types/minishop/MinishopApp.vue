@@ -7,28 +7,28 @@
           class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
           :class="{ active: activePageKey === 'main' }"
         >
-          Main
+          {{ $t('minishop.tabs.main') }}
         </RouterLink>
         <RouterLink
           :to="{ name: 'book-detail', params: { bookId: book.id, page: 'sales' } }"
           class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
           :class="{ active: activePageKey === 'sales' }"
         >
-          Sales
+          {{ $t('minishop.tabs.sales') }}
         </RouterLink>
         <RouterLink
           :to="{ name: 'book-detail', params: { bookId: book.id, page: 'customers' } }"
           class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
           :class="{ active: activePageKey === 'customers' }"
         >
-          Customers
+          {{ $t('minishop.tabs.customers') }}
         </RouterLink>
         <RouterLink
           :to="{ name: 'book-detail', params: { bookId: book.id, page: 'reports' } }"
           class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
           :class="{ active: activePageKey === 'reports' }"
         >
-          Reports
+          {{ $t('minishop.tabs.reports') }}
         </RouterLink>
       </template>
     </BookPageHeader>
@@ -97,7 +97,7 @@
       @close="handleCreateCustomerDialogClose"
     >
       <header class="dialog-header">
-        <h5>Create customer</h5>
+        <h5>{{ $t('minishop.dialogs.createCustomer') }}</h5>
         <button class="btn btn-icon" :disabled="isCreatingCustomer" @click="closeCreateCustomerDialog">
           <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
         </button>
@@ -109,46 +109,46 @@
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="create-customer-name">Name</label>
+            <label class="form-label" for="create-customer-name">{{ $t('common.fields.name') }}</label>
             <input
               id="create-customer-name"
               v-model.trim="createCustomerForm.name"
               type="text"
               class="form-control"
-              placeholder="Enter customer name"
+              :placeholder="$t('minishop.customers.enterCustomerName')"
               :disabled="isCreatingCustomer"
               required
             >
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="create-customer-phone">Phone</label>
+            <label class="form-label" for="create-customer-phone">{{ $t('common.fields.phone') }}</label>
             <input
               id="create-customer-phone"
               v-model.trim="createCustomerForm.phone"
               type="text"
               class="form-control"
-              placeholder="Optional phone number"
+              :placeholder="$t('minishop.customers.optionalPhone')"
               :disabled="isCreatingCustomer"
             >
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="create-customer-note">Note</label>
+            <label class="form-label" for="create-customer-note">{{ $t('common.fields.note') }}</label>
             <textarea
               id="create-customer-note"
               v-model.trim="createCustomerForm.note"
               class="form-control"
               rows="4"
-              placeholder="Optional note"
+              :placeholder="$t('minishop.customers.optionalNote')"
               :disabled="isCreatingCustomer"
             ></textarea>
           </div>
 
           <div class="pt-4 d-flex gap-2">
             <button type="submit" class="btn btn-primary" :disabled="isCreateCustomerSubmitDisabled">
-              <span v-if="isCreatingCustomer">Saving...</span>
-              <span v-else>Create</span>
+              <span v-if="isCreatingCustomer">{{ $t('common.states.saving') }}</span>
+              <span v-else>{{ $t('common.actions.create') }}</span>
             </button>
             <button
               type="button"
@@ -156,7 +156,7 @@
               :disabled="isCreatingCustomer"
               @click="closeCreateCustomerDialog"
             >
-              Cancel
+              {{ $t('common.actions.cancel') }}
             </button>
           </div>
         </form>
@@ -169,7 +169,7 @@
       @close="handleCreateProductDialogClose"
     >
       <header class="dialog-header">
-        <h5>Create product</h5>
+        <h5>{{ $t('minishop.dialogs.createProduct') }}</h5>
         <button class="btn btn-icon" 
             @click="closeCreateProductDialog"
             :disabled="isCreatingProduct">
@@ -184,13 +184,13 @@
             </div>
 
             <div class="mb-4">
-              <label class="form-label" for="create-product-name">Name</label>
+              <label class="form-label" for="create-product-name">{{ $t('common.fields.name') }}</label>
               <input
                 id="create-product-name"
                 v-model.trim="createProductForm.name"
                 type="text"
                 class="form-control"
-                placeholder="Enter product name"
+                :placeholder="$t('minishop.dialogs.enterProductName')"
                 :disabled="isCreatingProduct"
                 required
               >
@@ -198,15 +198,15 @@
 
             <div class="row  gap-3">
               <div class="col-6 mb-4">
-                <label class="form-label" for="create-product-category">Category</label>
+                <label class="form-label" for="create-product-category">{{ $t('common.fields.category') }}</label>
                 <select
                   id="create-product-category"
                   v-model="createProductForm.category_id"
                   class="form-select"
                   :disabled="isCreatingProduct || isLoadingCategories"
                 >
-                  <option value="">--- No category ---</option>
-                  <option :value="CREATE_CATEGORY_OPTION_VALUE">+ Add new category</option>
+                  <option value="">--- {{ $t('minishop.main.noCategory') }} ---</option>
+                  <option :value="CREATE_CATEGORY_OPTION_VALUE">+ {{ $t('minishop.dialogs.addCategory') }}</option>
                   <option
                     v-for="category in categories"
                     :key="category.id"
@@ -221,18 +221,18 @@
                   v-model.trim="createProductForm.new_category_name"
                   type="text"
                   class="form-control mt-3"
-                  placeholder="Enter new category name"
+                  :placeholder="$t('minishop.dialogs.enterCategoryName')"
                   :disabled="isCreatingProduct"
                 >
               </div>
               <div class="col-6 mb-4">
-                <label class="form-label" for="create-product-sku">SKU / Kod</label>
+                <label class="form-label" for="create-product-sku">{{ $t('minishop.dialogs.productCode') }}</label>
                 <input
                   id="create-product-sku"
                   v-model.trim="createProductForm.sku"
                   type="text"
                   class="form-control"
-                  placeholder="Optional SKU"
+                  :placeholder="$t('minishop.dialogs.optionalSku')"
                   :disabled="isCreatingProduct"
                 >
               </div>
@@ -240,7 +240,7 @@
 
             <div class="row gap-3">
               <div class="col-6 mb-4">
-                <label class="form-label" for="create-product-price">Price</label>
+                <label class="form-label" for="create-product-price">{{ $t('common.fields.price') }}</label>
                 <input
                   id="create-product-price"
                   v-model.trim="createProductForm.price"
@@ -254,7 +254,7 @@
                 >
               </div>
               <div class="col-3 mb-4">
-                <label class="form-label" for="create-product-quantity">Quantity</label>
+                <label class="form-label" for="create-product-quantity">{{ $t('common.fields.quantity') }}</label>
                 <input
                   id="create-product-quantity"
                   v-model.trim="createProductForm.quantity"
@@ -268,7 +268,7 @@
                 >
               </div>
               <div class="col-3 mb-4">
-                <label class="form-label" for="create-product-low-stock-alert">Low-stock alert</label>
+                <label class="form-label" for="create-product-low-stock-alert">{{ $t('minishop.dialogs.lowStockAlert') }}</label>
                 <input
                   id="create-product-low-stock-alert"
                   v-model.trim="createProductForm.low_stock_alert"
@@ -276,7 +276,7 @@
                   class="form-control"
                   min="0"
                   step="0.001"
-                  placeholder="Optional threshold"
+                  :placeholder="$t('minishop.dialogs.optionalThreshold')"
                   :disabled="isCreatingProduct"
                 >
               </div>
@@ -284,8 +284,8 @@
 
             <div class="pt-4 d-flex gap-2">
               <button type="submit" class="btn btn-primary" :disabled="isCreateProductSubmitDisabled">
-                <span v-if="isCreatingProduct">Saving...</span>
-                <span v-else>Create</span>
+                <span v-if="isCreatingProduct">{{ $t('common.states.saving') }}</span>
+                <span v-else>{{ $t('common.actions.create') }}</span>
               </button>
               <button
                 type="button"
@@ -293,7 +293,7 @@
                 @click="closeCreateProductDialog"
                 :disabled="isCreatingProduct"
               >
-                Cancel
+                {{ $t('common.actions.cancel') }}
               </button>
               
             </div>
@@ -307,7 +307,7 @@
       @close="handleEditProductDialogClose"
     >
       <header class="dialog-header">
-        <h5>Edit product</h5>
+        <h5>{{ $t('minishop.dialogs.editProduct') }}</h5>
         <button
           class="btn btn-icon"
           @click="closeEditProductDialog"
@@ -323,29 +323,29 @@
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="edit-product-name">Name</label>
-            <input
-              id="edit-product-name"
-              v-model.trim="editProductForm.name"
-              type="text"
-              class="form-control"
-              placeholder="Enter product name"
-              :disabled="isUpdatingProduct || isDeactivatingProduct"
-              required
-            >
+            <label class="form-label" for="edit-product-name">{{ $t('common.fields.name') }}</label>
+              <input
+                id="edit-product-name"
+                v-model.trim="editProductForm.name"
+                type="text"
+                class="form-control"
+                :placeholder="$t('minishop.dialogs.enterProductName')"
+                :disabled="isUpdatingProduct || isDeactivatingProduct"
+                required
+              >
           </div>
 
           <div class="row gap-3">
             <div class="col-6 mb-4">
-              <label class="form-label" for="edit-product-category">Category</label>
+              <label class="form-label" for="edit-product-category">{{ $t('common.fields.category') }}</label>
               <select
                 id="edit-product-category"
                 v-model="editProductForm.category_id"
                 class="form-select"
                 :disabled="isUpdatingProduct || isDeactivatingProduct || isLoadingCategories"
               >
-                <option value="">No category</option>
-                <option :value="CREATE_CATEGORY_OPTION_VALUE">+ Add new category</option>
+                <option value="">{{ $t('minishop.main.noCategory') }}</option>
+                <option :value="CREATE_CATEGORY_OPTION_VALUE">+ {{ $t('minishop.dialogs.addCategory') }}</option>
                 <option
                   v-for="category in categories"
                   :key="category.id"
@@ -360,18 +360,18 @@
                 v-model.trim="editProductForm.new_category_name"
                 type="text"
                 class="form-control mt-3"
-                placeholder="Enter new category name"
+                :placeholder="$t('minishop.dialogs.enterCategoryName')"
                 :disabled="isUpdatingProduct || isDeactivatingProduct"
               >
             </div>
             <div class="col-6 mb-4">
-              <label class="form-label" for="edit-product-sku">SKU / Kod</label>
+              <label class="form-label" for="edit-product-sku">{{ $t('minishop.dialogs.productCode') }}</label>
               <input
                 id="edit-product-sku"
                 v-model.trim="editProductForm.sku"
                 type="text"
                 class="form-control"
-                placeholder="Optional SKU"
+                :placeholder="$t('minishop.dialogs.optionalSku')"
                 :disabled="isUpdatingProduct || isDeactivatingProduct"
               >
             </div>
@@ -379,7 +379,7 @@
 
           <div class="row gap-3">
             <div class="col-6 mb-4">
-              <label class="form-label" for="edit-product-price">Price</label>
+              <label class="form-label" for="edit-product-price">{{ $t('common.fields.price') }}</label>
               <input
                 id="edit-product-price"
                 v-model.trim="editProductForm.price"
@@ -393,7 +393,7 @@
               >
             </div>
             <div class="col-3 mb-4">
-              <label class="form-label" for="edit-product-quantity">Quantity</label>
+              <label class="form-label" for="edit-product-quantity">{{ $t('common.fields.quantity') }}</label>
               <input
                 id="edit-product-quantity"
                 v-model.trim="editProductForm.quantity"
@@ -407,7 +407,7 @@
               >
             </div>
             <div class="col-3 mb-4">
-              <label class="form-label" for="edit-product-low-stock-alert">Low-stock alert</label>
+              <label class="form-label" for="edit-product-low-stock-alert">{{ $t('minishop.dialogs.lowStockAlert') }}</label>
               <input
                 id="edit-product-low-stock-alert"
                 v-model.trim="editProductForm.low_stock_alert"
@@ -415,7 +415,7 @@
                 class="form-control"
                 min="0"
                 step="0.001"
-                placeholder="Optional threshold"
+                :placeholder="$t('minishop.dialogs.optionalThreshold')"
                 :disabled="isUpdatingProduct || isDeactivatingProduct"
               >
             </div>
@@ -423,8 +423,8 @@
 
           <div class="pt-4 d-flex justify-content-between gap-2">
               <button type="submit" class="btn btn-primary" :disabled="isEditProductSubmitDisabled">
-                <span v-if="isUpdatingProduct">Saving...</span>
-                <span v-else>Save changes</span>
+                <span v-if="isUpdatingProduct">{{ $t('common.states.saving') }}</span>
+                <span v-else>{{ $t('common.actions.saveChanges') }}</span>
               </button>
 
               <button
@@ -433,7 +433,7 @@
                 @click="closeEditProductDialog"
                 :disabled="isUpdatingProduct || isDeactivatingProduct"
               >
-                Cancel
+                {{ $t('common.actions.cancel') }}
               </button>
 
               <button
@@ -442,8 +442,8 @@
                 :disabled="isUpdatingProduct || isDeactivatingProduct || editingProductId === ''"
                 @click="handleDeactivateProduct"
               >
-                <span v-if="isDeactivatingProduct">Deactivating...</span>
-                <span v-else>Deactivate</span>
+                <span v-if="isDeactivatingProduct">{{ $t('common.states.updating') }}</span>
+                <span v-else>{{ $t('common.actions.deactivate') }}</span>
               </button>
               
           </div>
@@ -458,14 +458,14 @@
       @close="handleDebtConfirmDialogClose"
     >
       <div class="border-bottom px-4 py-3">
-        <h2 class="h5 mb-1">Confirm debt sale</h2>
+        <h2 class="h5 mb-1">{{ $t('minishop.dialogs.confirmDebt') }}</h2>
         <p class="text-secondary mb-0">
-          This sale still has {{ formatMoneyValue(remainingAmount) }} remaining.
+          {{ $t('minishop.dialogs.debtSubtitle', { amount: formatMoneyValue(remainingAmount) }) }}
         </p>
       </div>
 
       <div class="px-4 py-3">
-        <p class="mb-0">Continue and save this sale as debt?</p>
+        <p class="mb-0">{{ $t('minishop.dialogs.debtQuestion') }}</p>
       </div>
 
       <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
@@ -475,7 +475,7 @@
           :disabled="isSavingSale"
           @click="closeDebtConfirmDialog"
         >
-          Cancel
+          {{ $t('common.actions.cancel') }}
         </button>
         <button
           type="button"
@@ -483,8 +483,8 @@
           :disabled="isSavingSale"
           @click="confirmDebtSale"
         >
-          <span v-if="isSavingSale">Saving...</span>
-          <span v-else>Confirm</span>
+          <span v-if="isSavingSale">{{ $t('common.states.saving') }}</span>
+          <span v-else>{{ $t('common.actions.confirm') }}</span>
         </button>
       </div>
     </dialog>
@@ -496,20 +496,20 @@
       @close="handleReceiptDialogClose"
     >
       <div class="border-bottom px-4 py-3">
-        <h2 class="h5 mb-1">Sale saved</h2>
+        <h2 class="h5 mb-1">{{ $t('minishop.dialogs.saleSaved') }}</h2>
         <p class="text-secondary mb-0">
-          Receipt for {{ receiptState?.sale?.id || 'this sale' }}
+          {{ $t('minishop.dialogs.receiptFor', { id: receiptState?.sale?.id || book.title }) }}
         </p>
       </div>
 
       <div v-if="receiptState" class="px-4 py-3" id="minishop-receipt-content">
         <div class="mb-3">
-          <div><strong>Book:</strong> {{ book.title }}</div>
-          <div><strong>Receipt:</strong> {{ receiptState.sale.id }}</div>
-          <div><strong>Sold at:</strong> {{ receiptState.sale.sold_at }}</div>
-          <div><strong>Currency:</strong> {{ receiptState.sale.currency_code }}</div>
+          <div><strong>{{ $t('common.fields.book') }}:</strong> {{ book.title }}</div>
+          <div><strong>{{ $t('common.fields.receipt') }}:</strong> {{ receiptState.sale.id }}</div>
+          <div><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ receiptState.sale.sold_at }}</div>
+          <div><strong>{{ $t('common.fields.currency') }}:</strong> {{ receiptState.sale.currency_code }}</div>
           <div v-if="receiptState.sale.customer_name">
-            <strong>Customer:</strong>
+            <strong>{{ $t('common.fields.customer') }}:</strong>
             {{ receiptState.sale.customer_name }}
             <span v-if="receiptState.sale.customer_phone"> · {{ receiptState.sale.customer_phone }}</span>
           </div>
@@ -519,10 +519,10 @@
           <table class="table table-sm mb-0">
             <thead>
               <tr>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Total</th>
+                <th>{{ $t('common.fields.item') }}</th>
+                <th>{{ $t('minishop.main.quantityShort') }}</th>
+                <th>{{ $t('common.fields.price') }}</th>
+                <th>{{ $t('common.fields.total') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -538,42 +538,42 @@
 
         <div class="d-flex flex-col gap-1">
           <div class="d-flex justify-content-between">
-            <span>Subtotal</span>
+            <span>{{ $t('common.fields.subtotal') }}</span>
             <strong>{{ receiptState.sale.subtotal_amount }}</strong>
           </div>
           <div class="d-flex justify-content-between">
-            <span>Discount</span>
+            <span>{{ $t('common.fields.discount') }}</span>
             <strong>- {{ receiptState.sale.discount_amount }}</strong>
           </div>
           <div class="d-flex justify-content-between">
-            <span>Total</span>
+            <span>{{ $t('common.fields.total') }}</span>
             <strong>{{ receiptState.sale.total_amount }}</strong>
           </div>
           <div class="d-flex justify-content-between">
-            <span>Paid</span>
+            <span>{{ $t('common.fields.paid') }}</span>
             <strong>{{ formatMoneyValue(receiptState.tenderedAmount) }}</strong>
           </div>
           <div v-if="receiptState.changeAmount > 0" class="d-flex justify-content-between text-green">
-            <span>Return change</span>
+            <span>{{ $t('minishop.sales.returnChange') }}</span>
             <strong>{{ formatMoneyValue(receiptState.changeAmount) }}</strong>
           </div>
           <div v-else-if="Number(receiptState.sale.due_amount) > 0" class="d-flex justify-content-between text-orange">
-            <span>Remaining debt</span>
+            <span>{{ $t('minishop.sales.remainingDebt') }}</span>
             <strong>{{ receiptState.sale.due_amount }}</strong>
           </div>
           <div v-else class="d-flex justify-content-between text-green">
-            <span>Status</span>
-            <strong>Paid in full</strong>
+            <span>{{ $t('common.fields.status') }}</span>
+            <strong>{{ $t('common.states.paidInFull') }}</strong>
           </div>
         </div>
       </div>
 
       <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
         <button type="button" class="btn btn-outline" @click="printReceipt">
-          Print receipt
+          {{ $t('common.actions.printReceipt') }}
         </button>
         <button type="button" class="btn btn-primary" @click="closeReceiptDialog">
-          OK
+          {{ $t('common.actions.ok') }}
         </button>
       </div>
     </dialog>
@@ -583,6 +583,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
 import {
   createMinishopCustomer,
@@ -618,6 +619,7 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 
 const createCustomerDialog = ref(null)
 const createProductDialog = ref(null)
@@ -785,14 +787,14 @@ const paymentStatusMessage = computed(() => {
   }
 
   if (changeAmount.value > 0) {
-    return `Return change: ${formatMoneyValue(changeAmount.value)}`
+    return t('minishop.main.returnChange', { amount: formatMoneyValue(changeAmount.value) })
   }
 
   if (remainingAmount.value > 0) {
-    return `Remaining: ${formatMoneyValue(remainingAmount.value)}`
+    return t('minishop.main.remaining', { amount: formatMoneyValue(remainingAmount.value) })
   }
 
-  return 'Paid in full'
+  return t('common.states.paidInFull')
 })
 
 const paymentStatusClass = computed(() => {
@@ -1143,7 +1145,7 @@ async function saveSale() {
     const savedItems = Array.isArray(data.items) ? data.items : []
 
     if (!savedSale) {
-      throw new Error('Sale response did not include receipt data.')
+      throw new Error(t('minishop.dialogs.saleResponseMissing'))
     }
 
     receiptState.value = {
@@ -1167,7 +1169,7 @@ async function saveSale() {
       return
     }
 
-    saleErrorMessage.value = getApiErrorMessage(error, 'Unable to save sale right now.')
+    saleErrorMessage.value = getApiErrorMessage(error, t('minishop.dialogs.unableSaveSale'))
   } finally {
     isSavingSale.value = false
   }
@@ -1181,7 +1183,7 @@ function printReceipt() {
   const receiptWindow = window.open('', '_blank', 'width=720,height=900')
 
   if (!receiptWindow) {
-    saleErrorMessage.value = 'Unable to open the receipt preview window.'
+    saleErrorMessage.value = t('minishop.dialogs.receiptWindowError')
     return
   }
 
@@ -1212,30 +1214,30 @@ function buildReceiptHtml() {
   const statusMarkup = receipt.changeAmount > 0
     ? `
       <div class="summary-row success">
-        <span>Return change</span>
+        <span>${escapeReceiptText(t('minishop.sales.returnChange'))}</span>
         <strong>${escapeReceiptText(formatMoneyValue(receipt.changeAmount))}</strong>
       </div>
     `
     : parseNonNegativeAmount(receipt.sale.due_amount, 0) > 0
       ? `
         <div class="summary-row warning">
-          <span>Remaining debt</span>
+          <span>${escapeReceiptText(t('minishop.sales.remainingDebt'))}</span>
           <strong>${escapeReceiptText(receipt.sale.due_amount)}</strong>
         </div>
       `
       : `
         <div class="summary-row success">
-          <span>Status</span>
-          <strong>Paid in full</strong>
+          <span>${escapeReceiptText(t('common.fields.status'))}</span>
+          <strong>${escapeReceiptText(t('common.states.paidInFull'))}</strong>
         </div>
       `
 
   return `
     <!doctype html>
-    <html lang="en">
+    <html lang="${escapeReceiptText(locale.value)}">
       <head>
         <meta charset="utf-8">
-        <title>Receipt ${escapeReceiptText(receipt.sale.id)}</title>
+        <title>${escapeReceiptText(t('common.fields.receipt'))} ${escapeReceiptText(receipt.sale.id)}</title>
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -1277,33 +1279,33 @@ function buildReceiptHtml() {
         </style>
       </head>
       <body>
-        <h1>Sale receipt</h1>
+        <h1>${escapeReceiptText(t('minishop.dialogs.saleReceipt'))}</h1>
         <div class="meta">
-          <div><span>Book</span><strong>${escapeReceiptText(props.book.title)}</strong></div>
-          <div><span>Receipt</span><strong>${escapeReceiptText(receipt.sale.id)}</strong></div>
-          <div><span>Sold at</span><strong>${escapeReceiptText(receipt.sale.sold_at)}</strong></div>
-          <div><span>Currency</span><strong>${escapeReceiptText(receipt.sale.currency_code)}</strong></div>
+          <div><span>${escapeReceiptText(t('common.fields.book'))}</span><strong>${escapeReceiptText(props.book.title)}</strong></div>
+          <div><span>${escapeReceiptText(t('common.fields.receipt'))}</span><strong>${escapeReceiptText(receipt.sale.id)}</strong></div>
+          <div><span>${escapeReceiptText(t('common.fields.soldAt'))}</span><strong>${escapeReceiptText(receipt.sale.sold_at)}</strong></div>
+          <div><span>${escapeReceiptText(t('common.fields.currency'))}</span><strong>${escapeReceiptText(receipt.sale.currency_code)}</strong></div>
           ${receipt.sale.customer_name
-            ? `<div><span>Customer</span><strong>${escapeReceiptText(receipt.sale.customer_name)}${receipt.sale.customer_phone ? ` · ${escapeReceiptText(receipt.sale.customer_phone)}` : ''}</strong></div>`
+            ? `<div><span>${escapeReceiptText(t('common.fields.customer'))}</span><strong>${escapeReceiptText(receipt.sale.customer_name)}${receipt.sale.customer_phone ? ` · ${escapeReceiptText(receipt.sale.customer_phone)}` : ''}</strong></div>`
             : ''
           }
         </div>
         <table>
           <thead>
             <tr>
-              <th>Item</th>
-              <th>Qty</th>
-              <th>Price</th>
-              <th>Total</th>
+              <th>${escapeReceiptText(t('common.fields.item'))}</th>
+              <th>${escapeReceiptText(t('minishop.main.quantityShort'))}</th>
+              <th>${escapeReceiptText(t('common.fields.price'))}</th>
+              <th>${escapeReceiptText(t('common.fields.total'))}</th>
             </tr>
           </thead>
           <tbody>${itemRows}</tbody>
         </table>
         <div class="summary">
-          <div class="summary-row"><span>Subtotal</span><strong>${escapeReceiptText(receipt.sale.subtotal_amount)}</strong></div>
-          <div class="summary-row"><span>Discount</span><strong>- ${escapeReceiptText(receipt.sale.discount_amount)}</strong></div>
-          <div class="summary-row"><span>Total</span><strong>${escapeReceiptText(receipt.sale.total_amount)}</strong></div>
-          <div class="summary-row"><span>Paid</span><strong>${escapeReceiptText(formatMoneyValue(receipt.tenderedAmount))}</strong></div>
+          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.subtotal'))}</span><strong>${escapeReceiptText(receipt.sale.subtotal_amount)}</strong></div>
+          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.discount'))}</span><strong>- ${escapeReceiptText(receipt.sale.discount_amount)}</strong></div>
+          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.total'))}</span><strong>${escapeReceiptText(receipt.sale.total_amount)}</strong></div>
+          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.paid'))}</span><strong>${escapeReceiptText(formatMoneyValue(receipt.tenderedAmount))}</strong></div>
           ${statusMarkup}
         </div>
       </body>
@@ -1336,7 +1338,7 @@ async function loadCategories() {
       return false
     }
 
-    categoryErrorMessage.value = getApiErrorMessage(error, 'Unable to load categories right now.')
+    categoryErrorMessage.value = getApiErrorMessage(error, t('minishop.dialogs.unableLoadCategories'))
     return false
   } finally {
     isLoadingCategories.value = false
@@ -1367,7 +1369,7 @@ async function loadCustomers() {
       return false
     }
 
-    customerErrorMessage.value = getApiErrorMessage(error, 'Unable to load customers right now.')
+    customerErrorMessage.value = getApiErrorMessage(error, t('minishop.customers.unableLoadCustomers'))
     return false
   } finally {
     isLoadingCustomers.value = false
@@ -1389,7 +1391,7 @@ async function loadProducts() {
       return false
     }
 
-    errorMessage.value = 'Unable to load products.'
+    errorMessage.value = t('minishop.dialogs.unableLoadProducts')
     return false
   } finally {
     isLoadingProducts.value = false
@@ -1430,7 +1432,7 @@ async function handleCreateProduct() {
       return
     }
 
-    createProductErrorMessage.value = getApiErrorMessage(error, 'Unable to create product right now.')
+    createProductErrorMessage.value = getApiErrorMessage(error, t('minishop.dialogs.unableCreateProduct'))
   } finally {
     isCreatingProduct.value = false
   }
@@ -1452,7 +1454,7 @@ async function handleCreateCustomer() {
     })
 
     if (!data.customer) {
-      throw new Error('Customer response did not include customer data.')
+      throw new Error(t('minishop.dialogs.customerResponseMissing'))
     }
 
     upsertCustomer(data.customer)
@@ -1466,7 +1468,7 @@ async function handleCreateCustomer() {
       return
     }
 
-    createCustomerErrorMessage.value = getApiErrorMessage(error, 'Unable to create customer right now.')
+    createCustomerErrorMessage.value = getApiErrorMessage(error, t('minishop.customers.unableCreateCustomer'))
   } finally {
     isCreatingCustomer.value = false
   }
@@ -1506,7 +1508,7 @@ async function handleUpdateProduct() {
       return
     }
 
-    editProductErrorMessage.value = getApiErrorMessage(error, 'Unable to update product right now.')
+    editProductErrorMessage.value = getApiErrorMessage(error, t('minishop.dialogs.unableUpdateProduct'))
   } finally {
     isUpdatingProduct.value = false
   }
@@ -1517,7 +1519,7 @@ async function handleDeactivateProduct() {
     return
   }
 
-  if (!window.confirm('Deactivate this product?')) {
+  if (!window.confirm(t('minishop.dialogs.deactivateProduct'))) {
     return
   }
 
@@ -1536,7 +1538,7 @@ async function handleDeactivateProduct() {
       return
     }
 
-    editProductErrorMessage.value = getApiErrorMessage(error, 'Unable to deactivate product right now.')
+    editProductErrorMessage.value = getApiErrorMessage(error, t('minishop.dialogs.unableDeactivateProduct'))
   } finally {
     isDeactivatingProduct.value = false
   }

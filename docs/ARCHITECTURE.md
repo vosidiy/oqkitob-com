@@ -23,7 +23,17 @@ The current architecture is intentionally book-centric: a user owns books, each 
   - mounts Vue
   - registers Pinia
   - registers Vue Router
+  - registers Vue I18n
   - runs the initial `authStore.checkAuth()`
+
+- `i18n/index.js`
+  - creates the shared `vue-i18n` instance
+  - defaults to `uz`
+  - falls back to `en`
+  - persists locale selection in `localStorage`
+
+- `i18n/messages.js`
+  - holds the shared message catalog for `uz`, `en`, and `ru`
 
 ### Layouts
 
@@ -33,6 +43,7 @@ The current architecture is intentionally book-centric: a user owns books, each 
     - signed-in user summary
     - shared books sidebar
     - create-book dialog
+    - authenticated language picker
     - logout action
     - child route content
   - warms the shared books list with `booksStore.fetchBooks()`
@@ -40,11 +51,10 @@ The current architecture is intentionally book-centric: a user owns books, each 
 
 - `GuestLayout.vue`
   - lightweight shell for `/login`, `/register`, and `/forgot-password`
+  - exposes the guest-side language picker so auth pages stay localized before sign-in
 
 ### Route Views
 
-- `LandingPage.vue`
-  - public entry page at `/`
 - `HomeView.vue`
   - authenticated overview page at `/home`
 - `BookView.vue`
@@ -59,6 +69,12 @@ Book-specific UI no longer lives in `components/`. It now lives in `views/book-t
 - `views/book-types/notes/NotesApp.vue`
 - `views/book-types/todo/TodoApp.vue`
 - `views/book-types/finance/FinanceApp.vue`
+- `views/book-types/minishop/MinishopApp.vue`
+- `views/book-types/minishop/*`
+  - `MainTab.vue`
+  - `SalesTab.vue`
+  - `CustomersTab.vue`
+  - `ReportsTab.vue`
 
 Each mini app:
 
@@ -97,7 +113,7 @@ Public methods:
 
 ### Books Store
 
-`frontend-src/src/stores/books.js` is a Pinia setup store via `useBooksStore()`.
+`frontend-src/src/stores/books-store.js` is a Pinia setup store via `useBooksStore()`.
 
 Responsibilities:
 
@@ -123,15 +139,15 @@ This store intentionally does not own selected-book state anymore. Selected-book
 
 `frontend-src/src/router/index.js` defines three route groups:
 
-- public
-  - `/` -> `LandingPage`
+- redirect
+  - `/app.html` -> `login`
 - guest-only under `GuestLayout`
   - `/login`
   - `/register`
   - `/forgot-password`
 - authenticated under `AppLayout`
   - `/home`
-  - `/home/books/:bookId`
+  - `/home/books/:bookId/:page?`
 
 The global `beforeEach` guard uses `authStore.ensureChecked()`:
 
@@ -176,8 +192,40 @@ After the selected book is known:
 - `NotesApp.vue` calls `fetchNotes(book.id)`
 - `TodoApp.vue` calls `fetchTodos(book.id)`
 - `FinanceApp.vue` calls `fetchFinanceTransactions(book.id)`
+- `MinishopApp.vue` calls minishop product/category/customer/sales helpers under `api/minishop.js`
 
 Because `AppLayout` keys `RouterView` by `bookId`, switching between books remounts `BookView` and the child mini app, which resets filters, dialogs, and local in-memory state cleanly.
+
+## Frontend Localization Architecture
+
+The frontend now uses a shared `vue-i18n` layer instead of component-local string literals.
+
+- supported locales:
+  - `uz`
+  - `en`
+  - `ru`
+- default locale:
+  - `uz`
+- fallback locale:
+  - `en`
+- persisted locale key:
+  - `oqkitob_locale`
+
+Current behavior:
+
+- `AppLayout.vue` and `GuestLayout.vue` both bind to the same locale state
+- locale changes apply immediately across routed views
+- unsupported locale values are coerced to English
+- missing keys resolve through English fallback
+- helper functions in `i18n/helpers.js` translate app-owned dynamic labels such as:
+  - book type names
+  - todo priorities
+  - payment statuses
+
+Scope note:
+
+- only visible frontend UI strings are localized right now
+- backend-provided validation and error messages are not localized yet
 
 ## Frontend API Layer
 
@@ -189,10 +237,12 @@ API helpers live in `frontend-src/src/api/`.
   - small helpers for reading response status and backend messages from unknown thrown errors
 - `auth.js`
   - auth request helpers
-- `books.js`
+- `books-api.js`
   - books list, book-type loading, single-book fallback, and book creation helpers
 - `notes.js`, `todos.js`, `finance.js`
   - book-type request helpers
+- `minishop.js`
+  - minishop products, customers, sales, and payment summary helpers
 
 This keeps transport code out of views and stores while staying lightweight.
 
@@ -216,6 +266,8 @@ This keeps transport code out of views and stores while staying lightweight.
 - `Finance`
   - `Api\FinanceController`
   - finance-book transactions
+- `Minishop`
+  - minishop products, customers, sales, receipts, and payment summary endpoints
 - Shared authenticated API layer
   - `AuthenticatedApiController`
   - `BookAccessService`
@@ -241,12 +293,16 @@ Current routes:
 /api/books/{bookId}/notes
 /api/books/{bookId}/todos
 /api/books/{bookId}/finance
+/api/books/{bookId}/minishop/products
+/api/books/{bookId}/minishop/customers
+/api/books/{bookId}/minishop/sales
 ```
 
 Conventions:
 
 - book-type routes use `/api/books/{bookId}/{type}`
 - finance uses `/finance` while the response payload remains `transactions`
+- minishop uses `/minishop/...` subroutes for tab-specific workflows
 - book-type endpoints validate:
   - authenticated user
   - book ownership

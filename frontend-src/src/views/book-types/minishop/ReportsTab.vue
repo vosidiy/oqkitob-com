@@ -4,15 +4,15 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-start gap-3 mobile:flex-col">
           <div>
-            <p class="reports-eyebrow mb-2">Reports preview</p>
-            <h2 class="reports-title mb-2">Sales overview dashboard</h2>
+            <p class="reports-eyebrow mb-2">{{ $t('minishop.reports.preview') }}</p>
+            <h2 class="reports-title mb-2">{{ $t('minishop.reports.title') }}</h2>
             <p class="text-secondary mb-0">
-              A visual-only mockup for the minishop reports tab using local demo data.
+              {{ $t('minishop.reports.subtitle') }}
             </p>
           </div>
 
           <div class="reports-badge">
-            {{ reportsOverviewMockData.generatedAtLabel }}
+            {{ $t('minishop.reports.demoData') }}
           </div>
         </div>
       </div>
@@ -26,11 +26,11 @@
         :class="`reports-kpi-card--${kpi.tone}`"
       >
         <div class="card-body">
-          <p class="text-secondary mb-2">{{ kpi.label }}</p>
+          <p class="text-secondary mb-2">{{ $t(`minishop.reports.kpis.${kpi.id}`) }}</p>
           <h3 class="reports-kpi-value mb-2">{{ formatMetricValue(kpi) }}</h3>
           <div class="d-flex justify-content-between gap-3 align-items-center">
             <strong :class="toneClassByKey[kpi.tone]">{{ kpi.change }}</strong>
-            <span class="text-secondary text-sm text-right">{{ kpi.note }}</span>
+            <span class="text-secondary text-sm text-right">{{ $t(`minishop.reports.notes.${kpi.noteKey}`) }}</span>
           </div>
         </div>
       </article>
@@ -41,13 +41,13 @@
         <div class="card-body">
           <div class="d-flex justify-content-between gap-3 align-items-start mb-4 mobile:flex-col">
             <div>
-              <h3 class="h5 mb-1">Sales trend</h3>
+              <h3 class="h5 mb-1">{{ $t('minishop.reports.salesTrend') }}</h3>
               <p class="text-secondary mb-0">
-                Daily revenue preview for the last 14 days.
+                {{ $t('minishop.reports.salesTrendSubtitle') }}
               </p>
             </div>
             <div class="reports-inline-metric">
-              <span class="reports-inline-metric__label">Peak day</span>
+              <span class="reports-inline-metric__label">{{ $t('minishop.reports.peakDay') }}</span>
               <strong>{{ formatMoneyValue(1845000) }}</strong>
             </div>
           </div>
@@ -60,9 +60,9 @@
       <article class="card reports-chart-card">
         <div class="card-body">
           <div class="mb-4">
-            <h3 class="h5 mb-1">Payment status</h3>
+            <h3 class="h5 mb-1">{{ $t('minishop.reports.paymentStatus') }}</h3>
             <p class="text-secondary mb-0">
-              How receipts are split across paid, partial, and unpaid.
+              {{ $t('minishop.reports.paymentStatusSubtitle') }}
             </p>
           </div>
           <div class="reports-canvas-shell reports-canvas-shell--compact">
@@ -74,9 +74,9 @@
       <article class="card reports-chart-card">
         <div class="card-body">
           <div class="mb-4">
-            <h3 class="h5 mb-1">Top products</h3>
+            <h3 class="h5 mb-1">{{ $t('minishop.reports.topProducts') }}</h3>
             <p class="text-secondary mb-0">
-              Best-selling products by revenue in this demo period.
+              {{ $t('minishop.reports.topProductsSubtitle') }}
             </p>
           </div>
           <div class="reports-canvas-shell reports-canvas-shell--compact">
@@ -91,9 +91,11 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Chart, registerables } from 'chart.js'
+import { useI18n } from 'vue-i18n'
 import { reportsOverviewMockData } from '@/views/book-types/minishop/reportsMockData'
 
 Chart.register(...registerables)
+const { t } = useI18n()
 
 const salesTrendCanvas = ref(null)
 const paymentStatusCanvas = ref(null)
@@ -129,7 +131,7 @@ function createCharts() {
         labels: reportsOverviewMockData.salesTrend.labels,
         datasets: [
           {
-            label: 'Sales',
+            label: t('minishop.reports.chartSalesLabel'),
             data: reportsOverviewMockData.salesTrend.totals,
             borderColor: '#0f766e',
             backgroundColor: 'rgba(15, 118, 110, 0.14)',
@@ -147,7 +149,7 @@ function createCharts() {
           tooltip: {
             callbacks: {
               label(context) {
-                return ` Sales: ${formatMoneyValue(context.parsed.y)}`
+                return ` ${t('minishop.reports.chartTooltipSales', { amount: formatMoneyValue(context.parsed.y) })}`
               },
             },
           },
@@ -181,7 +183,11 @@ function createCharts() {
     paymentStatusChart = new Chart(paymentStatusCanvas.value, {
       type: 'doughnut',
       data: {
-        labels: reportsOverviewMockData.paymentStatus.labels,
+        labels: [
+          t('minishop.reports.paymentLabels.paid'),
+          t('minishop.reports.paymentLabels.partial'),
+          t('minishop.reports.paymentLabels.unpaid'),
+        ],
         datasets: [
           {
             data: reportsOverviewMockData.paymentStatus.values,
@@ -207,7 +213,7 @@ function createCharts() {
           tooltip: {
             callbacks: {
               label(context) {
-                return ` ${context.label}: ${context.parsed}`
+                return ` ${t('minishop.reports.chartTooltipPayment', { label: context.label, value: context.parsed })}`
               },
             },
           },

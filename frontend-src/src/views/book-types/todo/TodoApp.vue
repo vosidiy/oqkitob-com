@@ -3,15 +3,15 @@
     <BookPageHeader :book="book" />
 
     <div class="p-5">
-      <h3 class="h6 mb-3">Tasks</h3>
+      <h3 class="h6 mb-3">{{ $t('todo.title') }}</h3>
 
-      <div v-if="isLoading" class="text-secondary">Loading tasks...</div>
+      <div v-if="isLoading" class="text-secondary">{{ $t('todo.loading') }}</div>
 
       <div v-else-if="errorMessage" class="alert alert-danger" role="alert">
         {{ errorMessage }}
       </div>
 
-      <div v-else-if="todos.length === 0" class="text-secondary">No tasks yet.</div>
+      <div v-else-if="todos.length === 0" class="text-secondary">{{ $t('todo.empty') }}</div>
 
       <div v-else class="list-group">
         <div v-for="item in todos" :key="item.id" class="list-group-item">
@@ -21,11 +21,11 @@
               <div v-if="item.description" class="small text-secondary mt-1">{{ item.description }}</div>
             </div>
             <span class="badge" :class="item.is_completed ? 'text-bg-success' : 'text-bg-warning'">
-              {{ item.is_completed ? 'Done' : 'Open' }}
+              {{ item.is_completed ? $t('todo.status.done') : $t('todo.status.open') }}
             </span>
           </div>
           <div class="small text-secondary mt-2 text-capitalize">
-            Priority: {{ item.priority || 'medium' }}
+            {{ $t('todo.priority') }}: {{ translateTodoPriority($t, item.priority) }}
           </div>
         </div>
       </div>
@@ -36,9 +36,11 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { isUnauthorizedError } from '@/api/errors'
 import { fetchTodos } from '@/api/todos'
 import BookPageHeader from '@/components/BookPageHeader.vue'
+import { translateTodoPriority } from '@/i18n/helpers'
 
 const props = defineProps({
   book: {
@@ -49,6 +51,7 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const todos = ref([])
 const isLoading = ref(true)
@@ -83,7 +86,7 @@ watch(() => route.params.page, async (page) => {
       return
     }
 
-    errorMessage.value = 'Unable to load tasks.'
+    errorMessage.value = t('todo.unableLoad')
   } finally {
     isLoading.value = false
   }

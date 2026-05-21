@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { i18n } from '@/i18n'
 import { fetchBooksList } from '@/api/books-api'
 
 // Keep the shared list request outside the store state so we can dedupe calls
@@ -43,7 +44,7 @@ export const useBooksStore = defineStore('books', () => {
 
         return books.value
       } catch (error) {
-        errorMessage.value = 'Unable to load books right now.'
+        errorMessage.value = i18n.global.t('appLayout.unableDashboard')
         books.value = existingBooks
         throw error
       } finally {

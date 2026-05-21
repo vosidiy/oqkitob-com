@@ -1,7 +1,7 @@
 <template>
   <div class="relative">
     <button type="button" class="btn btn-default px-2 gap-1" @click="openDialog">
-      Settings
+      {{ $t('common.actions.settings') }}
     </button>
   </div>
 </template>

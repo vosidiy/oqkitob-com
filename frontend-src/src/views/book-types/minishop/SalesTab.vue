@@ -9,18 +9,18 @@
             :value="selectedFilterTime"
             @change="selectedFilterTime = $event.target.value"
           >
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="last_10_days">Last 10 days</option>
-            <option value="last_20_days">Last 20 days</option>
-            <option value="last_30_days">Last 30 days</option>
-            <option value="previous_month">Previous month</option>
-            <option value="this_year">This year</option>
-            <option value="all_time">All time</option>
+            <option value="today">{{ $t('minishop.sales.filters.today') }}</option>
+            <option value="yesterday">{{ $t('minishop.sales.filters.yesterday') }}</option>
+            <option value="last_10_days">{{ $t('minishop.sales.filters.last10Days') }}</option>
+            <option value="last_20_days">{{ $t('minishop.sales.filters.last20Days') }}</option>
+            <option value="last_30_days">{{ $t('minishop.sales.filters.last30Days') }}</option>
+            <option value="previous_month">{{ $t('minishop.sales.filters.previousMonth') }}</option>
+            <option value="this_year">{{ $t('minishop.sales.filters.thisYear') }}</option>
+            <option value="all_time">{{ $t('minishop.sales.filters.allTime') }}</option>
           </select>
         </div>
         <div  class="flex-grow">
-          <input type="search" placeholder="Search" class="form-control">
+          <input type="search" :placeholder="$t('common.fields.search')" class="form-control">
         </div>
       </header>
       <div class="flex-1 overflow-y-auto">
@@ -29,17 +29,17 @@
         </div>
 
         <div v-else-if="isLoadingSalesList" class="px-4 py-4 text-secondary">
-          Loading sales...
+          {{ $t('minishop.sales.loadingSales') }}
         </div>
 
         <div v-else-if="sales.length === 0" class="px-4 py-4 text-secondary">
-          No sales yet.
+          {{ $t('minishop.sales.noSales') }}
         </div>
 
         <ul v-else class="mt-1">
           <li class="p-3">
             <RouterLink :to="{ name: 'book-detail', params: { bookId: props.book.id } }" class="btn text-left w-full btn-default">
-            Create sale
+            {{ $t('minishop.sales.createSale') }}
             </RouterLink> 
           </li>
           <li v-for="sale in sales" :key="sale.id" class="border-bottom hover:bg-neutral-100">
@@ -64,9 +64,9 @@
                 <div class="ml-auto text-right">
                   <p>{{ formatMoney(sale.total_amount) }}</p>
                   <p v-if="Number(sale.due_amount) > 0" class="text-red mt-1 mb-0">
-                    Due: {{ formatMoney(sale.due_amount) }}
+                    {{ $t('minishop.sales.due') }}: {{ formatMoney(sale.due_amount) }}
                   </p>
-                  <span class="text-capitalize text-sm">{{ sale.payment_status }}</span>
+                  <span class="text-capitalize text-sm">{{ translatePaymentStatus($t, sale.payment_status) }}</span>
                 </div>
               </div>
               
@@ -82,33 +82,33 @@
       </div>
 
       <div v-if="isLoadingSelectedSale" class="card">
-        <div class="p-10 text-secondary">Loading receipt...</div>
+        <div class="p-10 text-secondary">{{ $t('minishop.sales.loadingReceipt') }}</div>
       </div>
 
       <div v-else-if="selectedSale" class="card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start gap-3 mb-4 mobile:flex-col">
             <div>
-              <h3 class="text-2xl mb-1">Receipt</h3>
+              <h3 class="text-2xl mb-1">{{ $t('minishop.sales.receipt') }}</h3>
               <p class="text-secondary mb-0">{{ selectedSale.id }}</p>
             </div>
 
             <div class="text-right mobile:text-left">
-              <p class="mb-1"><strong>Sold at:</strong> {{ formatDateTime(selectedSale.sold_at) }}</p>
-              <p class="mb-1"><strong>Currency:</strong> {{ selectedSale.currency_code }}</p>
+              <p class="mb-1"><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ formatDateTime(selectedSale.sold_at) }}</p>
+              <p class="mb-1"><strong>{{ $t('common.fields.currency') }}:</strong> {{ selectedSale.currency_code }}</p>
               <p class="mb-1">
-                <strong>Customer:</strong>
-                {{ selectedSale.customer_name || 'No customer' }}
+                <strong>{{ $t('common.fields.customer') }}:</strong>
+                {{ selectedSale.customer_name || $t('minishop.sales.noCustomer') }}
                 <span v-if="selectedSale.customer_phone"> · {{ selectedSale.customer_phone }}</span>
               </p>
-              <p class="mb-3 text-capitalize"><strong>Status:</strong> {{ selectedSale.payment_status }}</p>
+              <p class="mb-3 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ translatePaymentStatus($t, selectedSale.payment_status) }}</p>
               <button
                 type="button"
                 class="btn btn-default mr-2"
                 :disabled="isDeletingSelectedSale"
                 @click="clearSelectedSale"
               >
-                Close
+                {{ $t('common.actions.close') }}
               </button>
               <button
                 type="button"
@@ -116,8 +116,8 @@
                 :disabled="isDeletingSelectedSale"
                 @click="handleDeleteSelectedSale"
               >
-                <span v-if="isDeletingSelectedSale">Deleting...</span>
-                <span v-else>Delete sale</span>
+                <span v-if="isDeletingSelectedSale">{{ $t('common.states.deleting') }}</span>
+                <span v-else>{{ $t('minishop.sales.deleteSale') }}</span>
               </button>
             </div>
           </div>
@@ -126,10 +126,10 @@
             <table class="table table-sm mb-0">
               <thead>
                 <tr>
-                  <th>Item</th>
-                  <th>Qty</th>
-                  <th>Price</th>
-                  <th>Total</th>
+                  <th>{{ $t('common.fields.item') }}</th>
+                  <th>{{ $t('minishop.main.quantityShort') }}</th>
+                  <th>{{ $t('common.fields.price') }}</th>
+                  <th>{{ $t('common.fields.total') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -148,7 +148,7 @@
               v-if="selectedSale.customer_name"
               class="d-flex justify-content-between gap-3"
             >
-              <span>Customer</span>
+              <span>{{ $t('common.fields.customer') }}</span>
               <strong class="text-right">
                 {{ selectedSale.customer_name }}
                 <span v-if="selectedSale.customer_phone"> · {{ selectedSale.customer_phone }}</span>
@@ -158,35 +158,35 @@
               v-if="selectedSale.note"
               class="d-flex justify-content-between gap-3"
             >
-              <span>Note</span>
+              <span>{{ $t('common.fields.note') }}</span>
               <strong class="text-right">{{ selectedSale.note }}</strong>
             </div>
             <div class="d-flex justify-content-between gap-3">
-              <span>Subtotal</span>
+              <span>{{ $t('common.fields.subtotal') }}</span>
               <strong>{{ formatMoney(selectedSale.subtotal_amount) }}</strong>
             </div>
             <div class="d-flex justify-content-between gap-3">
-              <span>Discount</span>
+              <span>{{ $t('common.fields.discount') }}</span>
               <strong>- {{ formatMoney(selectedSale.discount_amount) }}</strong>
             </div>
             <div class="d-flex justify-content-between gap-3">
-              <span>Total</span>
+              <span>{{ $t('common.fields.total') }}</span>
               <strong>{{ formatMoney(selectedSale.total_amount) }}</strong>
             </div>
             <div class="d-flex justify-content-between gap-3">
-              <span>Paid</span>
+              <span>{{ $t('common.fields.paid') }}</span>
               <strong>{{ formatMoney(selectedSale.paid_amount) }}</strong>
             </div>
             <div
               v-if="Number(selectedSale.due_amount) > 0"
               class="d-flex justify-content-between gap-3 text-orange"
             >
-              <span>Remaining debt</span>
+              <span>{{ $t('minishop.sales.remainingDebt') }}</span>
               <strong>{{ formatMoney(selectedSale.due_amount) }}</strong>
             </div>
             <div v-else class="d-flex justify-content-between gap-3 text-green">
-              <span>Status</span>
-              <strong>Paid in full</strong>
+              <span>{{ $t('common.fields.status') }}</span>
+              <strong>{{ $t('common.states.paidInFull') }}</strong>
             </div>
           </div>
 
@@ -197,7 +197,7 @@
               :disabled="isDeletingSelectedSale"
               @click="openPaymentDialog"
             >
-              Change payment
+              {{ $t('common.actions.changePayment') }}
             </button>
           </div>
         </div>
@@ -205,9 +205,9 @@
 
       <div v-else class="card">
         <div class="card-body text-center py-6">
-          <h3 class="h6 mb-2">Select a sale</h3>
+          <h3 class="h6 mb-2">{{ $t('minishop.sales.selectSale') }}</h3>
           <p class="text-secondary mb-0">
-            Choose any sale from the list to view its receipt details here.
+            {{ $t('minishop.sales.selectSaleHint') }}
           </p>
         </div>
       </div>
@@ -223,7 +223,7 @@
       @close="handlePaymentDialogClose"
     >
       <header class="dialog-header">
-        <h5>Change payment info</h5>
+        <h5>{{ $t('minishop.sales.changePaymentTitle') }}</h5>
         <button class="btn btn-icon" 
              :disabled="isUpdatingPayment"
               @click="closePaymentDialog">
@@ -238,14 +238,14 @@
           </div>
           
           <div class="d-flex justify-content-between mb-3">
-            <span class="col-6">Subtotal</span>
+            <span class="col-6">{{ $t('common.fields.subtotal') }}</span>
             <div class="col-6 text-right font-semibold">
               {{ formatMoney(paymentSummarySubtotal) }}
             </div>
           </div>
 
           <div class="row justify-content-between mb-3">
-            <label class="col-6 form-label" for="payment-summary-discount">Discount</label>
+            <label class="col-6 form-label" for="payment-summary-discount">{{ $t('common.fields.discount') }}</label>
             <div class="col-6 text-right font-semibold">
               <input
                 id="payment-summary-discount"
@@ -261,7 +261,7 @@
           </div>
 
           <div class="row justify-content-between mb-2">
-            <span class="col-6">Total</span>
+            <span class="col-6">{{ $t('common.fields.total') }}</span>
             <div class="col-5 text-right font-semibold">
               {{ formatMoney(paymentSummaryTotal) }}
             </div>
@@ -270,7 +270,7 @@
           <hr>
 
           <div class="row justify-content-between">
-            <label class="col-6 form-label" for="payment-summary-paid">Paid</label>
+            <label class="col-6 form-label" for="payment-summary-paid">{{ $t('common.fields.paid') }}</label>
             <div class="col-6 text-right font-semibold">
               <input
                 id="payment-summary-paid"
@@ -291,19 +291,19 @@
               v-if="paymentSummaryChangeAmount > 0"
               class="d-flex justify-content-between gap-3 text-green"
             >
-              <span>Return change</span>
+              <span>{{ $t('minishop.sales.returnChange') }}</span>
               <strong>{{ formatMoney(paymentSummaryChangeAmount) }}</strong>
             </div>
             <div
               v-else-if="paymentSummaryRemainingAmount > 0"
               class="d-flex justify-content-between gap-3 text-orange"
             >
-              <span>Remaining debt</span>
+              <span>{{ $t('minishop.sales.remainingDebt') }}</span>
               <strong>{{ formatMoney(paymentSummaryRemainingAmount) }}</strong>
             </div>
             <div v-else class="d-flex justify-content-between gap-3 text-green">
-              <span>Status</span>
-              <strong>Paid in full</strong>
+              <span>{{ $t('common.fields.status') }}</span>
+              <strong>{{ $t('common.states.paidInFull') }}</strong>
             </div>
           </div>
 
@@ -314,11 +314,11 @@
               :disabled="isUpdatingPayment"
               @click="closePaymentDialog"
             >
-              Cancel
+              {{ $t('common.actions.cancel') }}
             </button>
             <button type="submit" class="btn btn-primary flex-1" :disabled="isUpdatingPayment || !selectedSale">
-              <span v-if="isUpdatingPayment">Saving...</span>
-              <span v-else>Save</span>
+              <span v-if="isUpdatingPayment">{{ $t('common.states.saving') }}</span>
+              <span v-else>{{ $t('common.actions.save') }}</span>
             </button>
           </div>
       </form>
@@ -330,7 +330,9 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
+import { translatePaymentStatus } from '@/i18n/helpers'
 import {
   deleteMinishopSale,
   fetchMinishopSale,
@@ -350,6 +352,7 @@ const emit = defineEmits([
 ])
 
 const router = useRouter()
+const { t } = useI18n()
 
 const paymentDialog = ref(null)
 const sales = ref([])
@@ -423,7 +426,7 @@ async function loadSales() {
     }
 
     sales.value = []
-    salesListErrorMessage.value = getApiErrorMessage(error, 'Unable to load sales right now.')
+    salesListErrorMessage.value = getApiErrorMessage(error, t('minishop.sales.unableLoadSales'))
   } finally {
     isLoadingSalesList.value = false
   }
@@ -446,8 +449,8 @@ async function selectSale(sale) {
 
     clearSelectedSale()
     selectedSaleErrorMessage.value = isNotFoundError(error)
-      ? 'This sale is no longer available.'
-      : getApiErrorMessage(error, 'Unable to load this receipt right now.')
+      ? t('minishop.sales.saleUnavailable')
+      : getApiErrorMessage(error, t('minishop.sales.unableLoadReceipt'))
 
     if (isNotFoundError(error)) {
       removeSaleFromList(sale.id)
@@ -464,7 +467,7 @@ async function handleDeleteSelectedSale() {
 
   const saleId = selectedSale.value.id
 
-  if (!window.confirm('Delete this sale and restore stock?')) {
+  if (!window.confirm(t('minishop.sales.confirmDeleteSale'))) {
     return
   }
 
@@ -485,11 +488,11 @@ async function handleDeleteSelectedSale() {
     if (isNotFoundError(error)) {
       removeSaleFromList(saleId)
       clearSelectedSale()
-      selectedSaleErrorMessage.value = 'This sale is no longer available.'
+      selectedSaleErrorMessage.value = t('minishop.sales.saleUnavailable')
       return
     }
 
-    selectedSaleErrorMessage.value = getApiErrorMessage(error, 'Unable to delete this sale right now.')
+    selectedSaleErrorMessage.value = getApiErrorMessage(error, t('minishop.sales.unableDeleteSale'))
   } finally {
     isDeletingSelectedSale.value = false
   }
@@ -553,7 +556,7 @@ async function handleUpdatePaymentSummary() {
     })
 
     if (!data.sale) {
-      throw new Error('Sale response did not include updated sale data.')
+      throw new Error(t('minishop.dialogs.saleResponseMissing'))
     }
 
     selectedSale.value = data.sale
@@ -571,11 +574,11 @@ async function handleUpdatePaymentSummary() {
       removeSaleFromList(saleId)
       clearSelectedSale()
       closePaymentDialog()
-      selectedSaleErrorMessage.value = 'This sale is no longer available.'
+      selectedSaleErrorMessage.value = t('minishop.sales.saleUnavailable')
       return
     }
 
-    paymentUpdateErrorMessage.value = getApiErrorMessage(error, 'Unable to update this payment summary right now.')
+    paymentUpdateErrorMessage.value = getApiErrorMessage(error, t('minishop.sales.unableUpdatePayment'))
   } finally {
     isUpdatingPayment.value = false
   }

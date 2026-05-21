@@ -1,16 +1,16 @@
 <template>
   <div class="d-flex flex-col h-full w-full">
-    <div v-if="errorMessage" class="alert" :class="errorMessage === BOOK_NOT_FOUND_MESSAGE ? 'alert-warning' : 'alert-danger'" role="alert">
+    <div v-if="errorMessage" class="alert" :class="errorMessage === bookNotFoundMessage ? 'alert-warning' : 'alert-danger'" role="alert">
       {{ errorMessage }}
     </div>
 
-    <div v-else-if="isLoadingBook && !book" class="text-secondary">Loading book...</div>
+    <div v-else-if="isLoadingBook && !book" class="text-secondary">{{ $t('bookView.loadingBook') }}</div>
 
     <template v-else-if="book">
       <component :is="activeComponent" v-if="activeComponent" :key="book.id" :book="book" />
 
       <div v-else class="alert alert-info" role="alert">
-        This book type is not supported yet.
+        {{ $t('bookView.unsupportedType') }}
       </div>
     </template>
 
@@ -23,6 +23,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { isNotFoundError, isUnauthorizedError } from '@/api/errors'
 import { fetchBookById } from '@/api/books-api'
 import { useBooksStore } from '@/stores/books-store'
@@ -32,7 +33,8 @@ import NotesApp from '@/views/book-types/notes/NotesApp.vue'
 import TodoApp from '@/views/book-types/todo/TodoApp.vue'
 
 // Reuse one message constant so the template and loader logic stay in sync.
-const BOOK_NOT_FOUND_MESSAGE = 'Book not found.'
+const { t } = useI18n()
+const bookNotFoundMessage = computed(() => t('bookView.notFound'))
 
 // BookView only chooses the correct mini app. Each child app owns its own data fetch.
 const componentByType = {
@@ -70,7 +72,7 @@ async function resolveFallbackBook(currentBookId) {
     fallbackBook.value = data.book ?? null
 
     if (!book.value) {
-      errorMessage.value = BOOK_NOT_FOUND_MESSAGE
+      errorMessage.value = bookNotFoundMessage.value
     }
   } catch (error) {
     if (isUnauthorizedError(error)) {
@@ -79,11 +81,11 @@ async function resolveFallbackBook(currentBookId) {
     }
 
     if (isNotFoundError(error)) {
-      errorMessage.value = BOOK_NOT_FOUND_MESSAGE
+      errorMessage.value = bookNotFoundMessage.value
       return
     }
 
-    errorMessage.value = 'Unable to load book right now.'
+    errorMessage.value = t('bookView.unableLoad')
   }
 }
 
@@ -93,7 +95,7 @@ onMounted(async () => {
   const currentBookId = bookId.value
 
   if (!currentBookId) {
-    errorMessage.value = BOOK_NOT_FOUND_MESSAGE
+    errorMessage.value = bookNotFoundMessage.value
     isLoadingBook.value = false
     return
   }

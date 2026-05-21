@@ -5,8 +5,8 @@
 
   <article class="card shadow-lg p-6 mb-8">
   
-      <h4 class="text-xl mb-2">Login</h4>
-      <p class="text-secondary mb-4">Sign in to continue</p>
+      <h4 class="text-xl mb-2">{{ $t('auth.login.title') }}</h4>
+      <p class="text-secondary mb-4">{{ $t('auth.login.subtitle') }}</p>
 
       <div v-if="errorMessage" class="alert alert-danger" role="alert">
         {{ errorMessage }}
@@ -14,51 +14,51 @@
 
       <form @submit.prevent="handleSubmit">
         <div class="mb-3">
-          <label class="form-label" for="email">Email address</label>
+          <label class="form-label" for="email">{{ $t('common.fields.email') }}</label>
           <input
             id="email"
             v-model.trim="form.email"
             type="email"
             class="form-control"
-            placeholder="you@example.com"
+            :placeholder="$t('auth.login.emailPlaceholder')"
             autocomplete="email"
           >
         </div>
 
         <div class="mb-3">
-          <label class="form-label" for="password">Password</label>
+          <label class="form-label" for="password">{{ $t('common.fields.password') }}</label>
           <div class="relative d-flex">
               <input
                 id="password"
                 v-model="form.password"
                 :type="isPasswordVisible ? 'text' : 'password'"
                 class="form-control"
-                placeholder="Enter your password"
+                :placeholder="$t('auth.login.passwordPlaceholder')"
                 autocomplete="current-password"
               >
               <button
                 type="button"
                 class="btn absolute text-muted right-0 btn-icon"
-                :aria-label="isPasswordVisible ? 'Hide password' : 'Show password'"
+                :aria-label="isPasswordVisible ? $t('auth.login.hidePassword') : $t('auth.login.showPassword')"
                 @click="togglePasswordVisibility"
               > <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> </button>
           </div>
         </div>
         <div class="mb-5">
-            <RouterLink :to="{ name: 'forgot-password' }"> Parolni unuttim </RouterLink>
+            <RouterLink :to="{ name: 'forgot-password' }">{{ $t('auth.login.forgotPassword') }}</RouterLink>
         </div>
         
         <button type="submit" class="btn btn-primary btn-lg w-full" :disabled="isSubmitting">
-          <span v-if="isSubmitting">Logging in...</span>
-          <span v-else>Login</span>
+          <span v-if="isSubmitting">{{ $t('common.states.loading') }}</span>
+          <span v-else>{{ $t('auth.login.submit') }}</span>
         </button>
       </form>
 
   </article>
 
-  <RouterLink :to="{ name: 'register' }" class="btn btn-default w-full">  Create account  </RouterLink>
+  <RouterLink :to="{ name: 'register' }" class="btn btn-default w-full">{{ $t('auth.login.createAccount') }}</RouterLink>
 
-  <p class="text-center text-secondary my-8"> Yordam kerak bo'lsa bog'laning: <br> <a href="https://t.me/websift1990"> Telegram chat </a> </p>
+  <p class="text-center text-secondary my-8">{{ $t('auth.login.helpText') }}<br> <a href="https://t.me/websift1990">{{ $t('auth.login.telegramChat') }}</a> </p>
 </div> <!-- container .//end -->
 
 </template>
@@ -66,10 +66,12 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage } from '@/api/errors'
 import { authStore } from '@/stores/auth'
 
 const router = useRouter()
+const { t } = useI18n()
 
 const form = reactive({
   email: '',
@@ -99,7 +101,7 @@ async function handleSubmit() {
 }
 
 function getLoginErrorMessage(error) {
-  return getApiErrorMessage(error, 'Unable to sign in right now.')
+  return getApiErrorMessage(error, t('auth.login.unableToSignIn'))
 }
 
 function togglePasswordVisibility() {

@@ -10,20 +10,20 @@
       </div>
       
       <div v-if="isLoading" class="mt-10 text-secondary">
-          <p class="skeleton"> <b> Loading...</b> <b>Wait...</b>  <b> ... </b> </p>
+          <p class="skeleton"><b>{{ $t('notes.loadingDetailed') }}</b></p>
       </div>
-      <div v-else-if="notes.length === 0" class="mt-10 text-lg text-secondary"> No notes yet.  Click “Add new note” to get started. </div>
+      <div v-else-if="notes.length === 0" class="mt-10 text-lg text-secondary">{{ $t('notes.empty') }}</div>
 
       <div v-else class="d-grid grid-template-cols-4 mobile:grid-template-cols-1 tablet:grid-template-cols-2 gap-5">
 
         <article @click="openCreateDialog" class="card min-h-50 cursor-text border-dashed hover:border-color-neutral-600 shadow p-7" style="flex-basis: 240px;">
-          <h5 class="font-medium text-secondary mb-2"> Add new note </h5>
-          <div class="text-muted text-lg"> ✍️ Enter note details </div>
+          <h5 class="font-medium text-secondary mb-2">{{ $t('notes.addNew') }}</h5>
+          <div class="text-muted text-lg">✍️ {{ $t('notes.addNewHint') }}</div>
         </article>
 
         <article v-for="item in notes" :key="item.id" class="card group hover:border-color-neutral-600 shadow-sm" :class="getNoteCardClass(item.color)">
             <div class="p-5 cursor-pointer" style="height: 160px;" @click="openEditDialog(item)" :disabled="isNoteBusy(item.id)">
-                <h5 class="font-medium mb-2">{{ item.title || 'Untitled note' }}</h5>
+                <h5 class="font-medium mb-2">{{ item.title || $t('notes.untitled') }}</h5>
                 <div v-if="item.content" class="opacity-70 overflow-hidden">
                   {{ item.content }}
                 </div>
@@ -56,8 +56,8 @@
     >
       <form class="m-0" @submit.prevent="handleCreateNote">
         <div class="border-bottom px-4 py-3">
-          <h2 class="h5 mb-1">Create Note</h2>
-          <p class="text-secondary mb-0">Add a title, content, and optional color.</p>
+          <h2 class="h5 mb-1">{{ $t('notes.createTitle') }}</h2>
+          <p class="text-secondary mb-0">{{ $t('notes.createSubtitle') }}</p>
         </div>
 
         <div class="px-4 py-3">
@@ -66,31 +66,31 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label" for="create-note-title">Title</label>
+            <label class="form-label" for="create-note-title">{{ $t('common.fields.title') }}</label>
             <input
               id="create-note-title"
               v-model.trim="createForm.title"
               type="text"
               class="form-control"
-              placeholder="Enter note title"
+              :placeholder="$t('notes.titlePlaceholder')"
               :disabled="isCreatingNote"
             >
           </div>
 
           <div class="mb-3">
-            <label class="form-label" for="create-note-content">Content</label>
+            <label class="form-label" for="create-note-content">{{ $t('common.fields.content') }}</label>
             <textarea
               id="create-note-content"
               v-model.trim="createForm.content"
               class="form-control"
               rows="5"
-              placeholder="Write your note"
+              :placeholder="$t('notes.contentPlaceholder')"
               :disabled="isCreatingNote"
             ></textarea>
           </div>
 
           <div class="mb-0">
-            <div class="form-label mb-2">Color</div>
+            <div class="form-label mb-2">{{ $t('common.fields.color') }}</div>
             <div class="vstack gap-2">
               <div
                 v-for="option in colorOptions"
@@ -110,7 +110,7 @@
                   class="form-check-label w-100"
                   :for="`create-note-color-${option.value || 'white'}`"
                 >
-                  {{ option.label }}
+                  {{ $t(option.labelKey) }}
                 </label>
               </div>
             </div>
@@ -119,11 +119,11 @@
 
         <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
           <button type="button" class="btn btn-outline" @click="closeCreateDialog" :disabled="isCreatingNote">
-            Cancel
+            {{ $t('common.actions.cancel') }}
           </button>
           <button type="submit" class="btn btn-primary" :disabled="isCreatingNote">
-            <span v-if="isCreatingNote">Saving...</span>
-            <span v-else>Save</span>
+            <span v-if="isCreatingNote">{{ $t('common.states.saving') }}</span>
+            <span v-else>{{ $t('common.actions.save') }}</span>
           </button>
         </div>
       </form>
@@ -136,8 +136,8 @@
     >
       <form class="m-0" @submit.prevent="handleUpdateNote">
         <div class="border-bottom px-4 py-3">
-          <h2 class="h5 mb-1">Edit Note</h2>
-          <p class="text-secondary mb-0">Update the title, content, or note color.</p>
+          <h2 class="h5 mb-1">{{ $t('notes.editTitle') }}</h2>
+          <p class="text-secondary mb-0">{{ $t('notes.editSubtitle') }}</p>
         </div>
 
         <div class="px-4 py-3">
@@ -146,30 +146,30 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label" for="edit-note-title">Title</label>
+            <label class="form-label" for="edit-note-title">{{ $t('common.fields.title') }}</label>
             <input
               id="edit-note-title"
               v-model.trim="editForm.title"
               type="text"
               class="form-control"
-              placeholder="Enter note title"
+              :placeholder="$t('notes.titlePlaceholder')"
               :disabled="isUpdatingNote"
             >
           </div>
 
           <div class="mb-3">
-            <label class="form-label" for="edit-note-content">Content</label>
+            <label class="form-label" for="edit-note-content">{{ $t('common.fields.content') }}</label>
             <textarea
               id="edit-note-content"
               v-model.trim="editForm.content"
               class="form-control"
               rows="5"
-              placeholder="Write your note"
+              :placeholder="$t('notes.contentPlaceholder')"
               :disabled="isUpdatingNote"
             ></textarea>
           </div>
           <div class="mb-0">
-            <div class="form-label mb-2">Color</div>
+            <div class="form-label mb-2">{{ $t('common.fields.color') }}</div>
             <div class="vstack gap-2">
               <div
                 v-for="option in colorOptions"
@@ -189,7 +189,7 @@
                   class="form-check-label w-100"
                   :for="`edit-note-color-${option.value || 'white'}`"
                 >
-                  {{ option.label }}
+                  {{ $t(option.labelKey) }}
                 </label>
               </div>
             </div>
@@ -198,11 +198,11 @@
 
         <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">          
           <button type="button" class="btn btn-outline" @click="closeEditDialog" :disabled="isUpdatingNote">
-            Cancel
+            {{ $t('common.actions.cancel') }}
           </button>
           <button type="submit" class="btn btn-primary" :disabled="isUpdatingNote">
-            <span v-if="isUpdatingNote">Saving...</span>
-            <span v-else>Save</span>
+            <span v-if="isUpdatingNote">{{ $t('common.states.saving') }}</span>
+            <span v-else>{{ $t('common.actions.save') }}</span>
           </button>
         </div>
       </form>
@@ -213,6 +213,7 @@
 <script setup>
 import { reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
 import {
   archiveNoteRequest,
@@ -234,13 +235,14 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const colorOptions = [
-  { value: '', label: 'White' },
-  { value: 'yellow', label: 'Yellow' },
-  { value: 'blue', label: 'Blue' },
-  { value: 'green', label: 'Green' },
-  { value: 'red', label: 'Red' },
+  { value: '', labelKey: 'notes.colors.white' },
+  { value: 'yellow', labelKey: 'notes.colors.yellow' },
+  { value: 'blue', labelKey: 'notes.colors.blue' },
+  { value: 'green', labelKey: 'notes.colors.green' },
+  { value: 'red', labelKey: 'notes.colors.red' },
 ]
 
 const notes = ref([])
@@ -299,7 +301,7 @@ async function loadNotes() {
       return
     }
 
-    errorMessage.value = 'Unable to load notes.'
+    errorMessage.value = t('notes.unableLoad')
   } finally {
     isLoading.value = false
   }
@@ -382,7 +384,7 @@ async function handleCreateNote() {
       return
     }
 
-    createErrorMessage.value = getApiErrorMessage(error, 'Unable to create note right now.')
+    createErrorMessage.value = getApiErrorMessage(error, t('notes.unableCreate'))
   } finally {
     isCreatingNote.value = false
   }
@@ -417,14 +419,14 @@ async function handleUpdateNote() {
       return
     }
 
-    editErrorMessage.value = getApiErrorMessage(error, 'Unable to update note right now.')
+    editErrorMessage.value = getApiErrorMessage(error, t('notes.unableUpdate'))
   } finally {
     isUpdatingNote.value = false
   }
 }
 
 async function handleArchiveNote(note) {
-  if (!window.confirm('Are you sure?')) {
+  if (!window.confirm(t('notes.confirmArchive'))) {
     return
   }
 
@@ -439,7 +441,7 @@ async function handleArchiveNote(note) {
       return
     }
 
-    errorMessage.value = getApiErrorMessage(error, 'Unable to archive note right now.')
+    errorMessage.value = getApiErrorMessage(error, t('notes.unableArchive'))
   } finally {
     activeNoteActionId.value = ''
   }
@@ -465,14 +467,14 @@ async function handleTogglePin(note) {
       return
     }
 
-    errorMessage.value = getApiErrorMessage(error, 'Unable to update note pin right now.')
+    errorMessage.value = getApiErrorMessage(error, t('notes.unablePin'))
   } finally {
     activeNoteActionId.value = ''
   }
 }
 
 async function handleDeleteNote(note) {
-  if (!window.confirm('Are you sure?')) {
+  if (!window.confirm(t('notes.confirmDelete'))) {
     return
   }
 
@@ -487,7 +489,7 @@ async function handleDeleteNote(note) {
       return
     }
 
-    errorMessage.value = getApiErrorMessage(error, 'Unable to delete note right now.')
+    errorMessage.value = getApiErrorMessage(error, t('notes.unableDelete'))
   } finally {
     activeNoteActionId.value = ''
   }
@@ -508,7 +510,7 @@ async function handleUnauthorized(error, beforeRedirect) {
 
 function validateNoteForm(form) {
   if (form.title.trim() === '' && form.content.trim() === '') {
-    window.alert('Please enter a title or note content.')
+    window.alert(t('notes.validation'))
     return false
   }
 

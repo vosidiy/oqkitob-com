@@ -50,10 +50,26 @@ class UserModel extends Model
             'id',
             'name',
             'email',
+            'phone',
             'city',
             'country_name',
             'timezone',
             'plan',
+            'created_at',
+            'updated_at',
+        ])->where('id', $userId)
+            ->where('deleted_at', null)
+            ->first();
+
+        return $user ?: null;
+    }
+
+    public function getAuthUserById(string $userId): ?array
+    {
+        $user = $this->select([
+            'id',
+            'password_hash',
+            'status',
         ])->where('id', $userId)
             ->where('deleted_at', null)
             ->first();

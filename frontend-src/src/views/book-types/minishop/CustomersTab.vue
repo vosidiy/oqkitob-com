@@ -4,14 +4,14 @@
       <header class="d-flex h-16 gap-2 align-items-center justify-content-between px-4 py-3 border-bottom">
         <div>
           <button type="button" class="btn btn-primary-subtle" @click="openCreateCustomerDialog">
-            Add customer
+            {{ $t('minishop.customers.addCustomer') }}
           </button>
         </div>
         <div class="flex-grow">
           <input
             v-model.trim="customerSearchQuery"
             type="search"
-            placeholder="Search customers"
+            :placeholder="$t('minishop.customers.searchCustomers')"
             class="form-control"
             @input="handleCustomerSearchInput"
           >
@@ -24,11 +24,11 @@
         </div>
 
         <div v-else-if="isLoadingCustomers" class="px-4 py-4 text-secondary">
-          Loading customers...
+          {{ $t('minishop.customers.loadingCustomers') }}
         </div>
 
         <div v-else-if="customerList.length === 0" class="px-4 py-4 text-secondary">
-          No customers yet.
+          {{ $t('minishop.customers.noCustomers') }}
         </div>
 
         <ul v-else class="mt-1">
@@ -62,7 +62,7 @@
                     {{ formatMoney(customer.outstanding_balance) }}
                   </p>
                   <p class="text-sm text-secondary mb-0">
-                    {{ formatInteger(customer.receipt_count) }} receipts
+                    {{ $t('minishop.customers.receiptCount', { count: formatInteger(customer.receipt_count) }) }}
                   </p>
                   <p v-if="customer.last_sale_at" class="text-xs text-secondary mb-0 mt-1">
                     {{ formatDateTime(customer.last_sale_at) }}
@@ -82,7 +82,7 @@
         </div>
 
         <div v-if="isLoadingSelectedCustomer" class="card">
-          <div class="p-10 text-secondary">Loading customer...</div>
+          <div class="p-10 text-secondary">{{ $t('minishop.customers.loadingCustomer') }}</div>
         </div>
 
         <div v-else-if="selectedCustomer" class="card">
@@ -95,17 +95,17 @@
 
               <div class="d-flex gap-2 mobile:w-full">
                 <button type="button" class="btn btn-default" @click="clearSelectedCustomer">
-                  Close
+                  {{ $t('common.actions.close') }}
                 </button>
                 <button type="button" class="btn btn-primary" @click="openEditCustomerDialog">
-                  Edit customer
+                  {{ $t('minishop.customers.editCustomer') }}
                 </button>
               </div>
             </div>
 
             <div class="row gap-3 mb-4">
               <div class="col border rounded p-3 bg-lower">
-                <p class="text-secondary mb-1">Outstanding debt</p>
+                <p class="text-secondary mb-1">{{ $t('minishop.customers.outstandingDebt') }}</p>
                 <strong
                   class="text-lg"
                   :class="{ 'text-red': Number(selectedCustomer.outstanding_balance) > 0 }"
@@ -114,65 +114,65 @@
                 </strong>
               </div>
               <div class="col border rounded p-3 bg-lower">
-                <p class="text-secondary mb-1">Receipts</p>
+                <p class="text-secondary mb-1">{{ $t('minishop.customers.receipts') }}</p>
                 <strong class="text-lg">{{ formatInteger(selectedCustomer.receipt_count) }}</strong>
               </div>
               <div class="col border rounded p-3 bg-lower">
-                <p class="text-secondary mb-1">Total sales</p>
+                <p class="text-secondary mb-1">{{ $t('minishop.customers.totalSales') }}</p>
                 <strong class="text-lg">{{ formatMoney(selectedCustomer.total_sales_amount) }}</strong>
               </div>
               <div class="col border rounded p-3 bg-lower">
-                <p class="text-secondary mb-1">Total paid</p>
+                <p class="text-secondary mb-1">{{ $t('minishop.customers.totalPaid') }}</p>
                 <strong class="text-lg">{{ formatMoney(selectedCustomer.total_paid_amount) }}</strong>
               </div>
             </div>
 
             <div class="d-flex flex-col gap-2 mb-4">
               <div class="d-flex justify-content-between gap-3">
-                <span>Phone</span>
+                <span>{{ $t('common.fields.phone') }}</span>
                 <strong class="text-right">{{ selectedCustomer.phone || '-' }}</strong>
               </div>
               <div class="d-flex justify-content-between gap-3">
-                <span>Last receipt</span>
+                <span>{{ $t('minishop.customers.lastReceipt') }}</span>
                 <strong class="text-right">{{ formatDateTime(selectedCustomer.last_sale_at) }}</strong>
               </div>
               <div class="d-flex justify-content-between gap-3">
-                <span>Created</span>
+                <span>{{ $t('common.fields.created') }}</span>
                 <strong class="text-right">{{ formatDateTime(selectedCustomer.created_at) }}</strong>
               </div>
               <div class="d-flex justify-content-between gap-3">
-                <span>Updated</span>
+                <span>{{ $t('common.fields.updated') }}</span>
                 <strong class="text-right">{{ formatDateTime(selectedCustomer.updated_at) }}</strong>
               </div>
             </div>
 
             <div v-if="selectedCustomer.note" class="mb-4">
-              <h4 class="h6 mb-2">Note</h4>
+              <h4 class="h6 mb-2">{{ $t('common.fields.note') }}</h4>
               <p class="mb-0">{{ selectedCustomer.note }}</p>
             </div>
 
             <div>
               <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-                <h4 class="h6 mb-0">Related receipts</h4>
+                <h4 class="h6 mb-0">{{ $t('minishop.customers.relatedReceipts') }}</h4>
                 <span class="text-secondary text-sm">
-                  {{ selectedCustomerReceipts.length }} items
+                  {{ $t('minishop.customers.itemCount', { count: selectedCustomerReceipts.length }) }}
                 </span>
               </div>
 
               <div v-if="selectedCustomerReceipts.length === 0" class="text-secondary">
-                No receipts linked to this customer yet.
+                {{ $t('minishop.customers.noReceipts') }}
               </div>
 
               <div v-else class="table-responsive">
                 <table class="table table-sm mb-0">
                   <thead>
                     <tr>
-                      <th>Receipt</th>
-                      <th>Sold at</th>
-                      <th>Total</th>
-                      <th>Due</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th>{{ $t('common.fields.receipt') }}</th>
+                      <th>{{ $t('common.fields.soldAt') }}</th>
+                      <th>{{ $t('common.fields.total') }}</th>
+                      <th>{{ $t('minishop.sales.due') }}</th>
+                      <th>{{ $t('common.fields.status') }}</th>
+                      <th>{{ $t('common.actions.viewDetail') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -184,7 +184,7 @@
                       <td>{{ formatDateTime(receipt.sold_at) }}</td>
                       <td>{{ formatMoney(receipt.total_amount) }}</td>
                       <td>{{ formatMoney(receipt.due_amount) }}</td>
-                      <td class="text-capitalize">{{ receipt.payment_status }}</td>
+                      <td class="text-capitalize">{{ translatePaymentStatus($t, receipt.payment_status) }}</td>
                       <td>
                         <div class="d-flex gap-2 flex-wrap">
                           <button
@@ -193,7 +193,7 @@
                             :disabled="isReceiptActionBusy(receipt.id)"
                             @click="openReceiptDetailDialog(receipt.id)"
                           >
-                            View detail
+                            {{ $t('common.actions.viewDetail') }}
                           </button>
                           <button
                             type="button"
@@ -201,8 +201,8 @@
                             :disabled="isReceiptActionBusy(receipt.id)"
                             @click="handleDeleteReceipt(receipt.id)"
                           >
-                            <span v-if="deletingReceiptId === receipt.id">Deleting...</span>
-                            <span v-else>Delete sale</span>
+                            <span v-if="deletingReceiptId === receipt.id">{{ $t('common.states.deleting') }}</span>
+                            <span v-else>{{ $t('minishop.customers.deleteSale') }}</span>
                           </button>
                           <button
                             type="button"
@@ -210,7 +210,7 @@
                             :disabled="isReceiptActionBusy(receipt.id)"
                             @click="openReceiptPaymentDialog(receipt.id)"
                           >
-                            Change payment
+                            {{ $t('minishop.customers.changePayment') }}
                           </button>
                         </div>
                       </td>
@@ -224,9 +224,9 @@
 
         <div v-else class="card">
           <div class="card-body text-center py-6">
-            <h3 class="h6 mb-2">Select a customer</h3>
+            <h3 class="h6 mb-2">{{ $t('minishop.customers.selectCustomer') }}</h3>
             <p class="text-secondary mb-0">
-              Choose any customer from the list to view their details and related receipts here.
+              {{ $t('minishop.customers.selectCustomerHint') }}
             </p>
           </div>
         </div>
@@ -239,7 +239,7 @@
       @close="handleCreateCustomerDialogClose"
     >
       <header class="dialog-header">
-        <h5>Create customer</h5>
+        <h5>{{ $t('minishop.customers.createCustomer') }}</h5>
         <button class="btn btn-icon" :disabled="isCreatingCustomer" @click="closeCreateCustomerDialog">
           <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
         </button>
@@ -251,46 +251,46 @@
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="customers-tab-create-name">Name</label>
+            <label class="form-label" for="customers-tab-create-name">{{ $t('common.fields.name') }}</label>
             <input
               id="customers-tab-create-name"
               v-model.trim="createCustomerForm.name"
               type="text"
               class="form-control"
-              placeholder="Enter customer name"
+              :placeholder="$t('minishop.customers.enterCustomerName')"
               :disabled="isCreatingCustomer"
               required
             >
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="customers-tab-create-phone">Phone</label>
+            <label class="form-label" for="customers-tab-create-phone">{{ $t('common.fields.phone') }}</label>
             <input
               id="customers-tab-create-phone"
               v-model.trim="createCustomerForm.phone"
               type="text"
               class="form-control"
-              placeholder="Optional phone number"
+              :placeholder="$t('minishop.customers.optionalPhone')"
               :disabled="isCreatingCustomer"
             >
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="customers-tab-create-note">Note</label>
+            <label class="form-label" for="customers-tab-create-note">{{ $t('common.fields.note') }}</label>
             <textarea
               id="customers-tab-create-note"
               v-model.trim="createCustomerForm.note"
               class="form-control"
               rows="4"
-              placeholder="Optional note"
+              :placeholder="$t('minishop.customers.optionalNote')"
               :disabled="isCreatingCustomer"
             ></textarea>
           </div>
 
           <div class="pt-4 d-flex gap-2">
             <button type="submit" class="btn btn-primary" :disabled="isCreateCustomerSubmitDisabled">
-              <span v-if="isCreatingCustomer">Saving...</span>
-              <span v-else>Create</span>
+              <span v-if="isCreatingCustomer">{{ $t('common.states.saving') }}</span>
+              <span v-else>{{ $t('common.actions.create') }}</span>
             </button>
             <button
               type="button"
@@ -298,7 +298,7 @@
               :disabled="isCreatingCustomer"
               @click="closeCreateCustomerDialog"
             >
-              Cancel
+              {{ $t('common.actions.cancel') }}
             </button>
           </div>
         </form>
@@ -311,7 +311,7 @@
       @close="handleEditCustomerDialogClose"
     >
       <header class="dialog-header">
-        <h5>Edit customer</h5>
+        <h5>{{ $t('minishop.customers.editCustomerTitle') }}</h5>
         <button class="btn btn-icon" :disabled="isUpdatingCustomer" @click="closeEditCustomerDialog">
           <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
         </button>
@@ -323,46 +323,46 @@
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="customers-tab-edit-name">Name</label>
+            <label class="form-label" for="customers-tab-edit-name">{{ $t('common.fields.name') }}</label>
             <input
               id="customers-tab-edit-name"
               v-model.trim="editCustomerForm.name"
               type="text"
               class="form-control"
-              placeholder="Enter customer name"
+              :placeholder="$t('minishop.customers.enterCustomerName')"
               :disabled="isUpdatingCustomer"
               required
             >
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="customers-tab-edit-phone">Phone</label>
+            <label class="form-label" for="customers-tab-edit-phone">{{ $t('common.fields.phone') }}</label>
             <input
               id="customers-tab-edit-phone"
               v-model.trim="editCustomerForm.phone"
               type="text"
               class="form-control"
-              placeholder="Optional phone number"
+              :placeholder="$t('minishop.customers.optionalPhone')"
               :disabled="isUpdatingCustomer"
             >
           </div>
 
           <div class="mb-4">
-            <label class="form-label" for="customers-tab-edit-note">Note</label>
+            <label class="form-label" for="customers-tab-edit-note">{{ $t('common.fields.note') }}</label>
             <textarea
               id="customers-tab-edit-note"
               v-model.trim="editCustomerForm.note"
               class="form-control"
               rows="4"
-              placeholder="Optional note"
+              :placeholder="$t('minishop.customers.optionalNote')"
               :disabled="isUpdatingCustomer"
             ></textarea>
           </div>
 
           <div class="pt-4 d-flex gap-2">
             <button type="submit" class="btn btn-primary" :disabled="isEditCustomerSubmitDisabled">
-              <span v-if="isUpdatingCustomer">Saving...</span>
-              <span v-else>Save changes</span>
+              <span v-if="isUpdatingCustomer">{{ $t('common.states.saving') }}</span>
+              <span v-else>{{ $t('common.actions.saveChanges') }}</span>
             </button>
             <button
               type="button"
@@ -370,7 +370,7 @@
               :disabled="isUpdatingCustomer"
               @click="closeEditCustomerDialog"
             >
-              Cancel
+              {{ $t('common.actions.cancel') }}
             </button>
           </div>
         </form>
@@ -384,7 +384,7 @@
       @close="handleReceiptDetailDialogClose"
     >
       <header class="dialog-header">
-        <h5>Receipt detail</h5>
+        <h5>{{ $t('common.actions.viewDetail') }}</h5>
         <button class="btn btn-icon" :disabled="isLoadingReceiptDetail" @click="closeReceiptDetailDialog">
           <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
         </button>
@@ -395,25 +395,25 @@
         </div>
 
         <div v-if="isLoadingReceiptDetail" class="text-secondary">
-          Loading receipt...
+          {{ $t('minishop.sales.loadingReceipt') }}
         </div>
 
         <div v-else-if="selectedReceiptSale">
           <div class="d-flex justify-content-between align-items-start gap-3 mb-4 mobile:flex-col">
             <div>
-              <h3 class="text-2xl mb-1">Receipt</h3>
+              <h3 class="text-2xl mb-1">{{ $t('minishop.sales.receipt') }}</h3>
               <p class="text-secondary mb-0">{{ selectedReceiptSale.id }}</p>
             </div>
 
             <div class="text-right mobile:text-left">
-              <p class="mb-1"><strong>Sold at:</strong> {{ formatDateTime(selectedReceiptSale.sold_at) }}</p>
-              <p class="mb-1"><strong>Currency:</strong> {{ selectedReceiptSale.currency_code }}</p>
+              <p class="mb-1"><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ formatDateTime(selectedReceiptSale.sold_at) }}</p>
+              <p class="mb-1"><strong>{{ $t('common.fields.currency') }}:</strong> {{ selectedReceiptSale.currency_code }}</p>
               <p class="mb-1">
-                <strong>Customer:</strong>
-                {{ selectedReceiptSale.customer_name || 'No customer' }}
+                <strong>{{ $t('common.fields.customer') }}:</strong>
+                {{ selectedReceiptSale.customer_name || $t('minishop.sales.noCustomer') }}
                 <span v-if="selectedReceiptSale.customer_phone"> · {{ selectedReceiptSale.customer_phone }}</span>
               </p>
-              <p class="mb-0 text-capitalize"><strong>Status:</strong> {{ selectedReceiptSale.payment_status }}</p>
+              <p class="mb-0 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ translatePaymentStatus($t, selectedReceiptSale.payment_status) }}</p>
             </div>
           </div>
 
@@ -421,10 +421,10 @@
             <table class="table table-sm mb-0">
               <thead>
                 <tr>
-                  <th>Item</th>
-                  <th>Qty</th>
-                  <th>Price</th>
-                  <th>Total</th>
+                  <th>{{ $t('common.fields.item') }}</th>
+                  <th>{{ $t('minishop.main.quantityShort') }}</th>
+                  <th>{{ $t('common.fields.price') }}</th>
+                  <th>{{ $t('common.fields.total') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -443,7 +443,7 @@
               v-if="selectedReceiptSale.customer_name"
               class="d-flex justify-content-between gap-3"
             >
-              <span>Customer</span>
+              <span>{{ $t('common.fields.customer') }}</span>
               <strong class="text-right">
                 {{ selectedReceiptSale.customer_name }}
                 <span v-if="selectedReceiptSale.customer_phone"> · {{ selectedReceiptSale.customer_phone }}</span>
@@ -453,35 +453,35 @@
               v-if="selectedReceiptSale.note"
               class="d-flex justify-content-between gap-3"
             >
-              <span>Note</span>
+              <span>{{ $t('common.fields.note') }}</span>
               <strong class="text-right">{{ selectedReceiptSale.note }}</strong>
             </div>
             <div class="d-flex justify-content-between gap-3">
-              <span>Subtotal</span>
+              <span>{{ $t('common.fields.subtotal') }}</span>
               <strong>{{ formatMoney(selectedReceiptSale.subtotal_amount) }}</strong>
             </div>
             <div class="d-flex justify-content-between gap-3">
-              <span>Discount</span>
+              <span>{{ $t('common.fields.discount') }}</span>
               <strong>- {{ formatMoney(selectedReceiptSale.discount_amount) }}</strong>
             </div>
             <div class="d-flex justify-content-between gap-3">
-              <span>Total</span>
+              <span>{{ $t('common.fields.total') }}</span>
               <strong>{{ formatMoney(selectedReceiptSale.total_amount) }}</strong>
             </div>
             <div class="d-flex justify-content-between gap-3">
-              <span>Paid</span>
+              <span>{{ $t('common.fields.paid') }}</span>
               <strong>{{ formatMoney(selectedReceiptSale.paid_amount) }}</strong>
             </div>
             <div
               v-if="Number(selectedReceiptSale.due_amount) > 0"
               class="d-flex justify-content-between gap-3 text-orange"
             >
-              <span>Remaining debt</span>
+              <span>{{ $t('minishop.sales.remainingDebt') }}</span>
               <strong>{{ formatMoney(selectedReceiptSale.due_amount) }}</strong>
             </div>
             <div v-else class="d-flex justify-content-between gap-3 text-green">
-              <span>Status</span>
-              <strong>Paid in full</strong>
+              <span>{{ $t('common.fields.status') }}</span>
+              <strong>{{ $t('common.states.paidInFull') }}</strong>
             </div>
           </div>
         </div>
@@ -495,7 +495,7 @@
       @close="handleReceiptPaymentDialogClose"
     >
       <header class="dialog-header">
-        <h5>Change payment info</h5>
+        <h5>{{ $t('minishop.sales.changePaymentTitle') }}</h5>
         <button class="btn btn-icon" :disabled="isUpdatingReceiptPayment" @click="closeReceiptPaymentDialog">
           <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
         </button>
@@ -507,14 +507,14 @@
           </div>
 
           <div class="d-flex justify-content-between mb-3">
-            <span class="col-6">Subtotal</span>
+            <span class="col-6">{{ $t('common.fields.subtotal') }}</span>
             <div class="col-6 text-right font-semibold">
               {{ formatMoney(paymentSummarySubtotal) }}
             </div>
           </div>
 
           <div class="row justify-content-between mb-3">
-            <label class="col-6 form-label" for="customer-receipt-payment-discount">Discount</label>
+            <label class="col-6 form-label" for="customer-receipt-payment-discount">{{ $t('common.fields.discount') }}</label>
             <div class="col-6 text-right font-semibold">
               <input
                 id="customer-receipt-payment-discount"
@@ -530,7 +530,7 @@
           </div>
 
           <div class="row justify-content-between mb-2">
-            <span class="col-6">Total</span>
+            <span class="col-6">{{ $t('common.fields.total') }}</span>
             <div class="col-5 text-right font-semibold">
               {{ formatMoney(paymentSummaryTotal) }}
             </div>
@@ -539,7 +539,7 @@
           <hr>
 
           <div class="row justify-content-between">
-            <label class="col-6 form-label" for="customer-receipt-payment-paid">Paid</label>
+            <label class="col-6 form-label" for="customer-receipt-payment-paid">{{ $t('common.fields.paid') }}</label>
             <div class="col-6 text-right font-semibold">
               <input
                 id="customer-receipt-payment-paid"
@@ -560,19 +560,19 @@
               v-if="paymentSummaryChangeAmount > 0"
               class="d-flex justify-content-between gap-3 text-green"
             >
-              <span>Return change</span>
+              <span>{{ $t('minishop.sales.returnChange') }}</span>
               <strong>{{ formatMoney(paymentSummaryChangeAmount) }}</strong>
             </div>
             <div
               v-else-if="paymentSummaryRemainingAmount > 0"
               class="d-flex justify-content-between gap-3 text-orange"
             >
-              <span>Remaining debt</span>
+              <span>{{ $t('minishop.sales.remainingDebt') }}</span>
               <strong>{{ formatMoney(paymentSummaryRemainingAmount) }}</strong>
             </div>
             <div v-else class="d-flex justify-content-between gap-3 text-green">
-              <span>Status</span>
-              <strong>Paid in full</strong>
+              <span>{{ $t('common.fields.status') }}</span>
+              <strong>{{ $t('common.states.paidInFull') }}</strong>
             </div>
           </div>
 
@@ -583,15 +583,15 @@
               :disabled="isUpdatingReceiptPayment"
               @click="closeReceiptPaymentDialog"
             >
-              Cancel
+              {{ $t('common.actions.cancel') }}
             </button>
             <button
               type="submit"
               class="btn btn-primary flex-1"
               :disabled="isUpdatingReceiptPayment || !selectedReceiptSale"
             >
-              <span v-if="isUpdatingReceiptPayment">Saving...</span>
-              <span v-else>Save</span>
+              <span v-if="isUpdatingReceiptPayment">{{ $t('common.states.saving') }}</span>
+              <span v-else>{{ $t('common.actions.save') }}</span>
             </button>
           </div>
         </form>
@@ -603,7 +603,9 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
+import { translatePaymentStatus } from '@/i18n/helpers'
 import {
   createMinishopCustomer,
   deleteMinishopSale,
@@ -624,6 +626,7 @@ const props = defineProps({
 const emit = defineEmits(['customers-changed'])
 
 const router = useRouter()
+const { t } = useI18n()
 
 const createCustomerDialog = ref(null)
 const editCustomerDialog = ref(null)
@@ -740,7 +743,7 @@ async function loadCustomerList(search = customerSearchQuery.value.trim()) {
       return false
     }
 
-    customerErrorMessage.value = getApiErrorMessage(error, 'Unable to load customers right now.')
+    customerErrorMessage.value = getApiErrorMessage(error, t('minishop.customers.unableLoadCustomers'))
     return false
   } finally {
     isLoadingCustomers.value = false
@@ -802,8 +805,8 @@ async function loadCustomerDetails(customerId) {
 
     clearSelectedCustomer()
     selectedCustomerErrorMessage.value = isNotFoundError(error)
-      ? 'This customer is no longer available.'
-      : getApiErrorMessage(error, 'Unable to load this customer right now.')
+      ? t('minishop.customers.customerUnavailable')
+      : getApiErrorMessage(error, t('minishop.customers.unableLoadCustomer'))
   } finally {
     isLoadingSelectedCustomer.value = false
   }
@@ -916,7 +919,7 @@ async function handleCreateCustomer() {
     })
 
     if (!data.customer) {
-      throw new Error('Customer response did not include customer data.')
+      throw new Error(t('minishop.dialogs.customerResponseMissing'))
     }
 
     customerSearchQuery.value = ''
@@ -931,7 +934,7 @@ async function handleCreateCustomer() {
       return
     }
 
-    createCustomerErrorMessage.value = getApiErrorMessage(error, 'Unable to create customer right now.')
+    createCustomerErrorMessage.value = getApiErrorMessage(error, t('minishop.customers.unableCreateCustomer'))
   } finally {
     isCreatingCustomer.value = false
   }
@@ -953,7 +956,7 @@ async function handleUpdateCustomer() {
     })
 
     if (!data.customer) {
-      throw new Error('Customer response did not include customer data.')
+      throw new Error(t('minishop.dialogs.customerResponseMissing'))
     }
 
     customerSearchQuery.value = ''
@@ -968,7 +971,7 @@ async function handleUpdateCustomer() {
       return
     }
 
-    editCustomerErrorMessage.value = getApiErrorMessage(error, 'Unable to update customer right now.')
+    editCustomerErrorMessage.value = getApiErrorMessage(error, t('minishop.customers.unableUpdateCustomer'))
   } finally {
     isUpdatingCustomer.value = false
   }
@@ -986,7 +989,7 @@ async function loadReceiptSale(receiptId, mode = 'detail') {
     selectedReceiptItems.value = Array.isArray(data.items) ? data.items : []
 
     if (!selectedReceiptSale.value) {
-      throw new Error('Sale response did not include receipt data.')
+      throw new Error(t('minishop.dialogs.saleResponseMissing'))
     }
 
     if (mode === 'payment') {
@@ -1000,12 +1003,12 @@ async function loadReceiptSale(receiptId, mode = 'detail') {
       receiptDetailDialog.value?.showModal()
     }
   } catch (error) {
-    const didHandle = await handleReceiptActionError(error, receiptId, 'Unable to load this receipt right now.')
+    const didHandle = await handleReceiptActionError(error, receiptId, t('minishop.customers.unableLoadReceipt'))
 
     if (!didHandle) {
-      const message = error instanceof Error && error.message === 'Sale response did not include receipt data.'
+      const message = error instanceof Error && error.message === t('minishop.dialogs.saleResponseMissing')
         ? error.message
-        : getApiErrorMessage(error, 'Unable to load this receipt right now.')
+        : getApiErrorMessage(error, t('minishop.customers.unableLoadReceipt'))
 
       if (mode === 'payment') {
         receiptPaymentErrorMessage.value = message
@@ -1024,7 +1027,7 @@ async function handleDeleteReceipt(receiptId) {
     return
   }
 
-  if (!window.confirm('Delete this sale and restore stock?')) {
+  if (!window.confirm(t('minishop.customers.confirmDeleteSale'))) {
     return
   }
 
@@ -1043,10 +1046,10 @@ async function handleDeleteReceipt(receiptId) {
     await refreshSelectedCustomerData()
     emit('customers-changed')
   } catch (error) {
-    const didHandle = await handleReceiptActionError(error, receiptId, 'Unable to delete this sale right now.')
+    const didHandle = await handleReceiptActionError(error, receiptId, t('minishop.customers.unableDeleteReceipt'))
 
     if (!didHandle) {
-      selectedCustomerErrorMessage.value = getApiErrorMessage(error, 'Unable to delete this sale right now.')
+      selectedCustomerErrorMessage.value = getApiErrorMessage(error, t('minishop.customers.unableDeleteReceipt'))
     }
   } finally {
     deletingReceiptId.value = ''
@@ -1077,7 +1080,7 @@ async function handleUpdateReceiptPayment() {
     })
 
     if (!data.sale) {
-      throw new Error('Sale response did not include updated sale data.')
+      throw new Error(t('minishop.dialogs.saleResponseMissing'))
     }
 
     selectedReceiptSale.value = data.sale
@@ -1085,12 +1088,12 @@ async function handleUpdateReceiptPayment() {
     await refreshSelectedCustomerData()
     emit('customers-changed')
   } catch (error) {
-    const didHandle = await handleReceiptActionError(error, receiptId, 'Unable to update this payment summary right now.')
+    const didHandle = await handleReceiptActionError(error, receiptId, t('minishop.customers.unableUpdateReceiptPayment'))
 
     if (!didHandle) {
-      receiptPaymentErrorMessage.value = error instanceof Error && error.message === 'Sale response did not include updated sale data.'
+      receiptPaymentErrorMessage.value = error instanceof Error && error.message === t('minishop.dialogs.saleResponseMissing')
         ? error.message
-        : getApiErrorMessage(error, 'Unable to update this payment summary right now.')
+        : getApiErrorMessage(error, t('minishop.customers.unableUpdateReceiptPayment'))
     }
   } finally {
     isUpdatingReceiptPayment.value = false
@@ -1143,7 +1146,7 @@ async function handleReceiptActionError(error, receiptId, fallbackMessage) {
       resetSelectedReceiptState()
     }
 
-    selectedCustomerErrorMessage.value = 'This sale is no longer available.'
+    selectedCustomerErrorMessage.value = t('minishop.customers.saleUnavailable')
     await refreshSelectedCustomerData()
     emit('customers-changed')
     return true

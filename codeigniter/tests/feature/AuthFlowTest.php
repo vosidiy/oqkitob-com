@@ -37,6 +37,7 @@ CREATE TABLE db_users (
     default_book_id TEXT NULL,
     name TEXT NULL,
     email TEXT NOT NULL,
+    phone TEXT NULL,
     city TEXT NULL,
     country_name TEXT NULL,
     timezone TEXT NULL,
@@ -192,6 +193,284 @@ SQL);
         $response = $this->get('auth/me');
 
         $response->assertStatus(401);
+    }
+
+    public function testMeReturnsExpandedProfileForAuthenticatedUser(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->get('auth/me');
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Ali Vohidov', $payload['user']['name']);
+        self::assertSame('ali@example.com', $payload['user']['email']);
+        self::assertSame('+998900000111', $payload['user']['phone']);
+        self::assertSame('2026-05-11 20:52:13', $payload['user']['created_at']);
+        self::assertSame('2026-05-11 20:52:13', $payload['user']['updated_at']);
+        self::assertArrayNotHasKey('password_hash', $payload['user']);
+    }
+
+    public function testProfileUpdateRequiresAuthentication(): void
+    {
+        $response = $this->withBodyFormat('json')
+            ->put('auth/profile', [
+                'name' => 'Updated Name',
+            ]);
+
+        $response->assertStatus(401);
+    }
+
+    public function testProfileUpdateCanChangeName(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'name' => 'Updated Ali',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('users')
+            ->where('id', '11111111-1111-1111-1111-111111111111')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Profile updated successfully.', $payload['message']);
+        self::assertSame('Updated Ali', $payload['user']['name']);
+        self::assertSame('Updated Ali', $row['name']);
+    }
+
+    public function testProfileUpdateCanChangePhone(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'phone' => '+998901234567',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('users')
+            ->where('id', '11111111-1111-1111-1111-111111111111')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Profile updated successfully.', $payload['message']);
+        self::assertSame('+998901234567', $payload['user']['phone']);
+        self::assertSame('+998901234567', $row['phone']);
+    }
+
+    public function testProfileUpdateCanClearPhoneWithBlankInput(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'phone' => '   ',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('users')
+            ->where('id', '11111111-1111-1111-1111-111111111111')
+            ->get()
+            ->getRowArray();
+
+        self::assertNull($payload['user']['phone']);
+        self::assertNull($row['phone']);
+    }
+
+    public function testProfileUpdateRejectsBlankName(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'name' => '   ',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Name is required.', $payload['message']);
+    }
+
+    public function testProfileUpdateRejectsOverlongName(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'name' => str_repeat('a', 256),
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Name must be 255 characters or fewer.', $payload['message']);
+    }
+
+    public function testProfileUpdateRejectsOverlongPhone(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'phone' => str_repeat('1', 51),
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Phone must be 50 characters or fewer.', $payload['message']);
+    }
+
+    public function testProfileUpdateRejectsEmptyPayload(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', []);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Please provide at least one profile field to update.', $payload['message']);
+    }
+
+    public function testPasswordUpdateRequiresAuthentication(): void
+    {
+        $response = $this->withBodyFormat('json')
+            ->put('auth/password', [
+                'current_password' => 'Demo123!',
+                'new_password' => 'BetterPass123!',
+                'new_password_confirmation' => 'BetterPass123!',
+            ]);
+
+        $response->assertStatus(401);
+    }
+
+    public function testPasswordUpdateRejectsWrongCurrentPassword(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/password', [
+                'current_password' => 'WrongPassword1!',
+                'new_password' => 'BetterPass123!',
+                'new_password_confirmation' => 'BetterPass123!',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Current password is incorrect.', $payload['message']);
+    }
+
+    public function testPasswordUpdateRejectsSameAsCurrentPassword(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/password', [
+                'current_password' => 'Demo123!',
+                'new_password' => 'Demo123!',
+                'new_password_confirmation' => 'Demo123!',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('New password must be different from the current password.', $payload['message']);
+    }
+
+    public function testPasswordUpdateRejectsMismatchedConfirmation(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/password', [
+                'current_password' => 'Demo123!',
+                'new_password' => 'BetterPass123!',
+                'new_password_confirmation' => 'DifferentPass123!',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('New password confirmation does not match.', $payload['message']);
+    }
+
+    public function testPasswordUpdateSucceedsAndKeepsAuthentication(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/password', [
+                'current_password' => 'Demo123!',
+                'new_password' => 'BetterPass123!',
+                'new_password_confirmation' => 'BetterPass123!',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertSessionHas('user_id', '11111111-1111-1111-1111-111111111111');
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('users')
+            ->where('id', '11111111-1111-1111-1111-111111111111')
+            ->get()
+            ->getRowArray();
+        $followUp = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->get('auth/me');
+
+        self::assertSame('Password updated successfully.', $payload['message']);
+        self::assertTrue(password_verify('BetterPass123!', $row['password_hash']));
+        self::assertFalse(password_verify('Demo123!', $row['password_hash']));
+        $followUp->assertStatus(200);
+    }
+
+    public function testPasswordUpdateReplacesLoginCredentials(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/password', [
+                'current_password' => 'Demo123!',
+                'new_password' => 'BetterPass123!',
+                'new_password_confirmation' => 'BetterPass123!',
+            ]);
+
+        $response->assertStatus(200);
+
+        $oldLogin = $this->withBodyFormat('json')
+            ->post('auth/login', [
+                'email' => 'ali@example.com',
+                'password' => 'Demo123!',
+            ]);
+        $newLogin = $this->withBodyFormat('json')
+            ->post('auth/login', [
+                'email' => 'ali@example.com',
+                'password' => 'BetterPass123!',
+            ]);
+
+        $oldLogin->assertStatus(422);
+        $newLogin->assertStatus(200);
     }
 
     public function testBooksReturnsOnlyTheAuthenticatedUsersVisibleBooks(): void
@@ -725,6 +1004,7 @@ SQL);
                 'default_book_id' => 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
                 'name' => 'Ali Vohidov',
                 'email' => 'ali@example.com',
+                'phone' => '+998900000111',
                 'city' => 'Tashkent',
                 'country_name' => 'Uzbekistan',
                 'timezone' => 'Asia/Tashkent',
@@ -740,6 +1020,7 @@ SQL);
                 'default_book_id' => 'bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
                 'name' => 'Malika Karimova',
                 'email' => 'malika@example.com',
+                'phone' => '+998900000222',
                 'city' => 'Samarkand',
                 'country_name' => 'Uzbekistan',
                 'timezone' => 'Asia/Tashkent',
@@ -755,6 +1036,7 @@ SQL);
                 'default_book_id' => null,
                 'name' => 'Blocked User',
                 'email' => 'blocked@example.com',
+                'phone' => '+998900000999',
                 'city' => 'Tashkent',
                 'country_name' => 'Uzbekistan',
                 'timezone' => 'Asia/Tashkent',

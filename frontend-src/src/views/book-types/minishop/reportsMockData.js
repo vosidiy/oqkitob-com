@@ -1,40 +1,35 @@
 export const reportsOverviewMockData = {
-  generatedAtLabel: 'Demo data for visual preview',
   kpis: [
     {
       id: 'sales',
-      label: 'Total sales',
       value: 18450000,
       type: 'currency',
       change: '+12.4%',
-      note: 'Compared to last 14 days',
+      noteKey: 'compared14',
       tone: 'green',
     },
     {
       id: 'receipts',
-      label: 'Receipts',
       value: 268,
       type: 'integer',
       change: '+31',
-      note: 'Processed this period',
+      noteKey: 'processed',
       tone: 'blue',
     },
     {
       id: 'debt',
-      label: 'Outstanding debt',
       value: 2760000,
       type: 'currency',
       change: '-8.1%',
-      note: 'Partial and unpaid sales',
+      noteKey: 'partialUnpaid',
       tone: 'red',
     },
     {
       id: 'average',
-      label: 'Average receipt',
       value: 68843,
       type: 'currency',
       change: '+5.6%',
-      note: 'Average order value',
+      noteKey: 'avgOrder',
       tone: 'orange',
     },
   ],
@@ -73,7 +68,6 @@ export const reportsOverviewMockData = {
     ],
   },
   paymentStatus: {
-    labels: ['Paid', 'Partial', 'Unpaid'],
     values: [197, 49, 22],
   },
   topProducts: {

@@ -14,6 +14,8 @@ $routes->group('auth', static function ($routes) {
     $routes->post('login', 'Api\AuthController::login');
     $routes->post('logout', 'Api\AuthController::logout', ['filter' => 'auth']);
     $routes->get('me', 'Api\AuthController::me', ['filter' => 'auth']);
+    $routes->put('profile', 'Api\ProfileController::updateProfile', ['filter' => 'auth']);
+    $routes->put('password', 'Api\ProfileController::updatePassword', ['filter' => 'auth']);
 });
 
 $routes->group('books', ['filter' => 'auth'], static function ($routes) {
