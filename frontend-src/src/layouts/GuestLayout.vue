@@ -1,26 +1,33 @@
 <template>
-  <div class="min-h-100vh bg-base">
-    <header class="border-bottom bg-white">
-      <nav class="container d-flex justify-content-between align-items-center flex-wrap gap-3 py-4">
-        <a class="font-semibold text-decoration-none text-dark" href="/">
-          Oqkitob
-        </a>
-        <div class="d-flex align-items-center flex-wrap gap-4">
-          <a class="nav-link" href="/about.html">About</a>
-          <a class="nav-link" href="/contact.html">Contact</a>
-          <a class="nav-link" href="/terms.html">Terms</a>
-        </div>
-      </nav>
-    </header>
 
-    <main class="container py-5">
-      <div class="row justify-content-center">
-        <div class="col-12">
-          <RouterView />
-        </div>
-      </div>
-    </main>
-  </div>
+
+<header class="py-3 bg-base border-bottom">
+	<div class="container">
+		<div class="d-flex gap-2 align-items-center justify-content-between">
+			
+			<a href="/" class="hover:opacity-80 d-flex text-decoration-none align-items-center m-0">
+				<img src="/assets/img/logo.svg" alt="" height="36">
+				<div style="font-size:24px; letter-spacing:1px" class="font-semibold ml-1">Oq<span class="text-secondary">kitob</span> </div>
+			</a>
+
+			<div class="nav">
+          <a class="nav-link" href="/">Asosiy</a>
+          <a class="nav-link" href="/about.html">Haqimizda</a>
+          <a class="nav-link" href="/contact.html">Aloqa</a>
+          <a href="/login"  class="nav-link "> Kirish </a>
+			</div>
+
+		</div>
+	</div> <!-- container end.// -->
+</header>
+
+<section class="py-20 bg-lower min-h-90vh bg-lower rectangle-pattern">
+   <RouterView />
+</section>
+
+
+
+
 </template>
 
 <script setup>

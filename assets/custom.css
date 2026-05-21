@@ -172,3 +172,9 @@ meter {
 .drag-handle:active {
     cursor: grabbing;
 }
+
+
+.rectangle-pattern {
+    background-image:  linear-gradient(#ececec 1px, transparent 1px), linear-gradient(to right,#ececec 1px, var(--neutral-100) 1px);
+    background-size: 20px 20px;
+}

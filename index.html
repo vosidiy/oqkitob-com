@@ -2,7 +2,9 @@
 <html lang="">
   <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/assets/favicon.ico">
+    
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32x32.png">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oqkitob | Home</title>
     
@@ -11,64 +13,172 @@
 
   </head>
   <body>
-    
+
+<header class="py-3 bg-base border-bottom fixed-top">
     <div class="container">
-      <h1>Welcome to oqkitob</h1>
-      <a href="/login" class="btn btn-primary">Login</a>
-    </div>
+    <div class="d-flex gap-2 align-items-center justify-content-between">
+        
+        <a href="https://oqkitob.com" class="hover:opacity-80 d-flex text-decoration-none align-items-center m-0">
+            <img src="/assets/img/logo.svg" alt="" height="36">
+            <div style="font-size:24px; letter-spacing:1px" class="font-semibold ml-1">Oq<span class="text-secondary">kitob</span> </div>
+        </a>
 
-    <main class="flex-grow d-flex align-items-center py-5">
-      <div class="container">
-        <div class="row align-items-center justify-content-between">
-          <div class="col-7">
-            <span class="text-uppercase text-secondary fw-semibold small">Welcome to Oqkitob</span>
-            <h1 class="text-5xl font-bold mt-3 mb-3">Organize your notes, tasks, and ideas in one place.</h1>
-            <p class="text-lg text-secondary mb-4">
-              Oqkitob helps you keep your workspaces simple and focused, with room to grow into notes,
-              tasks, and finance tools over time.
-            </p>
-            <div class="d-flex flex-wrap gap-3">
-              <a class="btn btn-primary btn-lg" href="/login">
-                Go to login
-              </a>
-              <a class="btn btn-outline btn-lg" href="/about.html">
-                Learn more
-              </a>
-            </div>
-          </div>
-
-          <div class="col-4">
-            <div class="card shadow-sm">
-              <div class="card-body p-4">
-                <h2 class="text-3xl font-bold mb-3">Built for focused work</h2>
-                <div class="d-grid gap-3">
-                  <div class="border rounded p-3 bg-secondary">
-                    <div class="font-semibold mb-1">Notes books</div>
-                    <div class="small text-secondary">Capture ideas and reference content without clutter.</div>
-                  </div>
-                  <div class="border rounded p-3 bg-secondary">
-                    <div class="font-semibold mb-1">Todo books</div>
-                    <div class="small text-secondary">Track open work with simple status and priority signals.</div>
-                  </div>
-                  <div class="border rounded p-3 bg-secondary">
-                    <div class="font-semibold mb-1">Finance books</div>
-                    <div class="small text-secondary">Review transactions in the same dashboard as your other work.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="nav">
+            <a href="/"  class="nav-link "> Asosiy </a>
+            <a class="nav-link" href="/about.html">Haqimizda</a>
+            <a href="#" onclick="open_dialog('dialog_help')" class="nav-link  mobile:d-none">Yordam</a> 
+            <a href="/login"  class="nav-link "> Kirish </a>
         </div>
-      </div>
-    </main>
 
-    <footer class="border-top bg-white py-4">
-      <div class="container d-flex flex-column justify-content-between gap-2 text-muted">
-        <span>&copy; 2026 Oqkitob</span>
-        <span>Organized books for everyday work</span>
-      </div>
-    </footer>
+    </div>
+    </div> <!-- container end.// -->
+</header>
+
+<section class="pt-20 bg-lower h-100vh bg-size-cover overflow-hidden mobile:h-auto mobile:overflow-initial" style="background-image:url(/images/bg-home.jpg);">
+    <div class="container">
+
+    <div class="row">
+        <main class="col-7 mobile:col-12 relative">
+
+            <article class="mt-10 mobile:mt-0" style="max-width:680px">
+                <h1 class="text-5xl mobile:text-2xl mb-5 mobile:mb-2 font-bold">
+                    Sizning <span class="text-primary">"aqlli" kitobingiz</span> <br>  hisob-kitob yuritish <br> va ma'lumot saqlash uchun
+                </h1>
+                <div class="text-xl mobile:text-lg lh-lg mobile:d-none">
+                    <span>⭐⭐⭐⭐⭐</span> <br> 
+                    <p>"Men shu paytgacha Excel fayllari va qog'oz daftarlar bilan <br>  qiynalib ishlardim. Endi hammasini Oq-kitob dasturida <br> bir zumda saqlayman, topaman va hisobot olaman."</p>
+                    <em class="text-secondary"> — Oqkitob foydalanuvchisi</em>
+                </div>
+            </article>
+
+            <div class="mobile:d-none float-right">
+                <svg style="position: absolute; right: -80px; bottom: 103px;" xmlns="http://www.w3.org/2000/svg" width="284" height="116" fill="none">
+                <path fill="#6163FE" stroke="#6163FE" d="M223.15 76.788c.413-.458 1.044-.765 1.947-.711l55.25 3.36h.003c.827.047 1.676.48 2.227 1.129.508.599.743 1.352.513 2.15l-.052.16c-2.978 8.168-8.72 13.462-15.367 17.965-3.328 2.255-6.865 4.3-10.396 6.415-3.522 2.111-7.03 4.286-10.262 6.786-1.389 1.069-3.084.658-4.107-.358-.507-.504-.805-1.12-.822-1.712-.016-.571.227-1.188.939-1.738 5.119-3.955 11.532-7.141 17.638-10.884 6.065-3.718 11.769-7.96 15.23-13.963l.403-.699-.806-.049-50.33-3.06h-.001c-1.752-.106-2.655-1.51-2.657-2.94-.001-.711.227-1.381.65-1.851Z"/>
+                <path stroke="#6163FE" stroke-linecap="round" stroke-width="6" d="M260.288 89.91c-1.492.348-3.327.912-12.974 3.36-8.552 2.17-24.638 5.792-34.063 7.831-11.678 2.527-19.606 2.517-30.246 2.152-9.804-.337-19.875-3.634-31.592-8.457-14.161-5.828-24.25-14.517-30.121-19.623-6.272-6.801-12.134-13.869-17.369-18.556-.931-.803-1.578-1.462-2.923-3.046"/>
+                </svg>
+            </div>
+        </main>
+        <aside class="col-5  mobile:col-12">
+            <div class="card shadow-lg p-9 mobile:p-6 mb-4 mt-12 mobile:mt-4 ml-auto mobile:ml-0"  style="max-width: 400px; border-radius:16px">
+                
+                <h4 class="text-xxl mb-6">Akkauntga kirish</h4>
+
+                <form action="#" method="POST" class="mb-4">
+                    <input type="hidden" name="_token" value="" autocomplete="off">                
+                    <div class="mb-4">
+                        <label class="form-label font-medium">Telefon</label>
+                        <input type="email" name="email" class="form-control" value="+998" placeholder="Enter email" required> 
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label font-medium">Parol</label>
+                        <div class="relative d-flex">
+                            <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+                            <button type="button" onclick="showHidePassword('password')" class="btn absolute text-muted right-0 btn-icon"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> </button>
+                        </div>
+                    </div>
+                    <div class="mb-5">
+                        <a href="/forgot-password" class="text-sm">Parolni unuttim</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full"> Kirish </button>
+                </form>
+                
+                <!-- line   -->
+                <div class="py-3">
+                    <div class="d-flex relative border-top align-items-center justify-content-center">
+                        <small class="text-uppercase bg-base text-muted px-2" style="margin-top:-12px">YOKI</small>
+                    </div>
+                </div>
+                <!-- line end.// -->
+
+                <a class="btn btn-default w-full" href="/register"> Ro'yxatdan o'tish </a>
+
+
+            </div> <!-- card .//end -->
+        </aside>
+    </div> <!-- row end.// -->
+
+    </div> <!-- container .//end -->
+</section>
+
+<footer class="border-top">
+    <div class="container">
+        <div class="nav">
+            <a class="nav-link" href="/about.html">About</a>
+            <a class="nav-link" href="/contact.html">Contact</a>
+            <a class="nav-link" href="/terms.html">Terms</a>
+        </div>
+    </div>
+</footer>
+
+
+<!-- DIALOG HELP start -->
+<dialog id="dialog_help"  class="mt-10 dialog-sm">
+    <header class="dialog-header">
+        <h5>Yordam</h5>
+        <button class="btn btn-icon" onclick="close_dialog(this)">
+        <svg viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none">
+            <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
+        </svg> 
+        </button> 
+    </header>
+
+    <div class="dialog-body">
     
+    <h6 class="mb-2"> Yordam va taklif uchun <br> Bizga yozing </h6>
+    <p>
+        Email: vosidiy@gmail.com 
+    </p>
+    <p class="text-green mt-2">24 soat ichida aloqaga chiqamiz</p>
+    
+    <a class="btn btn-outline w-full mt-4" target="_blank" href="https://t.me/websoft1990"> 
+      Telegramdan yozish
+    </a>
+
+    </div>
+    <div class="dialog-bottom">
+        <button type="button" class="btn btn-default" onclick="close_dialog(this)"> OK <span class="text-muted">[Esc]</span> </button>
+  
+    </div> 
+</dialog>
+<!-- DIALOG HELP end.// -->
+
+
+<script>
+// Show hide password
+function showHidePassword(fieldId) {
+// 1. Get the input field element using its ID
+const passwordField = document.getElementById(fieldId);
+
+// 2. Check the current type and toggle it
+if (passwordField.type === "password") {
+    passwordField.type = "text";
+} else {
+    passwordField.type = "password";
+}
+}
+
+
+
+function open_dialog(dialog_id){
+// document.body.classList.add('overflow-hidden', 'dialog-open');
+document.getElementById(dialog_id).showModal();
+return false;
+}
+
+function close_dialog(btn_close){
+// document.body.classList.remove('overflow-hidden', 'dialog-open');
+let this_dialog = btn_close.closest('dialog')
+
+if(this_dialog.querySelector('form')){
+this_dialog.querySelector('form').reset();
+}
+
+this_dialog.close();
+if(this_dialog.dataset.onclose == 'refresh') { window.location.reload(true); }
+return false;
+}
+</script>
+
 
   </body>
 </html>

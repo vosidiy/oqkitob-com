@@ -1,8 +1,12 @@
 <template>
-  <div class="card shadow-sm">
-    <div class="card-body p-4">
-      <h1 class="text-3xl font-bold mb-2">Login</h1>
-      <p class="text-secondary mb-4">Sign in to continue to your books dashboard.</p>
+ 
+<div class="container" style="max-width: 450px;">
+
+
+  <article class="card shadow-lg p-6 mb-8">
+  
+      <h4 class="text-xl mb-2">Login</h4>
+      <p class="text-secondary mb-4">Sign in to continue</p>
 
       <div v-if="errorMessage" class="alert alert-danger" role="alert">
         {{ errorMessage }}
@@ -23,32 +27,28 @@
 
         <div class="mb-3">
           <label class="form-label" for="password">Password</label>
-          <input
-            id="password"
-            v-model="form.password"
-            type="password"
-            class="form-control"
-            placeholder="Enter your password"
-            autocomplete="current-password"
-          >
+          <div class="relative d-flex">
+              <input id="password" v-model="form.password" type="password"  class="form-control" placeholder="Enter your password" autocomplete="current-password">
+              <button type="button" onclick="showHidePassword('password')" class="btn absolute text-muted right-0 btn-icon"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> </button>
+          </div>
         </div>
-
-        <div class="small text-secondary mb-4">
-          Demo password for seeded users: <span class="font-semibold">Demo123!</span>
+        <div class="mb-5">
+            <RouterLink :to="{ name: 'forgot-password' }"> Parolni unuttim </RouterLink>
         </div>
-
+        
         <button type="submit" class="btn btn-primary btn-lg w-full" :disabled="isSubmitting">
           <span v-if="isSubmitting">Logging in...</span>
           <span v-else>Login</span>
         </button>
       </form>
 
-      <div class="d-flex justify-content-between gap-3 mt-4 small">
-        <RouterLink :to="{ name: 'forgot-password' }">Forgot password?</RouterLink>
-        <RouterLink :to="{ name: 'register' }">Create account</RouterLink>
-      </div>
-    </div>
-  </div>
+  </article>
+
+  <RouterLink :to="{ name: 'register' }" class="btn btn-default w-full">  Ro'yxatdan o'tish </RouterLink>
+
+  <p class="text-center text-secondary my-8"> Yordam kerak bo'lsa bog'laning: <br> <a href="https://t.me/websift1990"> Telegram chat </a> </p>
+</div> <!-- container .//end -->
+
 </template>
 
 <script setup>
@@ -88,4 +88,21 @@ async function handleSubmit() {
 function getLoginErrorMessage(error) {
   return getApiErrorMessage(error, 'Unable to sign in right now.')
 }
+
+
+
+
+// Show hide password
+function showHidePassword(fieldId) {
+  // 1. Get the input field element using its ID
+  const passwordField = document.getElementById(fieldId);
+
+  // 2. Check the current type and toggle it
+  if (passwordField.type === "password") {
+      passwordField.type = "text";
+  } else {
+      passwordField.type = "password";
+  }
+}
+
 </script>
