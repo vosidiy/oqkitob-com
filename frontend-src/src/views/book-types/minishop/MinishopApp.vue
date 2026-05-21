@@ -54,6 +54,7 @@
       :paid-input="paidInput"
       :payment-status-class="paymentStatusClass"
       :payment-status-message="paymentStatusMessage"
+      :product-search-query="productSearchQuery"
       :products="products"
       :sale-note-input="saleNoteInput"
       :sale-error-message="saleErrorMessage"
@@ -62,6 +63,7 @@
       :subtotal="subtotal"
       :total="total"
       @add-product-to-cart="addProductToCart"
+      @clear-product-filters="clearProductFilters"
       @complete-sale-placeholder="handleCompleteSalePlaceholder"
       @normalize-cart-item-price="normalizeCartItemPrice"
       @normalize-cart-item-quantity="normalizeCartItemQuantity"
@@ -73,6 +75,7 @@
       @remove-cart-item="removeCartItem"
       @update-cart-item-price="updateCartItemPrice"
       @update-cart-item-quantity="updateCartItemQuantity"
+      @update:product-search-query="productSearchQuery = $event"
       @update-sale-note-input="saleNoteInput = $event"
       @update:selected-category-id="selectedCategoryId = $event"
       @update:selected-customer-id="selectedCustomerId = $event"
@@ -650,6 +653,7 @@ const editProductErrorMessage = ref('')
 const saleErrorMessage = ref('')
 const selectedCategoryId = ref('')
 const selectedCustomerId = ref('')
+const productSearchQuery = ref('')
 const discountInput = ref('0.00')
 const paidInput = ref('0.00')
 const saleNoteInput = ref('')
@@ -716,17 +720,27 @@ const isEditProductSubmitDisabled = computed(() => {
 })
 
 const filteredProducts = computed(() => {
-  if (selectedCategoryId.value === '') {
-    return products.value
-  }
+  const normalizedQuery = productSearchQuery.value.trim().toLowerCase()
+  let nextProducts = products.value
 
   if (selectedCategoryId.value === NO_CATEGORY_FILTER_VALUE) {
-    return products.value.filter((product) => {
+    nextProducts = products.value.filter((product) => {
       return (product.category_id ?? '') === ''
     })
+  } else if (selectedCategoryId.value !== '') {
+    nextProducts = products.value.filter((product) => product.category_id === selectedCategoryId.value)
   }
 
-  return products.value.filter((product) => product.category_id === selectedCategoryId.value)
+  if (normalizedQuery === '') {
+    return nextProducts
+  }
+
+  return nextProducts.filter((product) => {
+    const normalizedName = String(product?.name ?? '').trim().toLowerCase()
+    const normalizedSku = String(product?.sku ?? '').trim().toLowerCase()
+
+    return normalizedName.includes(normalizedQuery) || normalizedSku.includes(normalizedQuery)
+  })
 })
 
 const normalizedCartItems = computed(() => {
@@ -1554,6 +1568,11 @@ function resetCreateProductForm() {
   createProductForm.low_stock_alert = ''
   createProductErrorMessage.value = ''
   isCreatingProduct.value = false
+}
+
+function clearProductFilters() {
+  selectedCategoryId.value = ''
+  productSearchQuery.value = ''
 }
 
 function resetCreateCustomerForm() {

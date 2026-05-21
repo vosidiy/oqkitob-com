@@ -1,7 +1,7 @@
 <template>
 <div class="d-flex h-full overflow-hidden mobile:flex-col">
   
-  <aside class="col-3 h-full min-w-80 mobile:max-w-full max-w-100 d-flex  flex-col  flex-shrink-0  bg-secondary border-right mobile:col-12">
+  <aside class="col-3 h-full min-w-80 mobile:max-w-full max-w-100 d-flex  flex-col  flex-shrink-0  bg-secondary border-right border-width-2 border-color-neutral-400 mobile:col-12">
    
     <section class="w-full border-bottom border-color-neutral-300 h-14 flex-shrink-0">
       <div class="d-flex p-1 px-2 align-items-center flex-grow gap-4 flex-row">

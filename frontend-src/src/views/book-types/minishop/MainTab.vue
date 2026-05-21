@@ -1,14 +1,8 @@
 <template>
   <div class="d-flex flex-1 overflow-hidden mobile:flex-col">
-    <aside class="d-flex flex-col overflow-hidden border-right max-w-35% mobile:max-w-full flex-grow mobile:w-full">
+    <aside class="d-flex flex-col overflow-hidden border-right  border-color-neutral-300 max-w-35% mobile:max-w-full flex-grow mobile:w-full">
       <header class="d-flex h-16 gap-2 align-items-center justify-content-between px-4 py-3 border-bottom">
         <div>
-          <button class="btn btn-primary-subtle" @click="emit('open-create-product')">
-            {{ $t('minishop.main.createProduct') }}
-          </button>
-        </div>
-
-        <div class="flex-grow">
           <select
             id="minishop-product-category-filter"
             :value="selectedCategoryId"
@@ -27,25 +21,44 @@
             </option>
           </select>
         </div>
+        <div  class="flex-grow">
+          <input
+            type="search"
+            :value="productSearchQuery"
+            :placeholder="$t('minishop.main.searchProducts')"
+            class="form-control"
+            @input="updateProductSearchQuery"
+          >
+        </div>
       </header>
 
       <section class="overflow-y-auto scrollbar-thin py-2 flex-1">
-        <p v-if="categoryErrorMessage" class="text-red mt-2">
+
+        <div class="px-4 mb-2">
+          <a href="#" role="button" class="text-secondary link" @click="emit('open-create-product')">
+            + {{ $t('minishop.main.createProduct') }}
+          </a>
+        </div>
+
+        <p v-if="categoryErrorMessage" class="text-red m-4">
           {{ categoryErrorMessage }}
         </p>
 
-        <div v-if="errorMessage" class="alert alert-danger mb-3" role="alert">
+        <div v-if="errorMessage" class="alert alert-danger m-4" role="alert">
           {{ errorMessage }}
         </div>
 
-        <div v-if="isLoadingProducts" class="text-secondary">{{ $t('minishop.main.loadingProducts') }}</div>
+        <div v-if="isLoadingProducts" class="m-3 text-secondary">{{ $t('minishop.main.loadingProducts') }}</div>
 
-        <div v-else-if="products.length === 0" class="text-secondary">
-          {{ $t('minishop.main.noProducts') }}
+        <div v-else-if="products.length === 0" class="m-4 text-secondary">
+          {{ $t('minishop.main.noProducts') }} 
         </div>
 
-        <div v-else-if="filteredProducts.length === 0" class="text-secondary">
-          {{ $t('minishop.main.noProductsInCategory') }}
+        <div v-else-if="filteredProducts.length === 0" class="m-4 p-4 text-center border-top">
+          <p class="mb-2">{{ $t('minishop.main.noFilteredProducts') }}</p>
+          <button type="button" class="btn text-primary" @click="emit('clear-product-filters')">
+            {{ $t('minishop.main.showAllProducts') }}
+          </button>
         </div>
 
         <ul v-else class="mb-0">
@@ -56,8 +69,11 @@
           >
             <div class="d-flex flex-row gap-3 align-items-center px-4 hover:bg-neutral-100">
               <div role="button" class="flex-1 overflow-hidden py-2" @click="emit('open-edit-product', product)">
-                <h6 class="font-medium mb-1">
+                <h6 class="font-semibold mb-1">
                   {{ product.name }}
+                  <span v-if="product.sku" class="text-secondary">
+                    • SKU: {{ product.sku }} 
+                  </span>
                 </h6>
                 <p>
                   {{ formatPrice(product.price) }} | {{ $t('minishop.main.quantityShort') }}: {{ formatQuantity(product.quantity) }}
@@ -78,6 +94,12 @@
             </div>
           </li>
         </ul>
+
+        <div v-if="showClearFiltersAction && filteredProducts.length > 0" class="m-4 p-2 text-center">
+          <button type="button" class="btn text-primary" @click="emit('clear-product-filters')">
+            {{ $t('minishop.main.clearFilters') }}
+          </button>
+        </div>
       </section>
     </aside>
 
@@ -363,6 +385,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  productSearchQuery: {
+    type: String,
+    required: true,
+  },
   saleNoteInput: {
     type: String,
     required: true,
@@ -416,8 +442,10 @@ const emit = defineEmits([
   'open-create-product',
   'open-edit-product',
   'remove-cart-item',
+  'clear-product-filters',
   'update-cart-item-price',
   'update-cart-item-quantity',
+  'update:productSearchQuery',
   'update-sale-note-input',
   'update:selectedCategoryId',
   'update:selectedCustomerId',
@@ -430,8 +458,16 @@ const selectedCustomer = computed(() => {
   return props.customers.find((customer) => customer.id === props.selectedCustomerId) ?? null
 })
 
+const showClearFiltersAction = computed(() => {
+  return props.selectedCategoryId !== '' || props.productSearchQuery.trim() !== ''
+})
+
 function updateSelectedCategoryId(event) {
   emit('update:selectedCategoryId', event.target.value)
+}
+
+function updateProductSearchQuery(event) {
+  emit('update:productSearchQuery', event.target.value)
 }
 
 function updateSelectedCustomerId(event) {
