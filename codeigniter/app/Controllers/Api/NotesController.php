@@ -19,7 +19,7 @@ use App\Services\BookAccessService;
  */
 class NotesController extends AuthenticatedApiController
 {
-    private const ALLOWED_COLORS = ['white', 'yellow', 'blue', 'green', 'red'];
+    private const ALLOWED_COLORS = ['yellow', 'purple', 'white', 'blue', 'green', 'red'];
 
     public function __construct(
         private readonly BookAccessService $bookAccess = new BookAccessService(),

@@ -48,8 +48,12 @@ export function fetchMinishopSale(bookId, saleId) {
   return apiClient.get(`/books/${bookId}/minishop/sales/${saleId}`)
 }
 
-export function updateMinishopSalePaymentSummary(bookId, saleId, payload) {
-  return apiClient.put(`/books/${bookId}/minishop/sales/${saleId}/payment-summary`, payload)
+export function createMinishopSalePayment(bookId, saleId, payload) {
+  return apiClient.post(`/books/${bookId}/minishop/sales/${saleId}/payments`, payload)
+}
+
+export function deleteMinishopSalePayment(bookId, saleId, paymentId) {
+  return apiClient.delete(`/books/${bookId}/minishop/sales/${saleId}/payments/${paymentId}`)
 }
 
 export function deleteMinishopSale(bookId, saleId) {

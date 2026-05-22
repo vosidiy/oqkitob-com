@@ -35,8 +35,6 @@
       :category-error-message="categoryErrorMessage"
       :customer-error-message="customerErrorMessage"
       :customers="customers"
-      :discount-amount="discountAmount"
-      :discount-input="discountInput"
       :error-message="errorMessage"
       :filtered-products="filteredProducts"
       :is-loading-categories="isLoadingCategories"
@@ -44,24 +42,17 @@
       :is-loading-products="isLoadingProducts"
       :is-saving-sale="isSavingSale"
       :no-category-filter-value="NO_CATEGORY_FILTER_VALUE"
-      :paid-input="paidInput"
-      :payment-status-class="paymentStatusClass"
-      :payment-status-message="paymentStatusMessage"
       :product-search-query="productSearchQuery"
       :products="products"
       :sale-note-input="saleNoteInput"
-      :sale-error-message="saleErrorMessage"
       :selected-category-id="selectedCategoryId"
       :selected-customer-id="selectedCustomerId"
       :subtotal="subtotal"
-      :total="total"
       @add-product-to-cart="addProductToCart"
       @clear-product-filters="clearProductFilters"
-      @complete-sale-placeholder="handleCompleteSalePlaceholder"
       @normalize-cart-item-price="normalizeCartItemPrice"
       @normalize-cart-item-quantity="normalizeCartItemQuantity"
-      @normalize-discount-input="normalizeDiscountInput"
-      @normalize-paid-input="normalizePaidInput"
+      @open-payment-dialog="openCheckoutPaymentDialog"
       @open-create-customer="openCreateCustomerDialogFromCheckout"
       @open-create-product="openCreateProductDialog"
       @open-edit-product="openEditProductDialog"
@@ -72,9 +63,6 @@
       @update-sale-note-input="saleNoteInput = $event"
       @update:selected-category-id="selectedCategoryId = $event"
       @update:selected-customer-id="selectedCustomerId = $event"
-      @update-discount-input="discountInput = $event"
-      @update-paid-input="paidInput = $event"
-      @mark-paid-manually-edited="markPaidManuallyEdited"
     />
 
     <SalesTab v-else-if="activePageKey === 'sales'" :book="book" @sales-changed="handleSalesChanged" />
@@ -446,40 +434,142 @@
     </dialog>
 
     <dialog
-      ref="debtConfirmDialog"
-      class="border rounded shadow p-0"
-      @cancel="handleDebtConfirmDialogCancel"
-      @close="handleDebtConfirmDialogClose"
+      ref="checkoutPaymentDialog"
+      class="dialog-sm"
+      @cancel="handleCheckoutPaymentDialogCancel"
+      @close="handleCheckoutPaymentDialogClose"
     >
-      <div class="border-bottom px-4 py-3">
-        <h2 class="h5 mb-1">{{ $t('minishop.dialogs.confirmDebt') }}</h2>
-        <p class="text-secondary mb-0">
-          {{ $t('minishop.dialogs.debtSubtitle', { amount: formatMoneyValue(remainingAmount) }) }}
-        </p>
-      </div>
-
-      <div class="px-4 py-3">
-        <p class="mb-0">{{ $t('minishop.dialogs.debtQuestion') }}</p>
-      </div>
-
-      <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
+      <header class="dialog-header">
+        <h5>{{ $t('minishop.dialogs.paymentOverview') }}</h5>
         <button
           type="button"
-          class="btn btn-outline"
+          class="btn btn-icon"
           :disabled="isSavingSale"
-          @click="closeDebtConfirmDialog"
+          @click="closeCheckoutPaymentDialog"
         >
-          {{ $t('common.actions.cancel') }}
+          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
         </button>
-        <button
-          type="button"
-          class="btn btn-primary"
-          :disabled="isSavingSale"
-          @click="confirmDebtSale"
-        >
-          <span v-if="isSavingSale">{{ $t('common.states.saving') }}</span>
-          <span v-else>{{ $t('common.actions.confirm') }}</span>
-        </button>
+      </header>
+
+      <div class="dialog-body">
+        <form @submit.prevent="handleCheckoutPaymentSubmit">
+          <div v-if="saleErrorMessage" class="alert alert-danger mb-3" role="alert">
+            {{ saleErrorMessage }}
+          </div>
+
+          <div class="d-flex justify-content-between mb-3">
+            <span>{{ $t('common.fields.subtotal') }}</span>
+            <div class="text-right font-semibold">
+              {{ formatMoneyValue(subtotal) }}
+            </div>
+          </div>
+
+          <div class="row justify-content-between mb-3">
+            <label class="col-6 form-label" for="checkout-payment-discount">{{ $t('common.fields.discount') }}</label>
+            <div class="col-6 text-right font-semibold">
+              <input
+                id="checkout-payment-discount"
+                v-model.trim="discountInput"
+                type="number"
+                class="form-control min-h-5 h-8 font-semibold"
+                min="0"
+                step="0.01"
+                :disabled="isSavingSale"
+                @blur="normalizeDiscountInput"
+              >
+            </div>
+          </div>
+
+          <div v-if="discountAmount > 0" class="row justify-content-between mb-3">
+            <span class="col-6">{{ $t('common.fields.total') }}</span>
+            <div class="col-6 text-right font-semibold">
+              {{ formatMoneyValue(total) }}
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="mb-3">
+            <label class="form-label d-block">{{ $t('common.fields.method') }}</label>
+            <div class="d-flex gap-4">
+              <label class="form-check d-flex align-items-center gap-2">
+                <input
+                  v-model="paymentMethod"
+                  class="form-check-input"
+                  type="radio"
+                  name="checkout-payment-method"
+                  value="cash"
+                  :disabled="isSavingSale"
+                >
+                <span>{{ $t('minishop.paymentMethods.cash') }}</span>
+              </label>
+              <label class="form-check d-flex align-items-center gap-2">
+                <input
+                  v-model="paymentMethod"
+                  class="form-check-input"
+                  type="radio"
+                  name="checkout-payment-method"
+                  value="card"
+                  :disabled="isSavingSale"
+                >
+                <span>{{ $t('minishop.paymentMethods.card') }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="row justify-content-between mb-3">
+            <label class="col-6 form-label" for="checkout-payment-paid">{{ $t('common.fields.paid') }}</label>
+            <div class="col-6 text-right font-semibold">
+              <input
+                id="checkout-payment-paid"
+                v-model.trim="paidInput"
+                type="number"
+                class="form-control min-h-5 h-8 font-semibold"
+                min="0"
+                step="0.01"
+                :disabled="isSavingSale"
+                @input="markPaidManuallyEdited"
+                @blur="normalizePaidInput"
+              >
+            </div>
+          </div>
+
+          <div class="mb-5">
+            <div
+              v-if="changeAmount > 0"
+              class="d-flex justify-content-between gap-3 text-green"
+            >
+              <span>{{ $t('minishop.sales.returnChange') }}</span>
+              <strong>{{ formatMoneyValue(changeAmount) }}</strong>
+            </div>
+            <div
+              v-else-if="remainingAmount > 0"
+              class="d-flex justify-content-between gap-3 text-orange"
+            >
+              <span>{{ $t('minishop.sales.remainingDebt') }}</span>
+              <strong>{{ formatMoneyValue(remainingAmount) }}</strong>
+            </div>
+            <div v-else class="d-flex justify-content-between gap-3 text-green">
+              <span>{{ $t('common.fields.status') }}</span>
+              <strong>{{ $t('common.states.paidInFull') }}</strong>
+            </div>
+          </div>
+
+          <div class="border-top d-flex pt-4 gap-2">
+            <button
+              type="button"
+              class="btn btn-default btn-lg flex-1"
+              :disabled="isSavingSale"
+              @click="closeCheckoutPaymentDialog"
+            >
+              {{ $t('common.actions.cancel') }}
+            </button>
+            <button type="submit" class="btn btn-lg btn-primary flex-1" :disabled="isSavingSale || cartItems.length === 0">
+              <span v-if="isSavingSale">{{ $t('common.states.saving') }}</span>
+              <span v-else>{{ $t('minishop.dialogs.savePayment') }}</span>
+            </button>
+          </div>
+        </form>
       </div>
     </dialog>
 
@@ -616,7 +706,7 @@ const { t, locale } = useI18n()
 const createCustomerDialog = ref(null)
 const createProductDialog = ref(null)
 const editProductDialog = ref(null)
-const debtConfirmDialog = ref(null)
+const checkoutPaymentDialog = ref(null)
 const receiptDialog = ref(null)
 const products = ref([])
 const categories = ref([])
@@ -645,6 +735,7 @@ const selectedCustomerId = ref('')
 const productSearchQuery = ref('')
 const discountInput = ref('0.00')
 const paidInput = ref('0.00')
+const paymentMethod = ref('cash')
 const saleNoteInput = ref('')
 const isPaidManuallyEdited = ref(false)
 const receiptState = ref(null)
@@ -834,8 +925,25 @@ watch(subtotal, (nextSubtotal) => {
 watch(total, (nextTotal) => {
   if (!isPaidManuallyEdited.value) {
     paidInput.value = formatMoneyValue(nextTotal)
+    return
+  }
+
+  if (paymentMethod.value === 'card' && paidAmount.value > nextTotal) {
+    paidInput.value = formatMoneyValue(nextTotal)
   }
 }, { immediate: true })
+
+watch(paymentMethod, (nextMethod) => {
+  if (nextMethod === 'card' && paidAmount.value > total.value) {
+    paidInput.value = formatMoneyValue(total.value)
+  }
+})
+
+watch(paidAmount, (nextPaidAmount) => {
+  if (paymentMethod.value === 'card' && nextPaidAmount > total.value) {
+    paidInput.value = formatMoneyValue(total.value)
+  }
+})
 
 watch(() => createProductForm.category_id, (nextCategoryId) => {
   if (nextCategoryId !== CREATE_CATEGORY_OPTION_VALUE) {
@@ -1022,21 +1130,45 @@ function markPaidManuallyEdited() {
 }
 
 function normalizePaidInput() {
+  if (paymentMethod.value === 'card' && paidAmount.value > total.value) {
+    paidInput.value = formatMoneyValue(total.value)
+    return
+  }
+
   paidInput.value = formatMoneyValue(paidInput.value)
 }
 
-function handleCompleteSalePlaceholder() {
+function openCheckoutPaymentDialog() {
   if (cartItems.value.length === 0 || isSavingSale.value) {
     return
   }
 
   saleErrorMessage.value = ''
 
-  if (remainingAmount.value > 0) {
-    openDebtConfirmDialog()
-    return
+  if (!checkoutPaymentDialog.value?.open) {
+    checkoutPaymentDialog.value?.showModal()
   }
+}
 
+function closeCheckoutPaymentDialog() {
+  if (checkoutPaymentDialog.value?.open) {
+    checkoutPaymentDialog.value.close()
+  }
+}
+
+function handleCheckoutPaymentDialogCancel(event) {
+  if (isSavingSale.value) {
+    event.preventDefault()
+  }
+}
+
+function handleCheckoutPaymentDialogClose() {
+  if (!isSavingSale.value) {
+    saleErrorMessage.value = ''
+  }
+}
+
+function handleCheckoutPaymentSubmit() {
   void saveSale()
 }
 
@@ -1068,34 +1200,6 @@ function handleCreateCustomerDialogCancel(event) {
   if (isCreatingCustomer.value) {
     event.preventDefault()
   }
-}
-
-function openDebtConfirmDialog() {
-  if (!debtConfirmDialog.value?.open) {
-    debtConfirmDialog.value?.showModal()
-  }
-}
-
-function closeDebtConfirmDialog() {
-  if (debtConfirmDialog.value?.open) {
-    debtConfirmDialog.value.close()
-  }
-}
-
-function handleDebtConfirmDialogCancel(event) {
-  if (isSavingSale.value) {
-    event.preventDefault()
-  }
-}
-
-function handleDebtConfirmDialogClose() {
-  if (!isSavingSale.value) {
-    saleErrorMessage.value = ''
-  }
-}
-
-function confirmDebtSale() {
-  void saveSale()
 }
 
 function openReceiptDialog() {
@@ -1140,12 +1244,15 @@ async function saveSale() {
       discount_amount: discountAmount.value,
       note: normalizeOptionalInput(saleNoteInput.value),
       paid_amount: tenderedAmount,
+      payment_method: paymentMethod.value,
+      paid_at: makeLocalDateTimeString(),
       sold_at: makeLocalDateTimeString(),
       items: normalizedSaleItemsPayload.value,
     })
 
     const savedSale = data.sale ?? null
     const savedItems = Array.isArray(data.items) ? data.items : []
+    const savedPayments = Array.isArray(data.payments) ? data.payments : []
 
     if (!savedSale) {
       throw new Error(t('minishop.dialogs.saleResponseMissing'))
@@ -1154,19 +1261,20 @@ async function saveSale() {
     receiptState.value = {
       sale: savedSale,
       items: savedItems,
+      payments: savedPayments,
       tenderedAmount,
       changeAmount: Math.max(tenderedAmount - parseNonNegativeAmount(savedSale.total_amount, 0), 0),
     }
 
     cartItems.value = []
     resetCheckoutState()
-    closeDebtConfirmDialog()
+    closeCheckoutPaymentDialog()
     await loadProducts()
     await refreshCustomerData()
     openReceiptDialog()
   } catch (error) {
     if (isUnauthorizedError(error)) {
-      closeDebtConfirmDialog()
+      closeCheckoutPaymentDialog()
       closeReceiptDialog()
       await router.replace({ name: 'login' })
       return
@@ -1632,6 +1740,7 @@ function resetCheckoutState() {
   selectedCustomerId.value = ''
   discountInput.value = '0.00'
   paidInput.value = '0.00'
+  paymentMethod.value = 'cash'
   saleNoteInput.value = ''
   isPaidManuallyEdited.value = false
 }

@@ -16,6 +16,7 @@ class MinishopSalePaymentModel extends Model
         'created_by',
         'currency_code',
         'amount',
+        'payment_method',
         'paid_at',
         'note',
         'created_at',
@@ -33,6 +34,7 @@ class MinishopSalePaymentModel extends Model
             'created_by',
             'currency_code',
             'amount',
+            'payment_method',
             'paid_at',
             'note',
             'created_at',
@@ -51,7 +53,17 @@ class MinishopSalePaymentModel extends Model
             return null;
         }
 
-        $payment = $this->where('id', $paymentId)
+        $payment = $this->select([
+            'id',
+            'sale_id',
+            'created_by',
+            'currency_code',
+            'amount',
+            'payment_method',
+            'paid_at',
+            'note',
+            'created_at',
+        ])->where('id', $paymentId)
             ->where('sale_id', $saleId)
             ->first();
 
@@ -70,6 +82,10 @@ class MinishopSalePaymentModel extends Model
         $row = $this->selectSum('amount', 'total_paid')
             ->where('sale_id', $saleId)
             ->first();
+
+        if (! is_array($row)) {
+            return 0.0;
+        }
 
         return (float) ($row['total_paid'] ?? 0);
     }

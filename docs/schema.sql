@@ -361,6 +361,28 @@ CREATE TABLE IF NOT EXISTS minishop_sale_items (
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS minishop_sale_payments (
+    id CHAR(36) NOT NULL,
+    sale_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
+    currency_code CHAR(3) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    payment_method ENUM('cash', 'card') NOT NULL DEFAULT 'cash',
+    paid_at DATETIME NOT NULL,
+    note VARCHAR(255) DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_minishop_sale_payments_sale_id (sale_id),
+    KEY idx_minishop_sale_payments_created_by (created_by),
+    KEY idx_minishop_sale_payments_paid_at (paid_at),
+    CONSTRAINT fk_minishop_sale_payments_sale
+        FOREIGN KEY (sale_id) REFERENCES minishop_sales(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_minishop_sale_payments_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 ALTER TABLE users
     ADD CONSTRAINT fk_users_default_book
     FOREIGN KEY (default_book_id) REFERENCES books(id)

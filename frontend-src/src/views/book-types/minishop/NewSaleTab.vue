@@ -243,71 +243,17 @@
         </div>
       </section>
 
-      <section class="py-2 px-4 d-flex align-items-center bg-neutral-200 justify-content-between border-top">
-        <div class="d-flex align-items-center gap-2 flex-row">
-          <label for="minishop-cart-discount">{{ $t('minishop.main.discountSum') }}:</label>
-          <div>
-            <input
-              id="minishop-cart-discount"
-              :value="discountInput"
-              type="number"
-              class="form-control max-w-40 min-h-5 h-7"
-              min="0"
-              step="10"
-              @input="emit('update-discount-input', $event.target.value)"
-              @blur="emit('normalize-discount-input')"
-            >
-          </div>
-        </div>
-        <div class="d-flex justify-content-end gap-3 align-items-center">
-          <span>{{ $t('common.fields.subtotal') }}:</span>
-          <strong class="text-right">{{ formatPrice(subtotal) }}</strong>
-        </div>
-      </section>
-
-      <section class="px-4 py-2 border-top">
-        <div v-if="saleErrorMessage" class="alert alert-danger mb-3" role="alert">
-          {{ saleErrorMessage }}
-        </div>
-
-        <div class="d-flex mb-1 text-sm justify-content-end gap-3 align-items-center">
-          <p class="text-secondary">{{ $t('minishop.main.discounted') }}:</p>
-          <p class="text-right"> - {{ formatPrice(discountAmount) }}</p>
-        </div>
-
-        <div class="d-flex mb-1 justify-content-end gap-3 align-items-center">
+      <section class="px-4 py-3 border-top bg-neutral-200">
+        <div class="d-flex mb-3 justify-content-end gap-3 align-items-center">
           <span class="text-lg">{{ $t('minishop.main.total') }}:</span>
-          <strong class="text-lg">{{ formatPrice(total) }}</strong>
-        </div>
-
-        <div class="mb-3 mt-2 gap-2 align-items-center d-flex">
-          <div>
-            <p v-if="paymentStatusMessage" class="font-semibold text-lg" :class="paymentStatusClass">
-              {{ paymentStatusMessage }}
-            </p>
-          </div>
-          <div class="flex-1 text-right">
-            <label class="mb-0 font-semibold text-lg" for="minishop-cart-paid">{{ $t('minishop.main.paid') }}:</label>
-          </div>
-          <div class="col-4">
-            <input
-              id="minishop-cart-paid"
-              :value="paidInput"
-              type="number"
-              class="form-control font-semibold text-lg"
-              min="0"
-              step="0.01"
-              @input="handlePaidInput"
-              @blur="emit('normalize-paid-input')"
-            >
-          </div>
+          <strong class="text-lg">{{ formatPrice(subtotal) }}</strong>
         </div>
 
         <button
           type="button"
           class="btn btn-primary w-full"
           :disabled="cartItems.length === 0 || isSavingSale"
-          @click="emit('complete-sale-placeholder')"
+          @click="emit('open-payment-dialog')"
         >
           <span v-if="isSavingSale">{{ $t('common.states.saving') }}</span>
           <span v-else>{{ $t('minishop.main.completeSale') }}</span>
@@ -349,14 +295,6 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  discountAmount: {
-    type: Number,
-    required: true,
-  },
-  discountInput: {
-    type: String,
-    required: true,
-  },
   errorMessage: {
     type: String,
     required: true,
@@ -381,10 +319,6 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  paidInput: {
-    type: String,
-    required: true,
-  },
   productSearchQuery: {
     type: String,
     required: true,
@@ -393,20 +327,8 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  saleErrorMessage: {
-    type: String,
-    required: true,
-  },
   isSavingSale: {
     type: Boolean,
-    required: true,
-  },
-  paymentStatusClass: {
-    type: String,
-    required: true,
-  },
-  paymentStatusMessage: {
-    type: String,
     required: true,
   },
   products: {
@@ -425,33 +347,24 @@ const props = defineProps({
     type: Number,
     required: true,
   },
-  total: {
-    type: Number,
-    required: true,
-  },
 })
 
 const emit = defineEmits([
   'add-product-to-cart',
-  'complete-sale-placeholder',
+  'clear-product-filters',
   'normalize-cart-item-price',
   'normalize-cart-item-quantity',
-  'normalize-discount-input',
-  'normalize-paid-input',
+  'open-payment-dialog',
   'open-create-customer',
   'open-create-product',
   'open-edit-product',
   'remove-cart-item',
-  'clear-product-filters',
   'update-cart-item-price',
   'update-cart-item-quantity',
   'update:productSearchQuery',
   'update-sale-note-input',
   'update:selectedCategoryId',
   'update:selectedCustomerId',
-  'update-discount-input',
-  'update-paid-input',
-  'mark-paid-manually-edited',
 ])
 
 const selectedCustomer = computed(() => {
@@ -472,11 +385,6 @@ function updateProductSearchQuery(event) {
 
 function updateSelectedCustomerId(event) {
   emit('update:selectedCustomerId', event.target.value)
-}
-
-function handlePaidInput(event) {
-  emit('mark-paid-manually-edited')
-  emit('update-paid-input', event.target.value)
 }
 
 function decrementCartItem(item) {

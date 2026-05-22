@@ -186,33 +186,14 @@
                       <td>{{ formatMoney(receipt.due_amount) }}</td>
                       <td class="text-capitalize">{{ translatePaymentStatus($t, receipt.payment_status) }}</td>
                       <td>
-                        <div class="d-flex gap-2 flex-wrap">
-                          <button
-                            type="button"
-                            class="btn btn-default"
-                            :disabled="isReceiptActionBusy(receipt.id)"
-                            @click="openReceiptDetailDialog(receipt.id)"
-                          >
-                            {{ $t('common.actions.viewDetail') }}
-                          </button>
-                          <button
-                            type="button"
-                            class="btn btn-outline text-red"
-                            :disabled="isReceiptActionBusy(receipt.id)"
-                            @click="handleDeleteReceipt(receipt.id)"
-                          >
-                            <span v-if="deletingReceiptId === receipt.id">{{ $t('common.states.deleting') }}</span>
-                            <span v-else>{{ $t('minishop.customers.deleteSale') }}</span>
-                          </button>
-                          <button
-                            type="button"
-                            class="btn btn-primary"
-                            :disabled="isReceiptActionBusy(receipt.id)"
-                            @click="openReceiptPaymentDialog(receipt.id)"
-                          >
-                            {{ $t('minishop.customers.changePayment') }}
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          class="btn btn-default"
+                          :disabled="isLoadingReceiptDetail && activeReceiptId === receipt.id"
+                          @click="openReceiptDetailDialog(receipt.id)"
+                        >
+                          {{ $t('common.actions.viewDetail') }}
+                        </button>
                       </td>
                     </tr>
                   </tbody>
@@ -413,7 +394,33 @@
                 {{ selectedReceiptSale.customer_name || $t('minishop.sales.noCustomer') }}
                 <span v-if="selectedReceiptSale.customer_phone"> · {{ selectedReceiptSale.customer_phone }}</span>
               </p>
-              <p class="mb-0 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ translatePaymentStatus($t, selectedReceiptSale.payment_status) }}</p>
+              <p class="mb-3 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ translatePaymentStatus($t, selectedReceiptSale.payment_status) }}</p>
+              <button
+                type="button"
+                class="btn btn-default mr-2"
+                :disabled="isLoadingReceiptDetail || isDeletingReceipt"
+                @click="closeReceiptDetailDialog"
+              >
+                {{ $t('common.actions.close') }}
+              </button>
+              <button
+                v-if="canAddPaymentToReceipt"
+                type="button"
+                class="btn btn-primary mr-2"
+                :disabled="isLoadingReceiptDetail || isSavingPayment || isDeletingReceipt"
+                @click="openAddPaymentDialog"
+              >
+                {{ $t('minishop.sales.addPayment') }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline text-red"
+                :disabled="isLoadingReceiptDetail || isDeletingReceipt || isSavingPayment"
+                @click="handleDeleteReceipt"
+              >
+                <span v-if="isDeletingReceipt">{{ $t('common.states.deleting') }}</span>
+                <span v-else>{{ $t('minishop.sales.deleteSale') }}</span>
+              </button>
             </div>
           </div>
 
@@ -484,31 +491,72 @@
               <strong>{{ $t('common.states.paidInFull') }}</strong>
             </div>
           </div>
+
+          <div class="mt-4 pt-4 border-top">
+            <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+              <h4 class="h6 mb-0">{{ $t('minishop.sales.paymentRecords') }}</h4>
+            </div>
+
+            <div v-if="selectedReceiptPayments.length === 0" class="text-secondary">
+              {{ $t('minishop.sales.noPaymentRecords') }}
+            </div>
+
+            <div v-else class="d-flex flex-col gap-3">
+              <div
+                v-for="payment in selectedReceiptPayments"
+                :key="payment.id"
+                class="border rounded p-3 bg-lower"
+              >
+                <div class="d-flex justify-content-between gap-3 mobile:flex-col">
+                  <div>
+                    <p class="mb-1"><strong>{{ $t('common.fields.date') }}:</strong> {{ formatDateTime(payment.paid_at || payment.created_at) }}</p>
+                    <p class="mb-0"><strong>{{ $t('common.fields.method') }}:</strong> {{ translatePaymentMethod(payment.payment_method) }}</p>
+                  </div>
+                  <div class="text-right mobile:text-left">
+                    <p class="mb-2"><strong>{{ formatMoney(payment.amount) }}</strong></p>
+                    <button
+                      type="button"
+                      class="btn btn-outline text-red"
+                      :disabled="deletingPaymentId === payment.id || isSavingPayment || isDeletingReceipt"
+                      @click="handleDeletePayment(payment)"
+                    >
+                      <span v-if="deletingPaymentId === payment.id">{{ $t('common.states.deleting') }}</span>
+                      <span v-else>{{ $t('minishop.sales.deletePayment') }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </dialog>
 
     <dialog
-      ref="receiptPaymentDialog"
+      ref="addPaymentDialog"
       class="dialog-sm"
-      @cancel="handleReceiptPaymentDialogCancel"
-      @close="handleReceiptPaymentDialogClose"
+      @cancel="handleAddPaymentDialogCancel"
+      @close="handleAddPaymentDialogClose"
     >
       <header class="dialog-header">
-        <h5>{{ $t('minishop.sales.changePaymentTitle') }}</h5>
-        <button class="btn btn-icon" :disabled="isUpdatingReceiptPayment" @click="closeReceiptPaymentDialog">
+        <h5>{{ $t('minishop.sales.addPayment') }}</h5>
+        <button
+          class="btn btn-icon"
+          :disabled="isSavingPayment"
+          @click="closeAddPaymentDialog"
+        >
           <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
         </button>
       </header>
       <div class="dialog-body">
-        <form @submit.prevent="handleUpdateReceiptPayment">
-          <div v-if="receiptPaymentErrorMessage" class="alert alert-danger mb-3" role="alert">
-            {{ receiptPaymentErrorMessage }}
+        <form @submit.prevent="handleAddPayment">
+          <div v-if="paymentErrorMessage" class="alert alert-danger mb-3" role="alert">
+            {{ paymentErrorMessage }}
           </div>
 
           <div class="d-flex justify-content-between mb-3">
-            <span class="col-6">{{ $t('common.fields.subtotal') }}</span>
-            <div class="col-6 text-right font-semibold">
+            <span>{{ $t('common.fields.subtotal') }}</span>
+            <div class="text-right font-semibold">
               {{ formatMoney(paymentSummarySubtotal) }}
             </div>
           </div>
@@ -518,42 +566,69 @@
             <div class="col-6 text-right font-semibold">
               <input
                 id="customer-receipt-payment-discount"
-                v-model.trim="receiptPaymentForm.discountInput"
+                v-model.trim="paymentForm.discountInput"
                 type="number"
                 class="form-control min-h-5 h-8 font-semibold"
                 min="0"
                 step="0.01"
-                :disabled="isUpdatingReceiptPayment"
-                @blur="normalizeReceiptPaymentDiscountInput"
+                :disabled="isSavingPayment"
+                @blur="normalizePaymentDiscountInput"
               >
             </div>
           </div>
 
-          <div class="row justify-content-between mb-2">
+          <div v-if="paymentSummaryDiscountAmount > 0" class="row justify-content-between mb-3">
             <span class="col-6">{{ $t('common.fields.total') }}</span>
-            <div class="col-5 text-right font-semibold">
+            <div class="col-6 text-right font-semibold">
               {{ formatMoney(paymentSummaryTotal) }}
             </div>
           </div>
 
           <hr>
 
-          <div class="row justify-content-between">
+          <div class="mb-3">
+            <label class="form-label d-block">{{ $t('common.fields.method') }}</label>
+            <div class="d-flex gap-4">
+              <label class="form-check d-flex align-items-center gap-2">
+                <input
+                  v-model="paymentForm.paymentMethod"
+                  class="form-check-input"
+                  type="radio"
+                  name="customer-receipt-payment-method"
+                  value="cash"
+                  :disabled="isSavingPayment"
+                >
+                <span>{{ $t('minishop.paymentMethods.cash') }}</span>
+              </label>
+              <label class="form-check d-flex align-items-center gap-2">
+                <input
+                  v-model="paymentForm.paymentMethod"
+                  class="form-check-input"
+                  type="radio"
+                  name="customer-receipt-payment-method"
+                  value="card"
+                  :disabled="isSavingPayment"
+                >
+                <span>{{ $t('minishop.paymentMethods.card') }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="row justify-content-between mb-3">
             <label class="col-6 form-label" for="customer-receipt-payment-paid">{{ $t('common.fields.paid') }}</label>
             <div class="col-6 text-right font-semibold">
               <input
                 id="customer-receipt-payment-paid"
-                v-model.trim="receiptPaymentForm.paidInput"
+                v-model.trim="paymentForm.paidInput"
                 type="number"
                 class="form-control min-h-5 h-8 font-semibold"
                 min="0"
                 step="0.01"
-                :disabled="isUpdatingReceiptPayment"
-                @blur="normalizeReceiptPaymentPaidInput"
+                :disabled="isSavingPayment"
+                @blur="normalizePaymentPaidInput"
               >
             </div>
           </div>
-          <hr>
 
           <div class="mb-5">
             <div
@@ -580,18 +655,18 @@
             <button
               type="button"
               class="btn btn-default flex-1"
-              :disabled="isUpdatingReceiptPayment"
-              @click="closeReceiptPaymentDialog"
+              :disabled="isSavingPayment"
+              @click="closeAddPaymentDialog"
             >
               {{ $t('common.actions.cancel') }}
             </button>
             <button
               type="submit"
               class="btn btn-primary flex-1"
-              :disabled="isUpdatingReceiptPayment || !selectedReceiptSale"
+              :disabled="isSavingPayment || !selectedReceiptSale || paymentSummaryPaidAmount <= 0"
             >
-              <span v-if="isUpdatingReceiptPayment">{{ $t('common.states.saving') }}</span>
-              <span v-else>{{ $t('common.actions.save') }}</span>
+              <span v-if="isSavingPayment">{{ $t('common.states.saving') }}</span>
+              <span v-else>{{ $t('minishop.sales.addPayment') }}</span>
             </button>
           </div>
         </form>
@@ -608,11 +683,12 @@ import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/
 import { translatePaymentStatus } from '@/i18n/helpers'
 import {
   createMinishopCustomer,
+  createMinishopSalePayment,
   deleteMinishopSale,
+  deleteMinishopSalePayment,
   fetchMinishopCustomer,
   fetchMinishopCustomers,
   fetchMinishopSale,
-  updateMinishopSalePaymentSummary,
   updateMinishopCustomer,
 } from '@/api/minishop'
 
@@ -631,7 +707,7 @@ const { t } = useI18n()
 const createCustomerDialog = ref(null)
 const editCustomerDialog = ref(null)
 const receiptDetailDialog = ref(null)
-const receiptPaymentDialog = ref(null)
+const addPaymentDialog = ref(null)
 const customerList = ref([])
 const customerErrorMessage = ref('')
 const customerSearchQuery = ref('')
@@ -640,21 +716,23 @@ const selectedCustomer = ref(null)
 const selectedCustomerReceipts = ref([])
 const selectedReceiptSale = ref(null)
 const selectedReceiptItems = ref([])
+const selectedReceiptPayments = ref([])
 const isLoadingCustomers = ref(false)
 const isLoadingSelectedCustomer = ref(false)
 const isLoadingReceiptDetail = ref(false)
 const isCreatingCustomer = ref(false)
 const isUpdatingCustomer = ref(false)
-const isUpdatingReceiptPayment = ref(false)
+const isSavingPayment = ref(false)
+const isDeletingReceipt = ref(false)
 const selectedCustomerErrorMessage = ref('')
 const receiptDetailErrorMessage = ref('')
-const receiptPaymentErrorMessage = ref('')
+const paymentErrorMessage = ref('')
 const createCustomerErrorMessage = ref('')
 const editCustomerErrorMessage = ref('')
 const editingCustomerId = ref('')
 const activeReceiptId = ref('')
-const deletingReceiptId = ref('')
 const pendingFocusedCustomerId = ref('')
+const deletingPaymentId = ref('')
 let customerSearchDebounceTimer = null
 
 const createCustomerForm = reactive({
@@ -669,9 +747,10 @@ const editCustomerForm = reactive({
   note: '',
 })
 
-const receiptPaymentForm = reactive({
+const paymentForm = reactive({
   discountInput: '0.00',
   paidInput: '0.00',
+  paymentMethod: 'cash',
 })
 
 const isCreateCustomerSubmitDisabled = computed(() => {
@@ -682,32 +761,56 @@ const isEditCustomerSubmitDisabled = computed(() => {
   return isUpdatingCustomer.value || editingCustomerId.value === '' || editCustomerForm.name === ''
 })
 
+const canAddPaymentToReceipt = computed(() => {
+  if (!selectedReceiptSale.value) {
+    return false
+  }
+
+  return Number(selectedReceiptSale.value.due_amount) > 0
+    || ['unpaid', 'partial'].includes(String(selectedReceiptSale.value.payment_status ?? ''))
+})
+
 const paymentSummarySubtotal = computed(() => {
   return parseNonNegativeAmount(selectedReceiptSale.value?.subtotal_amount ?? 0, 0)
 })
 
 const paymentSummaryDiscountAmount = computed(() => {
-  return Math.min(parseNonNegativeAmount(receiptPaymentForm.discountInput, 0), paymentSummarySubtotal.value)
+  return Math.min(parseNonNegativeAmount(paymentForm.discountInput, 0), paymentSummarySubtotal.value)
 })
 
 const paymentSummaryTotal = computed(() => {
   return Math.max(paymentSummarySubtotal.value - paymentSummaryDiscountAmount.value, 0)
 })
 
+const paymentSummaryRecordedPaidAmount = computed(() => {
+  return parseNonNegativeAmount(selectedReceiptSale.value?.paid_amount ?? 0, 0)
+})
+
+const paymentSummaryRemainingBeforePayment = computed(() => {
+  return Math.max(paymentSummaryTotal.value - paymentSummaryRecordedPaidAmount.value, 0)
+})
+
 const paymentSummaryPaidAmount = computed(() => {
-  return parseNonNegativeAmount(receiptPaymentForm.paidInput, 0)
+  return parseNonNegativeAmount(paymentForm.paidInput, 0)
+})
+
+const paymentSummaryAppliedAmount = computed(() => {
+  return paymentForm.paymentMethod === 'cash'
+    ? Math.min(paymentSummaryPaidAmount.value, paymentSummaryRemainingBeforePayment.value)
+    : paymentSummaryPaidAmount.value
 })
 
 const paymentSummaryChangeAmount = computed(() => {
-  return paymentSummaryPaidAmount.value > paymentSummaryTotal.value
-    ? paymentSummaryPaidAmount.value - paymentSummaryTotal.value
+  return paymentForm.paymentMethod === 'cash' && paymentSummaryPaidAmount.value > paymentSummaryRemainingBeforePayment.value
+    ? paymentSummaryPaidAmount.value - paymentSummaryRemainingBeforePayment.value
     : 0
 })
 
 const paymentSummaryRemainingAmount = computed(() => {
-  return paymentSummaryPaidAmount.value < paymentSummaryTotal.value
-    ? paymentSummaryTotal.value - paymentSummaryPaidAmount.value
-    : 0
+  return Math.max(
+    paymentSummaryTotal.value - paymentSummaryRecordedPaidAmount.value - paymentSummaryAppliedAmount.value,
+    0,
+  )
 })
 
 watch(() => props.book.id, () => {
@@ -819,7 +922,7 @@ function clearSelectedCustomer() {
   selectedCustomerErrorMessage.value = ''
   isLoadingSelectedCustomer.value = false
   closeReceiptDetailDialog()
-  closeReceiptPaymentDialog()
+  closeAddPaymentDialog()
   resetSelectedReceiptState()
 }
 
@@ -860,12 +963,33 @@ function closeEditCustomerDialog() {
 }
 
 function openReceiptDetailDialog(receiptId) {
-  void loadReceiptSale(receiptId, 'detail')
+  void loadReceiptSale(receiptId)
 }
 
 function closeReceiptDetailDialog() {
   if (receiptDetailDialog.value?.open) {
     receiptDetailDialog.value.close()
+  }
+}
+
+function openAddPaymentDialog() {
+  if (!selectedReceiptSale.value) {
+    return
+  }
+
+  paymentErrorMessage.value = ''
+  paymentForm.discountInput = formatMoney(selectedReceiptSale.value.discount_amount)
+  paymentForm.paidInput = formatMoney(selectedReceiptSale.value.due_amount)
+  paymentForm.paymentMethod = 'cash'
+
+  if (!addPaymentDialog.value?.open) {
+    addPaymentDialog.value?.showModal()
+  }
+}
+
+function closeAddPaymentDialog() {
+  if (addPaymentDialog.value?.open) {
+    addPaymentDialog.value.close()
   }
 }
 
@@ -880,27 +1004,18 @@ function handleReceiptDetailDialogClose() {
   isLoadingReceiptDetail.value = false
 }
 
-function openReceiptPaymentDialog(receiptId) {
-  void loadReceiptSale(receiptId, 'payment')
-}
-
-function closeReceiptPaymentDialog() {
-  if (receiptPaymentDialog.value?.open) {
-    receiptPaymentDialog.value.close()
-  }
-}
-
-function handleReceiptPaymentDialogCancel(event) {
-  if (isUpdatingReceiptPayment.value) {
+function handleAddPaymentDialogCancel(event) {
+  if (isSavingPayment.value) {
     event.preventDefault()
   }
 }
 
-function handleReceiptPaymentDialogClose() {
-  receiptPaymentErrorMessage.value = ''
-  receiptPaymentForm.discountInput = '0.00'
-  receiptPaymentForm.paidInput = '0.00'
-  isUpdatingReceiptPayment.value = false
+function handleAddPaymentDialogClose() {
+  paymentErrorMessage.value = ''
+  paymentForm.discountInput = '0.00'
+  paymentForm.paidInput = '0.00'
+  paymentForm.paymentMethod = 'cash'
+  isSavingPayment.value = false
 }
 
 async function handleCreateCustomer() {
@@ -977,44 +1092,33 @@ async function handleUpdateCustomer() {
   }
 }
 
-async function loadReceiptSale(receiptId, mode = 'detail') {
+async function loadReceiptSale(receiptId) {
   activeReceiptId.value = receiptId
   receiptDetailErrorMessage.value = ''
-  receiptPaymentErrorMessage.value = ''
   isLoadingReceiptDetail.value = true
 
   try {
     const { data } = await fetchMinishopSale(props.book.id, receiptId)
     selectedReceiptSale.value = data.sale ?? null
     selectedReceiptItems.value = Array.isArray(data.items) ? data.items : []
+    selectedReceiptPayments.value = Array.isArray(data.payments) ? data.payments : []
 
     if (!selectedReceiptSale.value) {
       throw new Error(t('minishop.dialogs.saleResponseMissing'))
     }
 
-    if (mode === 'payment') {
-      receiptPaymentForm.discountInput = formatMoney(selectedReceiptSale.value.discount_amount)
-      receiptPaymentForm.paidInput = formatMoney(selectedReceiptSale.value.paid_amount)
-
-      if (!receiptPaymentDialog.value?.open) {
-        receiptPaymentDialog.value?.showModal()
-      }
-    } else if (!receiptDetailDialog.value?.open) {
+    if (!receiptDetailDialog.value?.open) {
       receiptDetailDialog.value?.showModal()
     }
   } catch (error) {
-    const didHandle = await handleReceiptActionError(error, receiptId, t('minishop.customers.unableLoadReceipt'))
+    const didHandle = await handleReceiptActionError(error, receiptId)
 
     if (!didHandle) {
       const message = error instanceof Error && error.message === t('minishop.dialogs.saleResponseMissing')
         ? error.message
         : getApiErrorMessage(error, t('minishop.customers.unableLoadReceipt'))
 
-      if (mode === 'payment') {
-        receiptPaymentErrorMessage.value = message
-      } else {
-        receiptDetailErrorMessage.value = message
-      }
+      receiptDetailErrorMessage.value = message
       selectedCustomerErrorMessage.value = message
     }
   } finally {
@@ -1022,61 +1126,36 @@ async function loadReceiptSale(receiptId, mode = 'detail') {
   }
 }
 
-async function handleDeleteReceipt(receiptId) {
-  if (deletingReceiptId.value !== '' || isUpdatingReceiptPayment.value) {
+function normalizePaymentDiscountInput() {
+  paymentForm.discountInput = formatMoney(paymentSummaryDiscountAmount.value)
+}
+
+function normalizePaymentPaidInput() {
+  const normalizedAmount = paymentSummaryPaidAmount.value
+
+  if (paymentForm.paymentMethod === 'card' && normalizedAmount > paymentSummaryRemainingBeforePayment.value) {
+    paymentForm.paidInput = formatMoney(paymentSummaryRemainingBeforePayment.value)
     return
   }
 
-  if (!window.confirm(t('minishop.customers.confirmDeleteSale'))) {
+  paymentForm.paidInput = formatMoney(normalizedAmount)
+}
+
+async function handleAddPayment() {
+  if (!selectedReceiptSale.value || isSavingPayment.value || paymentSummaryPaidAmount.value <= 0) {
     return
   }
 
-  selectedCustomerErrorMessage.value = ''
-  deletingReceiptId.value = receiptId
-
-  try {
-    await deleteMinishopSale(props.book.id, receiptId)
-
-    if (activeReceiptId.value === receiptId) {
-      closeReceiptDetailDialog()
-      closeReceiptPaymentDialog()
-      resetSelectedReceiptState()
-    }
-
-    await refreshSelectedCustomerData()
-    emit('customers-changed')
-  } catch (error) {
-    const didHandle = await handleReceiptActionError(error, receiptId, t('minishop.customers.unableDeleteReceipt'))
-
-    if (!didHandle) {
-      selectedCustomerErrorMessage.value = getApiErrorMessage(error, t('minishop.customers.unableDeleteReceipt'))
-    }
-  } finally {
-    deletingReceiptId.value = ''
-  }
-}
-
-function normalizeReceiptPaymentDiscountInput() {
-  receiptPaymentForm.discountInput = formatMoney(paymentSummaryDiscountAmount.value)
-}
-
-function normalizeReceiptPaymentPaidInput() {
-  receiptPaymentForm.paidInput = formatMoney(paymentSummaryPaidAmount.value)
-}
-
-async function handleUpdateReceiptPayment() {
-  if (!selectedReceiptSale.value || isUpdatingReceiptPayment.value) {
-    return
-  }
-
-  receiptPaymentErrorMessage.value = ''
-  isUpdatingReceiptPayment.value = true
+  paymentErrorMessage.value = ''
+  isSavingPayment.value = true
   const receiptId = selectedReceiptSale.value.id
 
   try {
-    const { data } = await updateMinishopSalePaymentSummary(props.book.id, receiptId, {
+    const { data } = await createMinishopSalePayment(props.book.id, receiptId, {
       discount_amount: paymentSummaryDiscountAmount.value,
-      paid_amount: paymentSummaryPaidAmount.value,
+      payment_method: paymentForm.paymentMethod,
+      amount: paymentSummaryPaidAmount.value,
+      paid_at: makeLocalDateTimeString(),
     })
 
     if (!data.sale) {
@@ -1084,19 +1163,116 @@ async function handleUpdateReceiptPayment() {
     }
 
     selectedReceiptSale.value = data.sale
-    closeReceiptPaymentDialog()
+    selectedReceiptPayments.value = Array.isArray(data.payments) ? data.payments : []
+    closeAddPaymentDialog()
     await refreshSelectedCustomerData()
     emit('customers-changed')
   } catch (error) {
-    const didHandle = await handleReceiptActionError(error, receiptId, t('minishop.customers.unableUpdateReceiptPayment'))
-
-    if (!didHandle) {
-      receiptPaymentErrorMessage.value = error instanceof Error && error.message === t('minishop.dialogs.saleResponseMissing')
-        ? error.message
-        : getApiErrorMessage(error, t('minishop.customers.unableUpdateReceiptPayment'))
+    if (isUnauthorizedError(error)) {
+      closeAddPaymentDialog()
+      await router.replace({ name: 'login' })
+      return
     }
+
+    if (isNotFoundError(error)) {
+      closeAddPaymentDialog()
+      await handleReceiptActionError(error, receiptId)
+      return
+    }
+
+    paymentErrorMessage.value = error instanceof Error && error.message === t('minishop.dialogs.saleResponseMissing')
+      ? error.message
+      : getApiErrorMessage(error, t('minishop.sales.unableAddPayment'))
   } finally {
-    isUpdatingReceiptPayment.value = false
+    isSavingPayment.value = false
+  }
+}
+
+async function handleDeletePayment(payment) {
+  if (!selectedReceiptSale.value || deletingPaymentId.value !== '') {
+    return
+  }
+
+  if (!window.confirm(`${t('minishop.sales.deletePayment')}?`)) {
+    return
+  }
+
+  receiptDetailErrorMessage.value = ''
+  deletingPaymentId.value = payment.id
+  const receiptId = selectedReceiptSale.value.id
+
+  try {
+    const { data } = await deleteMinishopSalePayment(props.book.id, receiptId, payment.id)
+
+    if (!data.sale) {
+      throw new Error(t('minishop.dialogs.saleResponseMissing'))
+    }
+
+    selectedReceiptSale.value = data.sale
+    selectedReceiptPayments.value = Array.isArray(data.payments) ? data.payments : []
+    await refreshSelectedCustomerData()
+    emit('customers-changed')
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      await router.replace({ name: 'login' })
+      return
+    }
+
+    if (isNotFoundError(error)) {
+      await handleReceiptActionError(error, receiptId)
+      return
+    }
+
+    receiptDetailErrorMessage.value = error instanceof Error && error.message === t('minishop.dialogs.saleResponseMissing')
+      ? error.message
+      : getApiErrorMessage(error, t('minishop.sales.unableDeletePayment'))
+  } finally {
+    deletingPaymentId.value = ''
+  }
+}
+
+async function handleDeleteReceipt() {
+  if (!selectedReceiptSale.value || isDeletingReceipt.value || isSavingPayment.value) {
+    return
+  }
+
+  if (selectedReceiptPayments.value.length > 0) {
+    const message = t('minishop.sales.deletePaymentsFirst')
+    receiptDetailErrorMessage.value = message
+    window.alert(message)
+    return
+  }
+
+  const receiptId = selectedReceiptSale.value.id
+
+  if (!window.confirm(t('minishop.sales.confirmDeleteSale'))) {
+    return
+  }
+
+  receiptDetailErrorMessage.value = ''
+  isDeletingReceipt.value = true
+
+  try {
+    await deleteMinishopSale(props.book.id, receiptId)
+    closeReceiptDetailDialog()
+    resetSelectedReceiptState()
+    await refreshSelectedCustomerData()
+    emit('customers-changed')
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeReceiptDetailDialog()
+      await router.replace({ name: 'login' })
+      return
+    }
+
+    if (isNotFoundError(error)) {
+      await handleReceiptActionError(error, receiptId)
+      return
+    }
+
+    receiptDetailErrorMessage.value = getApiErrorMessage(error, t('minishop.sales.unableDeleteSale'))
+  } finally {
+    isDeletingReceipt.value = false
   }
 }
 
@@ -1130,17 +1306,17 @@ async function refreshSelectedCustomerData() {
   }
 }
 
-async function handleReceiptActionError(error, receiptId, fallbackMessage) {
+async function handleReceiptActionError(error, receiptId) {
   if (isUnauthorizedError(error)) {
     closeReceiptDetailDialog()
-    closeReceiptPaymentDialog()
+    closeAddPaymentDialog()
     await router.replace({ name: 'login' })
     return true
   }
 
   if (isNotFoundError(error)) {
     closeReceiptDetailDialog()
-    closeReceiptPaymentDialog()
+    closeAddPaymentDialog()
 
     if (activeReceiptId.value === receiptId) {
       resetSelectedReceiptState()
@@ -1159,14 +1335,11 @@ function resetSelectedReceiptState() {
   activeReceiptId.value = ''
   selectedReceiptSale.value = null
   selectedReceiptItems.value = []
+  selectedReceiptPayments.value = []
   receiptDetailErrorMessage.value = ''
-  receiptPaymentErrorMessage.value = ''
-}
-
-function isReceiptActionBusy(receiptId) {
-  return deletingReceiptId.value === receiptId
-    || isLoadingReceiptDetail.value
-    || (isUpdatingReceiptPayment.value && activeReceiptId.value === receiptId)
+  paymentErrorMessage.value = ''
+  deletingPaymentId.value = ''
+  isDeletingReceipt.value = false
 }
 
 function resetCreateCustomerForm() {
@@ -1238,5 +1411,20 @@ function formatDateTime(value) {
   }
 
   return parsedDate.toLocaleString()
+}
+
+function translatePaymentMethod(method) {
+  return t(`minishop.paymentMethods.${method === 'card' ? 'card' : 'cash'}`)
+}
+
+function makeLocalDateTimeString(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 </script>

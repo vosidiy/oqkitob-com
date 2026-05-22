@@ -47,6 +47,7 @@ $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->get('(:segment)/minishop/sales', 'Api\MinishopSalesController::index/$1');
     $routes->get('(:segment)/minishop/sales/(:segment)', 'Api\MinishopSalesController::show/$1/$2');
     $routes->post('(:segment)/minishop/sales', 'Api\MinishopSalesController::create/$1');
-    $routes->put('(:segment)/minishop/sales/(:segment)/payment-summary', 'Api\MinishopSalesController::updatePaymentSummary/$1/$2');
+    $routes->post('(:segment)/minishop/sales/(:segment)/payments', 'Api\MinishopSalesController::addPayment/$1/$2');
+    $routes->delete('(:segment)/minishop/sales/(:segment)/payments/(:segment)', 'Api\MinishopSalesController::deletePayment/$1/$2/$3');
     $routes->delete('(:segment)/minishop/sales/(:segment)', 'Api\MinishopSalesController::delete/$1/$2');
 });

@@ -2,11 +2,12 @@
 
 namespace App\Controllers\Api;
 
-use App\Models\BookModel;
 use App\Models\MinishopCustomerModel;
 use App\Models\MinishopProductModel;
 use App\Models\MinishopSaleItemModel;
 use App\Models\MinishopSaleModel;
+use App\Models\MinishopSalePaymentModel;
+use App\Services\BookAccessService;
 use CodeIgniter\Database\BaseConnection;
 use Config\Database;
 use DateInterval;
@@ -21,7 +22,8 @@ use RuntimeException;
  * GET /api/books/{bookId}/minishop/sales
  * GET /api/books/{bookId}/minishop/sales/{saleId}
  * POST /api/books/{bookId}/minishop/sales
- * PUT /api/books/{bookId}/minishop/sales/{saleId}/payment-summary
+ * POST /api/books/{bookId}/minishop/sales/{saleId}/payments
+ * DELETE /api/books/{bookId}/minishop/sales/{saleId}/payments/{paymentId}
  * DELETE /api/books/{bookId}/minishop/sales/{saleId}
  */
 class MinishopSalesController extends AuthenticatedApiController
@@ -40,11 +42,12 @@ class MinishopSalesController extends AuthenticatedApiController
     private BaseConnection $db;
 
     public function __construct(
-        private readonly BookModel $books = new BookModel(),
+        private readonly BookAccessService $bookAccess = new BookAccessService(),
         private readonly MinishopCustomerModel $customers = new MinishopCustomerModel(),
         private readonly MinishopProductModel $products = new MinishopProductModel(),
         private readonly MinishopSaleModel $sales = new MinishopSaleModel(),
         private readonly MinishopSaleItemModel $saleItems = new MinishopSaleItemModel(),
+        private readonly MinishopSalePaymentModel $salePayments = new MinishopSalePaymentModel(),
         ?BaseConnection $db = null
     ) {
         $this->db = $db ?? Database::connect();
@@ -53,10 +56,9 @@ class MinishopSalesController extends AuthenticatedApiController
     public function index(string $bookId)
     {
         $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
 
-        try {
-            $this->requireOwnedMinishopBook($userId, $bookId);
-        } catch (RuntimeException $exception) {
+        if ($permission === 'none') {
             return $this->failNotFound('Book not found.');
         }
 
@@ -72,10 +74,9 @@ class MinishopSalesController extends AuthenticatedApiController
     public function show(string $bookId, string $saleId)
     {
         $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
 
-        try {
-            $this->requireOwnedMinishopBook($userId, $bookId);
-        } catch (RuntimeException $exception) {
+        if ($permission === 'none') {
             return $this->failNotFound('Book not found.');
         }
 
@@ -88,12 +89,19 @@ class MinishopSalesController extends AuthenticatedApiController
         return $this->respond([
             'sale' => $sale,
             'items' => $this->saleItems->findBySale($saleId),
+            'payments' => $this->salePayments->findBySale($saleId),
         ]);
     }
 
     public function create(string $bookId)
     {
         $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
         $payload = $this->getSalePayload();
 
         try {
@@ -103,10 +111,6 @@ class MinishopSalesController extends AuthenticatedApiController
                 'message' => $exception->getMessage(),
             ], 422);
         } catch (RuntimeException $exception) {
-            if ($exception->getMessage() === 'Book not found.') {
-                return $this->failNotFound('Book not found.');
-            }
-
             return $this->failServerError($exception->getMessage());
         }
 
@@ -114,25 +118,28 @@ class MinishopSalesController extends AuthenticatedApiController
             'message' => 'Sale created successfully.',
             'sale' => $result['sale'],
             'items' => $result['items'],
+            'payments' => $result['payments'],
         ], 201);
     }
 
-    public function updatePaymentSummary(string $bookId, string $saleId)
+    public function addPayment(string $bookId, string $saleId)
     {
         $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
         $payload = $this->getSalePayload();
 
         try {
-            $sale = $this->updateSalePaymentSummary($userId, $bookId, $saleId, $payload);
+            $result = $this->addSalePayment($userId, $bookId, $saleId, $payload);
         } catch (InvalidArgumentException $exception) {
             return $this->respond([
                 'message' => $exception->getMessage(),
             ], 422);
         } catch (RuntimeException $exception) {
-            if ($exception->getMessage() === 'Book not found.') {
-                return $this->failNotFound('Book not found.');
-            }
-
             if ($exception->getMessage() === 'Sale not found.') {
                 return $this->failNotFound('Sale not found.');
             }
@@ -141,22 +148,64 @@ class MinishopSalesController extends AuthenticatedApiController
         }
 
         return $this->respond([
-            'message' => 'Payment summary updated successfully.',
-            'sale' => $sale,
+            'message' => 'Payment added successfully.',
+            'sale' => $result['sale'],
+            'payment' => $result['payment'],
+            'payments' => $result['payments'],
+        ], 201);
+    }
+
+    public function deletePayment(string $bookId, string $saleId, string $paymentId)
+    {
+        $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
+        try {
+            $result = $this->deleteSalePayment($bookId, $saleId, $paymentId);
+        } catch (InvalidArgumentException $exception) {
+            return $this->respond([
+                'message' => $exception->getMessage(),
+            ], 422);
+        } catch (RuntimeException $exception) {
+            if ($exception->getMessage() === 'Sale not found.') {
+                return $this->failNotFound('Sale not found.');
+            }
+
+            if ($exception->getMessage() === 'Payment not found.') {
+                return $this->failNotFound('Payment not found.');
+            }
+
+            return $this->failServerError($exception->getMessage());
+        }
+
+        return $this->respond([
+            'message' => 'Payment deleted successfully.',
+            'sale' => $result['sale'],
+            'deletedPaymentId' => $result['deletedPaymentId'],
+            'payments' => $result['payments'],
         ]);
     }
 
     public function delete(string $bookId, string $saleId)
     {
         $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
 
         try {
-            $result = $this->deleteSale($userId, $bookId, $saleId);
+            $result = $this->deleteSale($bookId, $saleId);
+        } catch (InvalidArgumentException $exception) {
+            return $this->respond([
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (RuntimeException $exception) {
-            if ($exception->getMessage() === 'Book not found.') {
-                return $this->failNotFound('Book not found.');
-            }
-
             if ($exception->getMessage() === 'Sale not found.') {
                 return $this->failNotFound('Sale not found.');
             }
@@ -186,29 +235,18 @@ class MinishopSalesController extends AuthenticatedApiController
         return is_array($payload) ? $payload : [];
     }
 
-    private function requireOwnedMinishopBook(string $userId, string $bookId): array
-    {
-        $book = $this->books->findOwnedActiveBook($userId, $bookId, 'minishop');
-
-        if ($book === null) {
-            throw new RuntimeException('Book not found.');
-        }
-
-        return $book;
-    }
-
     private function createSale(string $userId, string $bookId, array $payload): array
     {
-        $this->requireOwnedMinishopBook($userId, $bookId);
-
         $currencyCode = strtoupper(trim((string) ($payload['currency_code'] ?? '')));
         $discountAmount = $this->normalizeMoney($payload['discount_amount'] ?? 0);
-        $paidAmount = $this->normalizeMoney($payload['paid_amount'] ?? 0);
+        $tenderedAmount = $this->normalizeMoney($payload['paid_amount'] ?? 0);
+        $paymentMethod = $this->normalizePaymentMethod($payload['payment_method'] ?? 'cash');
         $customerId = $this->normalizeOptionalId($payload['customer_id'] ?? null);
         $note = $this->normalizeOptionalString($payload['note'] ?? null);
         $items = $payload['items'] ?? null;
         $timestamp = $this->utcNow();
         $soldAt = trim((string) ($payload['sold_at'] ?? ''));
+        $paidAt = trim((string) ($payload['paid_at'] ?? ''));
 
         if ($currencyCode === '' || strlen($currencyCode) !== 3) {
             throw new InvalidArgumentException('Currency code must be a 3-letter code.');
@@ -222,7 +260,7 @@ class MinishopSalesController extends AuthenticatedApiController
             throw new InvalidArgumentException('Discount amount cannot be negative.');
         }
 
-        if ($paidAmount < 0) {
+        if ($tenderedAmount < 0) {
             throw new InvalidArgumentException('Paid amount cannot be negative.');
         }
 
@@ -234,9 +272,18 @@ class MinishopSalesController extends AuthenticatedApiController
         }
 
         $totalAmount = round($subtotalAmount - $discountAmount, 2);
-        $summary = $this->makePaymentSummary($totalAmount, $paidAmount);
+        $initialSummary = $this->makePaymentSummary($totalAmount, 0);
+
+        if ($paymentMethod === 'card' && $tenderedAmount > $totalAmount) {
+            throw new InvalidArgumentException('Card payment amount cannot exceed the sale total.');
+        }
+
+        $appliedPaymentAmount = $paymentMethod === 'cash'
+            ? min($tenderedAmount, $totalAmount)
+            : $tenderedAmount;
         $saleId = $this->newUuid();
         $soldAt = $this->normalizeSoldAt($soldAt) ?? $timestamp;
+        $paidAt = $this->normalizeSoldAt($paidAt) ?? $soldAt;
         $customer = $customerId !== null
             ? $this->customers->findExistingByIdAndBook($bookId, $customerId)
             : null;
@@ -257,9 +304,9 @@ class MinishopSalesController extends AuthenticatedApiController
                 'subtotal_amount' => $this->formatMoney($subtotalAmount),
                 'discount_amount' => $this->formatMoney($discountAmount),
                 'total_amount' => $this->formatMoney($totalAmount),
-                'paid_amount' => $this->formatMoney($summary['paid_amount']),
-                'due_amount' => $this->formatMoney($summary['due_amount']),
-                'payment_status' => $summary['payment_status'],
+                'paid_amount' => $this->formatMoney($initialSummary['paid_amount']),
+                'due_amount' => $this->formatMoney($initialSummary['due_amount']),
+                'payment_status' => $initialSummary['payment_status'],
                 'note' => $note,
                 'sold_at' => $soldAt,
                 'created_at' => $timestamp,
@@ -305,6 +352,26 @@ class MinishopSalesController extends AuthenticatedApiController
                 }
             }
 
+            if ($appliedPaymentAmount > 0) {
+                $paymentCreated = $this->salePayments->insert([
+                    'id' => $this->newUuid(),
+                    'sale_id' => $saleId,
+                    'created_by' => $userId,
+                    'currency_code' => $currencyCode,
+                    'amount' => $this->formatMoney($appliedPaymentAmount),
+                    'payment_method' => $paymentMethod,
+                    'paid_at' => $paidAt,
+                    'note' => null,
+                    'created_at' => $timestamp,
+                ]);
+
+                if ($paymentCreated === false) {
+                    throw new RuntimeException('Unable to save sale payment right now.');
+                }
+            }
+
+            $this->syncSalePaymentSummaryFromRecords($saleId, $totalAmount, $timestamp);
+
             $this->db->transComplete();
 
             $sale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
@@ -316,6 +383,7 @@ class MinishopSalesController extends AuthenticatedApiController
             return [
                 'sale' => $sale,
                 'items' => $this->saleItems->findBySale($saleId),
+                'payments' => $this->salePayments->findBySale($saleId),
             ];
         } catch (\Throwable $exception) {
             $this->db->transRollback();
@@ -323,14 +391,16 @@ class MinishopSalesController extends AuthenticatedApiController
         }
     }
 
-    private function deleteSale(string $userId, string $bookId, string $saleId): array
+    private function deleteSale(string $bookId, string $saleId): array
     {
-        $this->requireOwnedMinishopBook($userId, $bookId);
-
         $sale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
 
         if ($sale === null) {
             throw new RuntimeException('Sale not found.');
+        }
+
+        if ($this->salePayments->findBySale($saleId) !== []) {
+            throw new InvalidArgumentException('Delete payment records first.');
         }
 
         $items = $this->saleItems->findBySale($saleId);
@@ -392,10 +462,8 @@ class MinishopSalesController extends AuthenticatedApiController
         }
     }
 
-    private function updateSalePaymentSummary(string $userId, string $bookId, string $saleId, array $payload): array
+    private function addSalePayment(string $userId, string $bookId, string $saleId, array $payload): array
     {
-        $this->requireOwnedMinishopBook($userId, $bookId);
-
         $sale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
 
         if ($sale === null) {
@@ -403,45 +471,143 @@ class MinishopSalesController extends AuthenticatedApiController
         }
 
         $subtotalAmount = $this->normalizeMoney($sale['subtotal_amount'] ?? 0);
-        $discountAmount = $this->normalizeMoney($payload['discount_amount'] ?? 0);
-        $paidAmount = $this->normalizeMoney($payload['paid_amount'] ?? 0);
+        $discountAmount = $this->normalizeMoney($payload['discount_amount'] ?? ($sale['discount_amount'] ?? 0));
+        $enteredAmount = $this->normalizeMoney($payload['amount'] ?? 0);
+        $paymentMethod = $this->normalizePaymentMethod($payload['payment_method'] ?? 'cash');
+        $paidAt = trim((string) ($payload['paid_at'] ?? ''));
 
         if ($discountAmount < 0) {
             throw new InvalidArgumentException('Discount amount cannot be negative.');
-        }
-
-        if ($paidAmount < 0) {
-            throw new InvalidArgumentException('Paid amount cannot be negative.');
         }
 
         if ($discountAmount > $subtotalAmount) {
             throw new InvalidArgumentException('Discount amount cannot exceed subtotal.');
         }
 
+        if ($enteredAmount <= 0) {
+            throw new InvalidArgumentException('Payment amount must be greater than zero.');
+        }
+
         $totalAmount = round($subtotalAmount - $discountAmount, 2);
-        $summary = $this->makePaymentSummary($totalAmount, $paidAmount);
+        $recordedPaymentsAmount = $this->salePayments->sumAmountBySale($saleId);
+
+        if ($totalAmount < $recordedPaymentsAmount) {
+            throw new InvalidArgumentException('Discount amount cannot reduce total below recorded payments.');
+        }
+
+        $remainingDue = max(round($totalAmount - $recordedPaymentsAmount, 2), 0);
+
+        if ($remainingDue <= 0) {
+            throw new InvalidArgumentException('This sale is already fully paid.');
+        }
+
+        if ($paymentMethod === 'card' && $enteredAmount > $remainingDue) {
+            throw new InvalidArgumentException('Card payment amount cannot exceed the remaining due.');
+        }
+
+        $appliedAmount = $paymentMethod === 'cash'
+            ? min($enteredAmount, $remainingDue)
+            : $enteredAmount;
         $timestamp = $this->utcNow();
+        $paymentId = $this->newUuid();
+        $paidAt = $this->normalizeSoldAt($paidAt) ?? $timestamp;
 
-        $updated = $this->sales->update($saleId, [
-            'discount_amount' => $this->formatMoney($discountAmount),
-            'total_amount' => $this->formatMoney($totalAmount),
-            'paid_amount' => $this->formatMoney($summary['paid_amount']),
-            'due_amount' => $this->formatMoney($summary['due_amount']),
-            'payment_status' => $summary['payment_status'],
-            'updated_at' => $timestamp,
-        ]);
+        $this->db->transException(true)->transStart();
 
-        if ($updated === false) {
-            throw new RuntimeException('Unable to update sale payment summary right now.');
+        try {
+            $updated = $this->sales->update($saleId, [
+                'discount_amount' => $this->formatMoney($discountAmount),
+                'total_amount' => $this->formatMoney($totalAmount),
+                'updated_at' => $timestamp,
+            ]);
+
+            if ($updated === false) {
+                throw new RuntimeException('Unable to update sale payment summary right now.');
+            }
+
+            $paymentCreated = $this->salePayments->insert([
+                'id' => $paymentId,
+                'sale_id' => $saleId,
+                'created_by' => $userId,
+                'currency_code' => (string) ($sale['currency_code'] ?? ''),
+                'amount' => $this->formatMoney($appliedAmount),
+                'payment_method' => $paymentMethod,
+                'paid_at' => $paidAt,
+                'note' => null,
+                'created_at' => $timestamp,
+            ]);
+
+            if ($paymentCreated === false) {
+                throw new RuntimeException('Unable to save sale payment right now.');
+            }
+
+            $this->syncSalePaymentSummaryFromRecords($saleId, $totalAmount, $timestamp);
+
+            $this->db->transComplete();
+
+            $updatedSale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
+            $payment = $this->salePayments->findExistingByIdAndSale($saleId, $paymentId);
+
+            if ($updatedSale === null || $payment === null) {
+                throw new RuntimeException('Unable to load the updated sale right now.');
+            }
+
+            return [
+                'sale' => $updatedSale,
+                'payment' => $payment,
+                'payments' => $this->salePayments->findBySale($saleId),
+            ];
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+    }
+
+    private function deleteSalePayment(string $bookId, string $saleId, string $paymentId): array
+    {
+        $sale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
+
+        if ($sale === null) {
+            throw new RuntimeException('Sale not found.');
         }
 
-        $updatedSale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
+        $payment = $this->salePayments->findExistingByIdAndSale($saleId, $paymentId);
 
-        if ($updatedSale === null) {
-            throw new RuntimeException('Unable to load the updated sale right now.');
+        if ($payment === null) {
+            throw new RuntimeException('Payment not found.');
         }
 
-        return $updatedSale;
+        $timestamp = $this->utcNow();
+        $totalAmount = $this->normalizeMoney($sale['total_amount'] ?? 0);
+
+        $this->db->transException(true)->transStart();
+
+        try {
+            $deleted = $this->salePayments->delete($paymentId);
+
+            if ($deleted === false) {
+                throw new RuntimeException('Unable to delete sale payment right now.');
+            }
+
+            $this->syncSalePaymentSummaryFromRecords($saleId, $totalAmount, $timestamp);
+
+            $this->db->transComplete();
+
+            $updatedSale = $this->sales->findExistingByIdAndBook($bookId, $saleId);
+
+            if ($updatedSale === null) {
+                throw new RuntimeException('Unable to load the updated sale right now.');
+            }
+
+            return [
+                'sale' => $updatedSale,
+                'deletedPaymentId' => $paymentId,
+                'payments' => $this->salePayments->findBySale($saleId),
+            ];
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
     }
 
     private function normalizeSaleItems(string $bookId, array $items): array
@@ -583,6 +749,21 @@ class MinishopSalesController extends AuthenticatedApiController
         return $parsedSoldAt?->format('Y-m-d H:i:s');
     }
 
+    private function normalizePaymentMethod(mixed $value): string
+    {
+        $paymentMethod = strtolower(trim((string) ($value ?? 'cash')));
+
+        if ($paymentMethod === '') {
+            return 'cash';
+        }
+
+        if (! in_array($paymentMethod, ['cash', 'card'], true)) {
+            throw new InvalidArgumentException('Payment method must be cash or card.');
+        }
+
+        return $paymentMethod;
+    }
+
     private function parseLocalDateTime(string $value): ?DateTimeImmutable
     {
         $normalizedValue = trim($value);
@@ -625,6 +806,22 @@ class MinishopSalesController extends AuthenticatedApiController
             'due_amount' => max(0, $dueAmount),
             'payment_status' => $paymentStatus,
         ];
+    }
+
+    private function syncSalePaymentSummaryFromRecords(string $saleId, float $totalAmount, string $timestamp): void
+    {
+        $summary = $this->makePaymentSummary($totalAmount, $this->salePayments->sumAmountBySale($saleId));
+
+        $updated = $this->sales->update($saleId, [
+            'paid_amount' => $this->formatMoney($summary['paid_amount']),
+            'due_amount' => $this->formatMoney($summary['due_amount']),
+            'payment_status' => $summary['payment_status'],
+            'updated_at' => $timestamp,
+        ]);
+
+        if ($updated === false) {
+            throw new RuntimeException('Unable to sync sale payment summary right now.');
+        }
     }
 
     private function normalizeMoney(mixed $value): float

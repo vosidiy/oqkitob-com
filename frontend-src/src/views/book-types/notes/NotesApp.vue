@@ -80,7 +80,7 @@
             ></textarea>
           
 
-            <div class="d-flex mt-2 gap-2">
+            <div class="d-flex mt-3 gap-2">
               <label
                 v-for="option in colorOptions"
                 :key="`create-${option.value || 'white'}`"
@@ -146,7 +146,7 @@
             :disabled="isUpdatingNote"
           ></textarea>
 
-          <div class="d-flex mt-2 gap-2">
+          <div class="d-flex mt-3 gap-2">
             <label
               v-for="option in colorOptions"
               :key="`edit-${option.value || 'yellow'}`"
@@ -173,7 +173,14 @@
           <span v-if="isUpdatingNote">{{ $t('common.states.saving') }}</span>
           <span v-else>{{ $t('common.actions.save') }}</span>
         </button>
-        <button class="btn btn-default"> 🗑️ Archive </button>
+        <button
+          type="button"
+          class="btn btn-default"
+          @click="handleArchiveNote(activeEditingNote)"
+          :disabled="!activeEditingNote || isNoteBusy(activeEditingNote.id)"
+        >
+          🗑️ {{ $t('common.actions.archive') }}
+        </button>
         <button type="button" class="btn btn-default" @click="closeEditDialog" :disabled="isUpdatingNote">
           {{ $t('common.actions.cancel') }}
         </button>
@@ -184,7 +191,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
@@ -210,13 +217,16 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 
+const DEFAULT_NOTE_COLOR = 'yellow'
 const colorOptions = [
   { value: 'yellow', labelKey: 'notes.colors.yellow' },
+  { value: 'purple', labelKey: 'notes.colors.purple' },
   { value: 'white', labelKey: 'notes.colors.white' },
   { value: 'blue', labelKey: 'notes.colors.blue' },
   { value: 'green', labelKey: 'notes.colors.green' }, 
   { value: 'red', labelKey: 'notes.colors.red' }, 
 ]
+const supportedNoteColors = new Set(colorOptions.map((option) => option.value))
 
 const notes = ref([])
 const isLoading = ref(true)
@@ -240,7 +250,15 @@ const createForm = reactive({
 const editForm = reactive({
   title: '',
   content: '',
-  color: '',
+  color: DEFAULT_NOTE_COLOR,
+})
+
+const activeEditingNote = computed(() => {
+  if (editingNoteId.value === '') {
+    return null
+  }
+
+  return notes.value.find((item) => item.id === editingNoteId.value) ?? null
 })
 
 watch(() => route.params.page, async (page) => {
@@ -306,7 +324,9 @@ function openEditDialog(note) {
   editingNoteId.value = note.id
   editForm.title = note.title ?? ''
   editForm.content = note.content ?? ''
-  editForm.color = note.color ?? ''
+  editForm.color = supportedNoteColors.has(String(note.color ?? '').trim().toLowerCase())
+    ? String(note.color ?? '').trim().toLowerCase()
+    : DEFAULT_NOTE_COLOR
   editErrorMessage.value = ''
 
   if (!editDialog.value?.open) {
@@ -397,22 +417,36 @@ async function handleUpdateNote() {
 }
 
 async function handleArchiveNote(note) {
+  if (!note) {
+    return
+  }
+
   if (!window.confirm(t('notes.confirmArchive'))) {
     return
   }
 
   errorMessage.value = ''
+  editErrorMessage.value = ''
   activeNoteActionId.value = note.id
 
   try {
     const { data } = await archiveNoteRequest(props.book.id, note.id)
     removeNoteFromList(data.noteId ?? note.id)
+
+    if (editingNoteId.value === note.id) {
+      closeEditDialog()
+    }
   } catch (error) {
     if (await handleUnauthorized(error)) {
       return
     }
 
-    errorMessage.value = getApiErrorMessage(error, t('notes.unableArchive'))
+    const nextErrorMessage = getApiErrorMessage(error, t('notes.unableArchive'))
+    errorMessage.value = nextErrorMessage
+
+    if (editingNoteId.value === note.id) {
+      editErrorMessage.value = nextErrorMessage
+    }
   } finally {
     activeNoteActionId.value = ''
   }
@@ -491,7 +525,7 @@ function validateNoteForm(form) {
 function resetCreateForm() {
   createForm.title = ''
   createForm.content = ''
-  createForm.color = ''
+  createForm.color = DEFAULT_NOTE_COLOR
   createErrorMessage.value = ''
   isCreatingNote.value = false
 }
@@ -499,7 +533,7 @@ function resetCreateForm() {
 function resetEditForm() {
   editForm.title = ''
   editForm.content = ''
-  editForm.color = ''
+  editForm.color = DEFAULT_NOTE_COLOR
   editErrorMessage.value = ''
   editingNoteId.value = ''
   isUpdatingNote.value = false
@@ -557,9 +591,12 @@ function isPinned(note) {
 }
 
 function getNoteCardClass(color) {
-  switch (color) {
+  const normalizedColor = String(color ?? '').trim().toLowerCase()
+  const noteColor = supportedNoteColors.has(normalizedColor) ? normalizedColor : DEFAULT_NOTE_COLOR
+
+  switch (noteColor) {
     case 'purple':
-      return ['bg-purple-100', 'border-purple-red-300']
+      return ['bg-purple-100', 'border-color-purple-300']
     case 'blue':
       return ['bg-blue-100', 'border-color-blue-300']
     case 'green':
