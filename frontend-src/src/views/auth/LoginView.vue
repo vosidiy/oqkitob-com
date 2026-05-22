@@ -20,7 +20,7 @@
             v-model.trim="form.email"
             type="email"
             class="form-control"
-            :placeholder="$t('auth.login.emailPlaceholder')"
+            placeholder="example@mail.com"
             autocomplete="email"
           >
         </div>
@@ -33,7 +33,7 @@
                 v-model="form.password"
                 :type="isPasswordVisible ? 'text' : 'password'"
                 class="form-control"
-                :placeholder="$t('auth.login.passwordPlaceholder')"
+                placeholder=""
                 autocomplete="current-password"
               >
               <button

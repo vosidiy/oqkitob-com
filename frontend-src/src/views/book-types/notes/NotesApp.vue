@@ -23,23 +23,23 @@
 
         <article v-for="item in notes" :key="item.id" class="card group hover:border-color-neutral-600 shadow-sm" :class="getNoteCardClass(item.color)">
             <div class="p-5 cursor-pointer" style="height: 160px;" @click="openEditDialog(item)" :disabled="isNoteBusy(item.id)">
-                <h5 class="font-medium mb-2">{{ item.title || $t('notes.untitled') }}</h5>
-                <div v-if="item.content" class="opacity-70 overflow-hidden">
+                <h5 v-if="item.title" class="font-medium mb-2">{{ item.title || $t('notes.untitled') }}</h5>
+                <div v-if="item.content" class="opacity-70 overflow-hidden" style="height: 110px;">
                   {{ item.content }}
                 </div>
                 <p v-else class="text-muted"> --- </p>
             </div>
-            <div class="d-flex p-2 gap-1">
+            <div class="d-flex p-3 gap-1">
+               <button type="button" class="btn btn-sm btn-icon" :class="isPinned(item) ? 'btn-default' : 'btn-neutral'" 
+                  @click="handleTogglePin(item)" :disabled="isNoteBusy(item.id)">
+                    📌
+                </button>
                 <button type="button"  class="btn btn-sm btn-icon btn-neutral" @click="handleArchiveNote(item)" :disabled="isNoteBusy(item.id)">
                   🗑️
                 </button>
-                <button type="button" class="btn btn-sm btn-icon  btn-neutral"
+                <button type="button" hidden disabled class="btn btn-sm btn-icon  btn-neutral"
                     @click="handleDeleteNote(item)" :disabled="isNoteBusy(item.id)">
                     ❌
-                </button>
-                <button type="button" class="btn btn-sm btn-icon" :class="isPinned(item) ? 'btn-default' : 'btn-neutral'" 
-                  @click="handleTogglePin(item)" :disabled="isNoteBusy(item.id)">
-                    📌
                 </button>
               </div>
         </article>
@@ -49,104 +49,78 @@
       <!-- container .//end -->
     </main>
 
-    <dialog
-      ref="createDialog"
-      @cancel="handleCreateDialogCancel"
-      @close="handleCreateDialogClose"
-    >
-      <form class="m-0" @submit.prevent="handleCreateNote">
-        <div class="border-bottom px-4 py-3">
-          <h2 class="h5 mb-1">{{ $t('notes.createTitle') }}</h2>
-          <p class="text-secondary mb-0">{{ $t('notes.createSubtitle') }}</p>
-        </div>
+    <dialog ref="createDialog" class="mt-20" @cancel="handleCreateDialogCancel" @close="handleCreateDialogClose">
+      <div class="dialog-body">
+          <form id="formNoteCreate"  @submit.prevent="handleCreateNote">
+            <div v-if="createErrorMessage" class="alert alert-danger" role="alert">
+              {{ createErrorMessage }}
+            </div>
+            <div class="d-flex mb-3">
+              <input type="text"
+                autofocus
+                v-model.trim="createForm.title"
+                class="form-control border-transparent hover:border text-xl"
+                :placeholder="$t('notes.titlePlaceholder')"
+                :disabled="isCreatingNote"
+              >
+              <button type="button" tabindex="-1" class="btn btn-icon ml-2" @click="closeCreateDialog" :disabled="isCreatingNote">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
+                </svg> 
+              </button> 
+            </div>
 
-        <div class="px-4 py-3">
-          <div v-if="createErrorMessage" class="alert alert-danger" role="alert">
-            {{ createErrorMessage }}
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="create-note-title">{{ $t('common.fields.title') }}</label>
-            <input
-              id="create-note-title"
-              v-model.trim="createForm.title"
-              type="text"
-              class="form-control"
-              :placeholder="$t('notes.titlePlaceholder')"
-              :disabled="isCreatingNote"
-            >
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="create-note-content">{{ $t('common.fields.content') }}</label>
             <textarea
               id="create-note-content"
               v-model.trim="createForm.content"
-              class="form-control"
+              class="form-control border-transparent hover:border text-lg h-auto"
               rows="5"
               :placeholder="$t('notes.contentPlaceholder')"
               :disabled="isCreatingNote"
             ></textarea>
-          </div>
+          
 
-          <div class="mb-0">
-            <div class="form-label mb-2">{{ $t('common.fields.color') }}</div>
-            <div class="vstack gap-2">
-              <div
+            <div class="d-flex mt-2 gap-2">
+              <label
                 v-for="option in colorOptions"
                 :key="`create-${option.value || 'white'}`"
-                class="form-check border rounded px-3 py-2"
+                class="card-check p-1 rounded"
               >
                 <input
-                  :id="`create-note-color-${option.value || 'white'}`"
                   v-model="createForm.color"
-                  class="form-check-input"
+                  class="visually-hidden"
                   type="radio"
                   name="create-note-color"
                   :value="option.value"
                   :disabled="isCreatingNote"
                 >
-                <label
-                  class="form-check-label w-100"
-                  :for="`create-note-color-${option.value || 'white'}`"
-                >
+                <span  class="form-check-label">
                   {{ $t(option.labelKey) }}
-                </label>
-              </div>
+                </span>
+              </label>
             </div>
-          </div>
-        </div>
-
-        <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
-          <button type="button" class="btn btn-outline" @click="closeCreateDialog" :disabled="isCreatingNote">
-            {{ $t('common.actions.cancel') }}
-          </button>
-          <button type="submit" class="btn btn-primary" :disabled="isCreatingNote">
+            
+          </form>
+      </div> <!-- dialog-body.// -->
+      <div class="dialog-bottom">
+          <button type="submit" form="formNoteCreate" class="btn flex-grow btn-primary" :disabled="isCreatingNote">
             <span v-if="isCreatingNote">{{ $t('common.states.saving') }}</span>
             <span v-else>{{ $t('common.actions.save') }}</span>
           </button>
-        </div>
-      </form>
+          <button type="button" class="btn btn-default" @click="closeCreateDialog" :disabled="isCreatingNote">
+            {{ $t('common.actions.cancel') }}
+          </button>
+      </div>
     </dialog>
 
-    <dialog
-      ref="editDialog"
-      @cancel="handleEditDialogCancel"
-      @close="handleEditDialogClose"
-    >
-      <form class="m-0" @submit.prevent="handleUpdateNote">
-        <div class="border-bottom px-4 py-3">
-          <h2 class="h5 mb-1">{{ $t('notes.editTitle') }}</h2>
-          <p class="text-secondary mb-0">{{ $t('notes.editSubtitle') }}</p>
-        </div>
-
-        <div class="px-4 py-3">
+    <dialog ref="editDialog" @cancel="handleEditDialogCancel" @close="handleEditDialogClose">
+      <div class="dialog-body">
+        <form id="formNoteEdit"  @submit.prevent="handleUpdateNote">
           <div v-if="editErrorMessage" class="alert alert-danger" role="alert">
             {{ editErrorMessage }}
           </div>
 
-          <div class="mb-3">
-            <label class="form-label" for="edit-note-title">{{ $t('common.fields.title') }}</label>
+          <div class="d-flex mb-3">
             <input
               id="edit-note-title"
               v-model.trim="editForm.title"
@@ -155,58 +129,57 @@
               :placeholder="$t('notes.titlePlaceholder')"
               :disabled="isUpdatingNote"
             >
+            <button type="button" tabindex="-1" class="btn btn-icon ml-2" @click="closeEditDialog" :disabled="isUpdatingNote">
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
+              </svg> 
+            </button> 
           </div>
+          
+          <textarea
+            id="edit-note-content"
+            v-model.trim="editForm.content"
+            class="form-control border-transparent hover:border text-lg h-auto"
+            rows="5"
+            autofocus
+            :placeholder="$t('notes.contentPlaceholder')"
+            :disabled="isUpdatingNote"
+          ></textarea>
 
-          <div class="mb-3">
-            <label class="form-label" for="edit-note-content">{{ $t('common.fields.content') }}</label>
-            <textarea
-              id="edit-note-content"
-              v-model.trim="editForm.content"
-              class="form-control"
-              rows="5"
-              :placeholder="$t('notes.contentPlaceholder')"
-              :disabled="isUpdatingNote"
-            ></textarea>
-          </div>
-          <div class="mb-0">
-            <div class="form-label mb-2">{{ $t('common.fields.color') }}</div>
-            <div class="vstack gap-2">
-              <div
-                v-for="option in colorOptions"
-                :key="`edit-${option.value || 'white'}`"
-                class="form-check border rounded px-3 py-2"
+          <div class="d-flex mt-2 gap-2">
+            <label
+              v-for="option in colorOptions"
+              :key="`edit-${option.value || 'yellow'}`"
+              class="card-check p-1 rounded"
+            >
+              <input
+                v-model="editForm.color"
+                class="visually-hidden"
+                type="radio"
+                name="edit-note-color"
+                :value="option.value"
+                :disabled="isUpdatingNote"
               >
-                <input
-                  :id="`edit-note-color-${option.value || 'white'}`"
-                  v-model="editForm.color"
-                  class="form-check-input"
-                  type="radio"
-                  name="edit-note-color"
-                  :value="option.value"
-                  :disabled="isUpdatingNote"
-                >
-                <label
-                  class="form-check-label w-100"
-                  :for="`edit-note-color-${option.value || 'white'}`"
-                >
-                  {{ $t(option.labelKey) }}
-                </label>
-              </div>
-            </div>
+              <span  class="form-check-label">
+                {{ $t(option.labelKey) }}
+              </span>
+            </label>
           </div>
-        </div>
 
-        <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">          
-          <button type="button" class="btn btn-outline" @click="closeEditDialog" :disabled="isUpdatingNote">
-            {{ $t('common.actions.cancel') }}
-          </button>
-          <button type="submit" class="btn btn-primary" :disabled="isUpdatingNote">
-            <span v-if="isUpdatingNote">{{ $t('common.states.saving') }}</span>
-            <span v-else>{{ $t('common.actions.save') }}</span>
-          </button>
-        </div>
-      </form>
+        </form>
+      </div> <!-- dialog-body .// --> 
+      <div class="dialog-bottom">
+        <button type="submit" form="formNoteEdit" class="btn flex-grow  btn-primary" :disabled="isUpdatingNote">
+          <span v-if="isUpdatingNote">{{ $t('common.states.saving') }}</span>
+          <span v-else>{{ $t('common.actions.save') }}</span>
+        </button>
+        <button class="btn btn-default"> 🗑️ Archive </button>
+        <button type="button" class="btn btn-default" @click="closeEditDialog" :disabled="isUpdatingNote">
+          {{ $t('common.actions.cancel') }}
+        </button>
+      </div>
     </dialog>
+
   </div>
 </template>
 
@@ -238,11 +211,11 @@ const router = useRouter()
 const { t } = useI18n()
 
 const colorOptions = [
-  { value: '', labelKey: 'notes.colors.white' },
   { value: 'yellow', labelKey: 'notes.colors.yellow' },
+  { value: 'white', labelKey: 'notes.colors.white' },
   { value: 'blue', labelKey: 'notes.colors.blue' },
-  { value: 'green', labelKey: 'notes.colors.green' },
-  { value: 'red', labelKey: 'notes.colors.red' },
+  { value: 'green', labelKey: 'notes.colors.green' }, 
+  { value: 'red', labelKey: 'notes.colors.red' }, 
 ]
 
 const notes = ref([])
@@ -316,9 +289,7 @@ function openCreateDialog() {
 }
 
 function closeCreateDialog() {
-  if (createDialog.value?.open) {
-    createDialog.value.close()
-  }
+      createDialog.value.close()
 }
 
 function handleCreateDialogClose() {
@@ -595,6 +566,8 @@ function getNoteCardClass(color) {
       return ['bg-green-100', 'border-color-green-300']
     case 'red':
       return ['bg-red-100', 'border-color-red-300']
+    case 'white':
+      return ['bg-neutral-100', 'border-color-neutral-300']
     default:
       return ['bg-yellow-100', 'border-color-yellow-300']
   }

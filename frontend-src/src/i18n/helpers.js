@@ -17,6 +17,6 @@ export function translateTodoPriority(t, priority) {
 export function translatePaymentStatus(t, status) {
   const normalizedStatus = String(status ?? '').trim().toLowerCase()
   return knownPaymentStatuses.has(normalizedStatus)
-    ? t(`minishop.reports.paymentLabels.${normalizedStatus}`)
+    ? t(`minishop.paymentLabels.${normalizedStatus}`)
     : (status || '-')
 }

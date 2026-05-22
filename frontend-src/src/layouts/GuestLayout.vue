@@ -19,7 +19,7 @@
           id="guest_language_picker"
           v-model="currentLocale"
           :aria-label="$t('guestLayout.ariaLanguagePicker')"
-          class="form-select"
+          class="form-select min-w-10 w-25"
         >
           <option v-for="option in localeOptions" :key="option.code" :value="option.code">
             {{ option.label }}

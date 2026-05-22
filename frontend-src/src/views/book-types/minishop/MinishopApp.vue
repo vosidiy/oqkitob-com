@@ -23,17 +23,10 @@
         >
           {{ $t('minishop.tabs.customers') }}
         </RouterLink>
-        <RouterLink
-          :to="{ name: 'book-detail', params: { bookId: book.id, page: 'reports' } }"
-          class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
-          :class="{ active: activePageKey === 'reports' }"
-        >
-          {{ $t('minishop.tabs.reports') }}
-        </RouterLink>
       </template>
     </BookPageHeader>
 
-    <MainTab
+    <NewSaleTab
       v-if="activePageKey === 'main'"
       :cart-items="cartItems"
       :cart-line-total-by-product-id="cartLineTotalByProductId"
@@ -91,8 +84,6 @@
       :book="book"
       @customers-changed="handleCustomersChanged"
     />
-
-    <ReportsTab v-else-if="activePageKey === 'reports'" />
 
     <dialog
       ref="createCustomerDialog"
@@ -600,16 +591,14 @@ import {
 } from '@/api/minishop'
 import BookPageHeader from '@/components/BookPageHeader.vue'
 import CustomersTab from '@/views/book-types/minishop/CustomersTab.vue'
-import MainTab from '@/views/book-types/minishop/MainTab.vue'
-import ReportsTab from '@/views/book-types/minishop/ReportsTab.vue'
+import NewSaleTab from '@/views/book-types/minishop/NewSaleTab.vue'
 import SalesTab from '@/views/book-types/minishop/SalesTab.vue'
 
 const NO_CATEGORY_FILTER_VALUE = '__no_category__'
 const CREATE_CATEGORY_OPTION_VALUE = '__create_category__'
 const pageComponentByKey = {
   customers: CustomersTab,
-  main: MainTab,
-  reports: ReportsTab,
+  main: NewSaleTab,
   sales: SalesTab,
 }
 
