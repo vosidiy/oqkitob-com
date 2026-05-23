@@ -459,7 +459,7 @@
 
           <div class="d-flex justify-content-between mb-3">
             <span>{{ $t('common.fields.subtotal') }}</span>
-            <div class="text-right font-semibold">
+            <div class="text-right">
               {{ formatMoneyValue(subtotal) }}
             </div>
           </div>
@@ -471,9 +471,9 @@
                 id="checkout-payment-discount"
                 v-model.trim="discountInput"
                 type="number"
-                class="form-control min-h-5 h-8 font-semibold"
+                class="form-control text-right min-h-5 h-8"
                 min="0"
-                step="0.01"
+                step="1"
                 :disabled="isSavingSale"
                 @blur="normalizeDiscountInput"
               >
@@ -482,49 +482,47 @@
 
           <div v-if="discountAmount > 0" class="row justify-content-between mb-3">
             <span class="col-6">{{ $t('common.fields.total') }}</span>
-            <div class="col-6 text-right font-semibold">
+            <div class="col-6 text-right">
               {{ formatMoneyValue(total) }}
             </div>
           </div>
 
           <hr>
 
-          <div class="mb-3">
-            <label class="form-label d-block">{{ $t('common.fields.method') }}</label>
-            <div class="d-flex gap-4">
-              <label class="form-check d-flex align-items-center gap-2">
-                <input
+          <label class="form-label mb-3 text-secondary" for="checkout-payment-paid">{{ $t('common.fields.paid') }}:</label>
+          <nav class="tabs-boxed w-full mb-4">
+            <label tabindex="0" class="tab-link">
+              <input
                   v-model="paymentMethod"
-                  class="form-check-input"
+                  class="visually-hidden"
                   type="radio"
                   name="checkout-payment-method"
                   value="cash"
+                  checked
                   :disabled="isSavingSale"
                 >
-                <span>{{ $t('minishop.paymentMethods.cash') }}</span>
-              </label>
-              <label class="form-check d-flex align-items-center gap-2">
-                <input
+              {{ $t('minishop.paymentMethods.cash') }}
+            </label>
+            <label tabindex="0" class="tab-link">
+              <input
                   v-model="paymentMethod"
-                  class="form-check-input"
+                  class="visually-hidden"
                   type="radio"
                   name="checkout-payment-method"
                   value="card"
                   :disabled="isSavingSale"
                 >
-                <span>{{ $t('minishop.paymentMethods.card') }}</span>
-              </label>
-            </div>
-          </div>
+              {{ $t('minishop.paymentMethods.card') }}
+            </label>
+          </nav>
 
-          <div class="row justify-content-between mb-3">
-            <label class="col-6 form-label" for="checkout-payment-paid">{{ $t('common.fields.paid') }}</label>
-            <div class="col-6 text-right font-semibold">
+          <div class="mb-1">
+            <div class="text-right font-semibold">
               <input
                 id="checkout-payment-paid"
                 v-model.trim="paidInput"
                 type="number"
-                class="form-control min-h-5 h-8 font-semibold"
+                class="form-control text-xl font-semibold"
                 min="0"
                 step="0.01"
                 :disabled="isSavingSale"
@@ -534,40 +532,36 @@
             </div>
           </div>
 
-          <div class="mb-5">
-            <div
-              v-if="changeAmount > 0"
-              class="d-flex justify-content-between gap-3 text-green"
-            >
-              <span>{{ $t('minishop.sales.returnChange') }}</span>
-              <strong>{{ formatMoneyValue(changeAmount) }}</strong>
+          <div class="mb-2">
+            <div v-if="changeAmount > 0" class="text-green">
+              <span>{{ $t('minishop.sales.returnChange') }}: </span>
+              <strong class="text-sm"> {{ formatMoneyValue(changeAmount) }} </strong>
             </div>
-            <div
-              v-else-if="remainingAmount > 0"
-              class="d-flex justify-content-between gap-3 text-orange"
-            >
-              <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-              <strong>{{ formatMoneyValue(remainingAmount) }}</strong>
+            <div  v-else-if="remainingAmount > 0" class="text-orange">
+              <span> {{ $t('minishop.sales.remainingDebt') }}: </span>
+              <strong class="text-sm"> {{ formatMoneyValue(remainingAmount) }}</strong>
             </div>
-            <div v-else class="d-flex justify-content-between gap-3 text-green">
-              <span>{{ $t('common.fields.status') }}</span>
-              <strong>{{ $t('common.states.paidInFull') }}</strong>
+            <div v-else class="text-green">
+              <strong class="text-sm">{{ $t('common.states.paidInFull') }}</strong>
             </div>
           </div>
 
-          <div class="border-top d-flex pt-4 gap-2">
-            <button
-              type="button"
-              class="btn btn-default btn-lg flex-1"
-              :disabled="isSavingSale"
-              @click="closeCheckoutPaymentDialog"
-            >
-              {{ $t('common.actions.cancel') }}
-            </button>
-            <button type="submit" class="btn btn-lg btn-primary flex-1" :disabled="isSavingSale || cartItems.length === 0">
+          <div class="pt-4">
+            <button type="submit" class="btn btn-lg w-full btn-primary" :disabled="isSavingSale || cartItems.length === 0">
               <span v-if="isSavingSale">{{ $t('common.states.saving') }}</span>
-              <span v-else>{{ $t('minishop.dialogs.savePayment') }}</span>
+              <strong v-else>{{ $t('minishop.dialogs.savePayment') }}</strong>
             </button>
+
+            <div class="text-center mt-4">
+              <a role="button" href="#"
+                class="text-secondary btn-sm"
+                :disabled="isSavingSale"
+                @click="closeCheckoutPaymentDialog"
+              >
+                {{ $t('common.actions.cancel') }}
+              </a>
+            </div>
+
           </div>
         </form>
       </div>
