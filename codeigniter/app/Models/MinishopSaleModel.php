@@ -34,7 +34,12 @@ class MinishopSaleModel extends Model
     /**
      * Default sales list ordered newest first for history screens.
      */
-    public function findByBook(string $bookId, ?string $soldFrom = null, ?string $soldTo = null): array
+    public function findByBook(
+        string $bookId,
+        ?string $soldFrom = null,
+        ?string $soldTo = null,
+        string $search = ''
+    ): array
     {
         $query = $this->makeSaleSummaryQuery()
             ->where('minishop_sales.book_id', $bookId)
@@ -46,6 +51,22 @@ class MinishopSaleModel extends Model
 
         if ($soldTo !== null) {
             $query->where('minishop_sales.sold_at <=', $soldTo);
+        }
+
+        $normalizedSearch = trim($search);
+
+        if ($normalizedSearch !== '') {
+            $query->join(
+                'minishop_sale_items',
+                'minishop_sale_items.sale_id = minishop_sales.id',
+                'left'
+            )->groupStart()
+                ->like('minishop_sales.id', $normalizedSearch)
+                ->orLike('minishop_customers.name', $normalizedSearch)
+                ->orLike('minishop_sale_items.product_name', $normalizedSearch)
+                ->orLike('minishop_sale_items.product_sku', $normalizedSearch)
+                ->groupEnd()
+                ->distinct();
         }
 
         return $query->orderBy('minishop_sales.sold_at', 'DESC')

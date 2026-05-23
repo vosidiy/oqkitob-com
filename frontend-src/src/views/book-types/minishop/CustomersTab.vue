@@ -184,7 +184,7 @@
                       <td>{{ formatDateTime(receipt.sold_at) }}</td>
                       <td>{{ formatMoney(receipt.total_amount) }}</td>
                       <td>{{ formatMoney(receipt.due_amount) }}</td>
-                      <td class="text-capitalize">{{ translatePaymentStatus($t, receipt.payment_status) }}</td>
+                      <td class="text-capitalize">{{ $t('minishop.paymentLabels.' + receipt.payment_status) }}</td>
                       <td>
                         <button
                           type="button"
@@ -394,7 +394,7 @@
                 {{ selectedReceiptSale.customer_name || $t('minishop.sales.noCustomer') }}
                 <span v-if="selectedReceiptSale.customer_phone"> · {{ selectedReceiptSale.customer_phone }}</span>
               </p>
-              <p class="mb-3 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ translatePaymentStatus($t, selectedReceiptSale.payment_status) }}</p>
+              <p class="mb-3 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ $t('minishop.paymentLabels.' + selectedReceiptSale.payment_status) }}</p>
               <button
                 type="button"
                 class="btn btn-default mr-2"
@@ -510,7 +510,7 @@
                 <div class="d-flex justify-content-between gap-3 mobile:flex-col">
                   <div>
                     <p class="mb-1"><strong>{{ $t('common.fields.date') }}:</strong> {{ formatDateTime(payment.paid_at || payment.created_at) }}</p>
-                    <p class="mb-0"><strong>{{ $t('common.fields.method') }}:</strong> {{ translatePaymentMethod(payment.payment_method) }}</p>
+                    <p class="mb-0"><strong>{{ $t('common.fields.method') }}:</strong> {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
                   </div>
                   <div class="text-right mobile:text-left">
                     <p class="mb-2"><strong>{{ formatMoney(payment.amount) }}</strong></p>
@@ -680,7 +680,6 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
-import { translatePaymentStatus } from '@/i18n/helpers'
 import {
   createMinishopCustomer,
   createMinishopSalePayment,
@@ -880,7 +879,7 @@ function handleCustomerSearchInput() {
 
   customerSearchDebounceTimer = window.setTimeout(() => {
     void loadCustomerList(customerSearchQuery.value.trim())
-  }, 250)
+  }, 500)
 }
 
 async function selectCustomer(customer) {
@@ -1411,10 +1410,6 @@ function formatDateTime(value) {
   }
 
   return parsedDate.toLocaleString()
-}
-
-function translatePaymentMethod(method) {
-  return t(`minishop.paymentMethods.${method === 'card' ? 'card' : 'cash'}`)
 }
 
 function makeLocalDateTimeString(date = new Date()) {

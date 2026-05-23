@@ -114,7 +114,7 @@
       </section>
 
       <section class="px-2 flex-1 overflow-y-scroll">
-        <div v-if="cartItems.length === 0" class="text-secondary p-10 text-center">
+        <div v-if="cartItems.length === 0" class="text-secondary p-10 text-lg text-center">
           👈 {{ $t('minishop.main.emptyCart') }}
         </div>
 
@@ -125,7 +125,7 @@
             class="border-bottom px-2 hover:bg-neutral-100 border-color-neutral-500"
           >
             <div class="d-flex align-items-center py-1 border-bottom">
-              <h6 class="flex-1 text-lg">{{ item.name }}</h6>
+              <h6 class="flex-1 text-lg"> 📦 {{ item.name }}</h6>
 
               <button
                 type="button"
@@ -201,45 +201,48 @@
 
         <div v-if="cartItems.length > 0" class="px-3 pb-3">
           <div class="border rounded p-3 bg-neutral-100">
-            <div class="d-flex justify-content-between align-items-center gap-2 mb-2 mobile:flex-col mobile:align-items-start">
-              <label class="form-label mb-0" for="minishop-cart-customer">{{ $t('common.fields.customer') }}</label>
+            <div class="d-flex gap-2 mb-2">
+              <select
+                id="minishop-cart-customer"
+                :value="selectedCustomerId"
+                class="form-select"
+                :disabled="isLoadingCustomers || isSavingSale"
+                @change="updateSelectedCustomerId"
+              >
+                <option value="">{{ $t('minishop.main.noCustomer') }}</option>
+                <option v-for="customer in customers" :key="customer.id" :value="customer.id">
+                  {{ formatCustomerOption(customer) }}
+                </option>
+              </select>
+
               <button
                 type="button"
-                class="btn btn-default btn-sm"
+                class="btn btn-default"
                 :disabled="isSavingSale"
                 @click="emit('open-create-customer')"
               >
-                {{ $t('minishop.main.newCustomer') }}
+                👤 {{ $t('minishop.main.newCustomer') }}
               </button>
+
             </div>
 
-            <select
-              id="minishop-cart-customer"
-              :value="selectedCustomerId"
-              class="form-select"
-              :disabled="isLoadingCustomers || isSavingSale"
-              @change="updateSelectedCustomerId"
-            >
-              <option value="">{{ $t('minishop.main.noCustomer') }}</option>
-              <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                {{ formatCustomerOption(customer) }}
-              </option>
-            </select>
-
-            <p v-if="customerErrorMessage" class="text-red text-sm mt-2 mb-0">
-              {{ customerErrorMessage }}
-            </p>
-            <p v-else-if="isLoadingCustomers" class="text-secondary text-sm mt-2 mb-0">
-              {{ $t('minishop.main.loadingCustomers') }}
-            </p>
-            <p v-else-if="customers.length === 0" class="text-secondary text-sm mt-2 mb-0">
-              {{ $t('minishop.main.noCustomers') }}
-            </p>
-            <p v-else-if="selectedCustomer" class="text-secondary text-sm mt-2 mb-0">
-              {{ $t('minishop.main.linkedTo', { name: selectedCustomer.name }) }}
-              <span v-if="selectedCustomer.phone"> · {{ selectedCustomer.phone }}</span>
-            </p>
+            <div>
+              <p v-if="customerErrorMessage" class="text-red">
+                {{ customerErrorMessage }}
+              </p>
+              <p v-else-if="isLoadingCustomers" class="text-secondary">
+                {{ $t('minishop.main.loadingCustomers') }}
+              </p>
+              <p v-else-if="customers.length === 0" class="text-secondary">
+                {{ $t('minishop.main.noCustomers') }}
+              </p>
+              <p v-else-if="selectedCustomer" class="text-secondary">
+                {{ $t('minishop.main.linkedTo', { name: selectedCustomer.name }) }}
+                <span v-if="selectedCustomer.phone"> · {{ selectedCustomer.phone }}</span>
+              </p>
+            </div>
           </div>
+          
         </div>
       </section>
 

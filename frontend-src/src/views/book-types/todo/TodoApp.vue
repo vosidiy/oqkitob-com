@@ -25,7 +25,7 @@
             </span>
           </div>
           <div class="small text-secondary mt-2 text-capitalize">
-            {{ $t('todo.priority') }}: {{ translateTodoPriority($t, item.priority) }}
+            {{ $t('todo.priority') }}: {{ $t('todo.priorities.' + item.priority) }}
           </div>
         </div>
       </div>
@@ -40,7 +40,6 @@ import { useI18n } from 'vue-i18n'
 import { isUnauthorizedError } from '@/api/errors'
 import { fetchTodos } from '@/api/todos'
 import BookPageHeader from '@/components/BookPageHeader.vue'
-import { translateTodoPriority } from '@/i18n/helpers'
 
 const props = defineProps({
   book: {

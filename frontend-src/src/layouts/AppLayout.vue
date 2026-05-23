@@ -50,7 +50,7 @@
             </div>
             <div class="p-3 mobile:p-1" data-book-id="{{ book.id }}">
                 <h6 class="mb-1 mobile:mb-0 text-capitalize">  {{ book.title }}  </h6>
-                <p class="text-secondary">{{ translateBookType(t, book.type_key) }}</p>
+                <p class="text-secondary">{{ $t('bookTypes.' + book.type_key) }}</p>
                 <div
                   v-if="book.description"
                   class="small mt-1"
@@ -350,7 +350,7 @@
                   :disabled="isCreatingBook"
                 >
                 <label class="form-check-label w-100" :for="`book-type-${bookType.type_key}`">
-                  <div class="fw-semibold">{{ translateBookType(t, bookType.type_key) }}</div>
+                  <div class="fw-semibold">{{ $t('bookTypes.' + bookType.type_key) }}</div>
                   <div v-if="bookType.description" class="small text-secondary mt-1">
                     {{ bookType.description }}
                   </div>
@@ -443,7 +443,6 @@ import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
 import { useI18n } from 'vue-i18n'
 import { useBookSettingsDialog } from '@/composables/book-settings-dialog'
 import { useLocale } from '@/composables/use-locale'
-import { translateBookType } from '@/i18n/helpers'
 import { authStore } from '@/stores/auth'
 import { useBooksStore } from '@/stores/books-store'
 

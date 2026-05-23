@@ -20,7 +20,13 @@
           </select>
         </div>
         <div class="flex-grow">
-          <input type="search" :placeholder="$t('common.fields.search')" class="form-control">
+          <input
+            v-model.trim="salesSearchQuery"
+            type="search"
+            :placeholder="$t('minishop.sales.searchSales')"
+            class="form-control"
+            @input="handleSalesSearchInput"
+          >
         </div>
       </header>
 
@@ -34,7 +40,26 @@
         </div>
 
         <div v-else-if="sales.length === 0" class="px-4 py-4 text-secondary">
-          {{ $t('minishop.sales.noSales') }}
+          <p class="mb-0">
+            {{ hasActiveSalesSearch ? $t('minishop.sales.noSearchResults') : $t('minishop.sales.noSales') }}
+          </p>
+          <div v-if="hasActiveSalesSearch" class="d-flex gap-2 mt-3 mobile:flex-col">
+            <button
+              v-if="shouldShowAllPeriodsAction"
+              type="button"
+              class="btn btn-primary"
+              @click="showAllPeriods"
+            >
+              {{ $t('minishop.sales.showAllPeriods') }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-default"
+              @click="clearSalesSearch"
+            >
+              {{ $t('minishop.sales.clearSearch') }}
+            </button>
+          </div>
         </div>
 
         <ul v-else class="mt-1">
@@ -44,33 +69,34 @@
             </RouterLink>
           </li>
           <li v-for="sale in sales" :key="sale.id" class="border-bottom hover:bg-neutral-100">
-            <div
-              role="button"
-              class="px-4 p-2"
+            <a href="#" role="button" class="px-4 p-3 text-base d-block"
               :class="{ 'bg-primary-200': selectedSaleId === sale.id }"
               @click="selectSale(sale)"
             >
               <div class="d-flex justify-content-between gap-2">
+                <div class="mr-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-receipt-text-icon lucide-receipt-text"><path d="M13 16H8"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"/></svg>
+                </div>
                 <div>
                   <h6>{{ formatDateTime(sale.sold_at) }}</h6>
-                  <small class="text-sm text-secondary">{{ sale.id }}</small>
-                  <p v-if="sale.customer_name" class="text-sm text-secondary mt-1 mb-0">
-                    {{ sale.customer_name }}
-                    <span v-if="sale.customer_phone"> · {{ sale.customer_phone }}</span>
+                  <small class="text-sm text-secondary">ID: {{ sale.id }}</small>
+                  <p v-if="sale.customer_name" class="mt-1 mb-0">
+                    👤 {{ sale.customer_name }}
+                    <span class="text-secondary" v-if="sale.customer_phone">  • 📞 {{ sale.customer_phone }}</span>
                   </p>
                   <p v-if="sale.note" class="text-sm text-secondary mt-1 mb-0">
                     {{ sale.note }}
                   </p>
                 </div>
                 <div class="ml-auto text-right">
-                  <p>{{ formatMoney(sale.total_amount) }}</p>
-                  <p v-if="Number(sale.due_amount) > 0" class="text-red mt-1 mb-0">
+                  <p class="font-semibold">{{ formatMoney(sale.total_amount) }}</p>
+                  <p v-if="Number(sale.due_amount) > 0" class="text-red">
                     {{ $t('minishop.sales.due') }}: {{ formatMoney(sale.due_amount) }}
                   </p>
-                  <span class="text-capitalize text-sm">{{ translatePaymentStatus($t, sale.payment_status) }}</span>
+                  <span class="text-secondary text-sm"> Status: {{ $t('minishop.paymentLabels.' + sale.payment_status) }}</span>
                 </div>
               </div>
-            </div>
+            </a>
           </li>
         </ul>
       </div>
@@ -102,7 +128,7 @@
                   {{ selectedSale.customer_name || $t('minishop.sales.noCustomer') }}
                   <span v-if="selectedSale.customer_phone"> · {{ selectedSale.customer_phone }}</span>
                 </p>
-                <p class="mb-3 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ translatePaymentStatus($t, selectedSale.payment_status) }}</p>
+                <p class="mb-3 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ $t('minishop.paymentLabels.' + selectedSale.payment_status) }}</p>
                 <button
                   type="button"
                   class="btn btn-default mr-2"
@@ -217,7 +243,7 @@
                   <div class="d-flex justify-content-between gap-3 mobile:flex-col">
                     <div>
                       <p class="mb-1"><strong>{{ $t('common.fields.date') }}:</strong> {{ formatDateTime(payment.paid_at || payment.created_at) }}</p>
-                      <p class="mb-0"><strong>{{ $t('common.fields.method') }}:</strong> {{ translatePaymentMethod(payment.payment_method) }}</p>
+                      <p class="mb-0"><strong>{{ $t('common.fields.method') }}:</strong> {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
                     </div>
                     <div class="text-right mobile:text-left">
                       <p class="mb-2"><strong>{{ formatMoney(payment.amount) }}</strong></p>
@@ -267,6 +293,8 @@
             </div>
           </div>
         </div>
+
+
       </section>
     </aside>
   </section>
@@ -419,7 +447,6 @@ import { computed, reactive, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
-import { translatePaymentStatus } from '@/i18n/helpers'
 import {
   createMinishopSalePayment,
   deleteMinishopSale,
@@ -457,6 +484,10 @@ const salesListErrorMessage = ref('')
 const selectedSaleErrorMessage = ref('')
 const paymentErrorMessage = ref('')
 const selectedFilterTime = ref('today')
+const salesSearchQuery = ref('')
+
+let salesSearchDebounceTimer = null
+let latestSalesRequestId = 0
 
 const paymentForm = reactive({
   discountInput: '0.00',
@@ -538,9 +569,21 @@ const salesSummaryTitle = computed(() => {
   })
 })
 
-watch([() => props.book.id, selectedFilterTime], async () => {
-  await loadSales()
+const hasActiveSalesSearch = computed(() => salesSearchQuery.value !== '')
+const shouldShowAllPeriodsAction = computed(() => {
+  return hasActiveSalesSearch.value && selectedFilterTime.value !== 'all_time'
+})
+
+watch(() => props.book.id, async () => {
+  cancelPendingSalesSearch()
+  salesSearchQuery.value = ''
+  await loadSales('')
 }, { immediate: true })
+
+watch(selectedFilterTime, async () => {
+  cancelPendingSalesSearch()
+  await loadSales()
+})
 
 watch(
   [() => paymentForm.paymentMethod, paymentSummaryRemainingBeforePayment],
@@ -551,22 +594,31 @@ watch(
   },
 )
 
-async function loadSales() {
+async function loadSales(search = salesSearchQuery.value) {
+  const requestId = ++latestSalesRequestId
+
   isLoadingSalesList.value = true
   salesListErrorMessage.value = ''
-  selectedSaleId.value = ''
-  selectedSale.value = null
-  selectedSaleItems.value = []
-  selectedSalePayments.value = []
+  clearSelectedSale()
   selectedSaleErrorMessage.value = ''
 
   try {
     const { data } = await fetchMinishopSales(props.book.id, {
       filter_time: selectedFilterTime.value,
       local_now: makeLocalDateTimeString(),
+      search,
     })
+
+    if (!isLatestSalesRequest(requestId)) {
+      return
+    }
+
     sales.value = Array.isArray(data.sales) ? data.sales : []
   } catch (error) {
+    if (!isLatestSalesRequest(requestId)) {
+      return
+    }
+
     if (isUnauthorizedError(error)) {
       await router.replace({ name: 'login' })
       return
@@ -575,8 +627,34 @@ async function loadSales() {
     sales.value = []
     salesListErrorMessage.value = getApiErrorMessage(error, t('minishop.sales.unableLoadSales'))
   } finally {
-    isLoadingSalesList.value = false
+    if (isLatestSalesRequest(requestId)) {
+      isLoadingSalesList.value = false
+    }
   }
+}
+
+function handleSalesSearchInput() {
+  cancelPendingSalesSearch()
+
+  salesSearchDebounceTimer = window.setTimeout(() => {
+    salesSearchDebounceTimer = null
+    void loadSales(salesSearchQuery.value)
+  }, 500)
+}
+
+function clearSalesSearch() {
+  cancelPendingSalesSearch()
+  salesSearchQuery.value = ''
+  void loadSales('')
+}
+
+function showAllPeriods() {
+  if (selectedFilterTime.value === 'all_time') {
+    return
+  }
+
+  cancelPendingSalesSearch()
+  selectedFilterTime.value = 'all_time'
 }
 
 async function selectSale(sale) {
@@ -819,8 +897,15 @@ function removeSaleFromList(saleId) {
   sales.value = sales.value.filter((sale) => sale.id !== saleId)
 }
 
-function translatePaymentMethod(method) {
-  return t(`minishop.paymentMethods.${method === 'card' ? 'card' : 'cash'}`)
+function cancelPendingSalesSearch() {
+  if (salesSearchDebounceTimer !== null) {
+    window.clearTimeout(salesSearchDebounceTimer)
+    salesSearchDebounceTimer = null
+  }
+}
+
+function isLatestSalesRequest(requestId) {
+  return requestId === latestSalesRequestId
 }
 
 function formatMoney(value) {

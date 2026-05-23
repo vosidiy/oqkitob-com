@@ -75,6 +75,7 @@
 
     <dialog
       ref="createCustomerDialog"
+      class="mt-10"
       @cancel="handleCreateCustomerDialogCancel"
       @close="handleCreateCustomerDialogClose"
     >
@@ -108,9 +109,8 @@
             <input
               id="create-customer-phone"
               v-model.trim="createCustomerForm.phone"
-              type="text"
+              type="text" 
               class="form-control"
-              :placeholder="$t('minishop.customers.optionalPhone')"
               :disabled="isCreatingCustomer"
             >
           </div>
@@ -121,8 +121,7 @@
               id="create-customer-note"
               v-model.trim="createCustomerForm.note"
               class="form-control"
-              rows="4"
-              :placeholder="$t('minishop.customers.optionalNote')"
+              rows="2"
               :disabled="isCreatingCustomer"
             ></textarea>
           </div>
@@ -147,6 +146,7 @@
 
     <dialog
       ref="createProductDialog"
+      class="mt-10"
       @cancel="handleCreateProductDialogCancel"
       @close="handleCreateProductDialogClose"
     >
@@ -285,6 +285,7 @@
 
     <dialog
       ref="editProductDialog"
+      class="mt-10"
       @cancel="handleEditProductDialogCancel"
       @close="handleEditProductDialogClose"
     >
@@ -435,7 +436,7 @@
 
     <dialog
       ref="checkoutPaymentDialog"
-      class="dialog-sm"
+      class="dialog-sm mt-10"
       @cancel="handleCheckoutPaymentDialogCancel"
       @close="handleCheckoutPaymentDialogClose"
     >
@@ -473,7 +474,7 @@
                 type="number"
                 class="form-control text-right min-h-5 h-8"
                 min="0"
-                step="1"
+                step="0.1"
                 :disabled="isSavingSale"
                 @blur="normalizeDiscountInput"
               >
@@ -489,12 +490,10 @@
 
           <hr>
 
-          <label class="form-label mb-3 text-secondary" for="checkout-payment-paid">{{ $t('common.fields.paid') }}:</label>
           <nav class="tabs-boxed w-full mb-4">
-            <label tabindex="0" class="tab-link">
+            <label tabindex="0" class="tab-link flex-1">
               <input
                   v-model="paymentMethod"
-                  class="visually-hidden"
                   type="radio"
                   name="checkout-payment-method"
                   value="cash"
@@ -503,10 +502,9 @@
                 >
               {{ $t('minishop.paymentMethods.cash') }}
             </label>
-            <label tabindex="0" class="tab-link">
+            <label tabindex="0" class="tab-link flex-1">
               <input
                   v-model="paymentMethod"
-                  class="visually-hidden"
                   type="radio"
                   name="checkout-payment-method"
                   value="card"
@@ -569,21 +567,21 @@
 
     <dialog
       ref="receiptDialog"
-      class="border rounded shadow p-0"
+      class="mt-10"
       @cancel="handleReceiptDialogCancel"
       @close="handleReceiptDialogClose"
     >
-      <div class="border-bottom px-4 py-3">
-        <h2 class="h5 mb-1">{{ $t('minishop.dialogs.saleSaved') }}</h2>
-        <p class="text-secondary mb-0">
-          {{ $t('minishop.dialogs.receiptFor', { id: receiptState?.sale?.id || book.title }) }}
-        </p>
-      </div>
+      <header class="dialog-header">
+        <h5> ✅  {{ $t('minishop.dialogs.saleSaved') }}</h5>
+        <button class="btn btn-icon" @click="closeReceiptDialog">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
+        </button>
+      </header>
 
-      <div v-if="receiptState" class="px-4 py-3" id="minishop-receipt-content">
+      <div v-if="receiptState" class="dialog-body" id="minishop-receipt-content">
         <div class="mb-3">
           <div><strong>{{ $t('common.fields.book') }}:</strong> {{ book.title }}</div>
-          <div><strong>{{ $t('common.fields.receipt') }}:</strong> {{ receiptState.sale.id }}</div>
+          <div><strong>{{ $t('common.fields.receipt') }} ID:</strong> {{ receiptState.sale.id }}</div>
           <div><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ receiptState.sale.sold_at }}</div>
           <div><strong>{{ $t('common.fields.currency') }}:</strong> {{ receiptState.sale.currency_code }}</div>
           <div v-if="receiptState.sale.customer_name">
@@ -614,46 +612,47 @@
           </table>
         </div>
 
-        <div class="d-flex flex-col gap-1">
+        <div class="d-flex flex-col mb-4 align-items-end">
           <div class="d-flex justify-content-between">
             <span>{{ $t('common.fields.subtotal') }}</span>
-            <strong>{{ receiptState.sale.subtotal_amount }}</strong>
+            <strong class="min-w-40 text-right">{{ receiptState.sale.subtotal_amount }}</strong>
           </div>
           <div class="d-flex justify-content-between">
             <span>{{ $t('common.fields.discount') }}</span>
-            <strong>- {{ receiptState.sale.discount_amount }}</strong>
+            <strong class="min-w-40 text-right">- {{ receiptState.sale.discount_amount }}</strong>
           </div>
           <div class="d-flex justify-content-between">
             <span>{{ $t('common.fields.total') }}</span>
-            <strong>{{ receiptState.sale.total_amount }}</strong>
+            <strong class="min-w-40 text-right">{{ receiptState.sale.total_amount }}</strong>
           </div>
           <div class="d-flex justify-content-between">
             <span>{{ $t('common.fields.paid') }}</span>
-            <strong>{{ formatMoneyValue(receiptState.tenderedAmount) }}</strong>
+            <strong class="min-w-40 text-right">{{ formatMoneyValue(receiptState.tenderedAmount) }}</strong>
           </div>
           <div v-if="receiptState.changeAmount > 0" class="d-flex justify-content-between text-green">
             <span>{{ $t('minishop.sales.returnChange') }}</span>
-            <strong>{{ formatMoneyValue(receiptState.changeAmount) }}</strong>
+            <strong class="min-w-40 text-right">{{ formatMoneyValue(receiptState.changeAmount) }}</strong>
           </div>
           <div v-else-if="Number(receiptState.sale.due_amount) > 0" class="d-flex justify-content-between text-orange">
             <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-            <strong>{{ receiptState.sale.due_amount }}</strong>
+            <strong class="min-w-40 text-right">{{ receiptState.sale.due_amount }}</strong>
           </div>
           <div v-else class="d-flex justify-content-between text-green">
             <span>{{ $t('common.fields.status') }}</span>
-            <strong>{{ $t('common.states.paidInFull') }}</strong>
+            <strong class="min-w-40 text-right">{{ $t('common.states.paidInFull') }}</strong>
           </div>
         </div>
-      </div>
 
-      <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
-        <button type="button" class="btn btn-outline" @click="printReceipt">
-          {{ $t('common.actions.printReceipt') }}
-        </button>
-        <button type="button" class="btn btn-primary" @click="closeReceiptDialog">
-          {{ $t('common.actions.ok') }}
-        </button>
-      </div>
+        <div class="d-flex flex-row gap-2 border-top pt-3">
+          <button type="button" class="btn flex-1 btn-outline" @click="printReceipt">
+            🖨️ {{ $t('common.actions.printReceipt') }}
+          </button>
+          <button type="button" class="btn flex-1 btn-primary" @click="closeReceiptDialog">
+            {{ $t('common.actions.ok') }} 
+          </button>
+        </div>
+        
+      </div>  <!-- dialog-body .// -->
     </dialog>
   </div>
 </template>
@@ -747,7 +746,7 @@ const createProductForm = reactive({
 
 const createCustomerForm = reactive({
   name: '',
-  phone: '',
+  phone: '+998',
   note: '',
 })
 
@@ -1668,7 +1667,7 @@ function clearProductFilters() {
 
 function resetCreateCustomerForm() {
   createCustomerForm.name = ''
-  createCustomerForm.phone = ''
+  createCustomerForm.phone = '+998'
   createCustomerForm.note = ''
   createCustomerErrorMessage.value = ''
   isCreatingCustomer.value = false

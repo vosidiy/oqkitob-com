@@ -3,7 +3,7 @@
     <div class="min-w-50 mr-auto mobile:min-w-auto mobile:flex-grow mobile:mb-2">
       <h5 class="text-xl text-capitalize">{{ book.title }}</h5>
       <p class="text-secondary text-sm">
-        {{ $t('bookHeader.subtitle', { type: translateBookType($t, book.type_key) }) }}
+        {{ $t('bookHeader.subtitle', { type: $t('bookTypes.' + book.type_key) }) }}
         <span v-if="book.description"> | {{ book.description }}</span>
       </p>
     </div>
@@ -21,7 +21,6 @@
 
 <script setup>
 import BookHeaderActions from '@/components/BookHeaderActions.vue'
-import { translateBookType } from '@/i18n/helpers'
 
 defineProps({
   book: {

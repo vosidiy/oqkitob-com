@@ -57,6 +57,7 @@ class MinishopSalesController extends AuthenticatedApiController
     {
         $userId = $this->currentUserIdAndCloseSession();
         $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
+        $search = trim((string) $this->request->getGet('search'));
 
         if ($permission === 'none') {
             return $this->failNotFound('Book not found.');
@@ -67,7 +68,7 @@ class MinishopSalesController extends AuthenticatedApiController
         $range = $this->makeSalesDateRange($filter, $localNow);
 
         return $this->respond([
-            'sales' => $this->sales->findByBook($bookId, $range['sold_from'], $range['sold_to']),
+            'sales' => $this->sales->findByBook($bookId, $range['sold_from'], $range['sold_to'], $search),
         ]);
     }
 
@@ -333,14 +334,7 @@ class MinishopSalesController extends AuthenticatedApiController
                     throw new RuntimeException('Unable to save sale items right now.');
                 }
 
-                $newQuantity = round($item['product_quantity'] - $item['quantity'], 3);
-
-                if ($newQuantity < 0) {
-                    throw new InvalidArgumentException(sprintf(
-                        'Product "%s" does not have enough stock.',
-                        $item['product_name']
-                    ));
-                }
+                $newQuantity = round($this->normalizeQuantity($item['product_quantity'] ?? 0) - $item['quantity'], 3);
 
                 $productUpdated = $this->products->update($item['product_id'], [
                     'quantity' => $this->formatQuantity($newQuantity),
@@ -656,20 +650,11 @@ class MinishopSalesController extends AuthenticatedApiController
                 ));
             }
 
-            $productQuantity = $this->normalizeQuantity($product['quantity'] ?? 0);
-
-            if ($quantity > $productQuantity) {
-                throw new InvalidArgumentException(sprintf(
-                    'Product "%s" does not have enough stock.',
-                    (string) ($product['name'] ?? 'Unknown product')
-                ));
-            }
-
             $normalized[] = [
                 'product_id' => $productId,
                 'product_name' => (string) ($product['name'] ?? ''),
                 'product_sku' => $this->normalizeOptionalString($product['sku'] ?? null),
-                'product_quantity' => $productQuantity,
+                'product_quantity' => $this->normalizeQuantity($product['quantity'] ?? 0),
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
                 'line_total' => round($quantity * $unitPrice, 2),
