@@ -107,6 +107,7 @@
                     <span>💬 {{ $t('common.fields.note') }}: </span>
                     <span>{{ selectedCustomer.note }}</span>
                   </p>
+
                 </div>
               </div>
 
@@ -150,20 +151,20 @@
               </div>
             </article>
 
-            <article class="d-flex flex-col gap-2 mb-4">
-              <div class="d-flex justify-content-between gap-3">
-                <span>{{ $t('common.fields.created') }}</span>
-                <strong class="text-right">{{ formatDateTime(selectedCustomer.created_at) }}</strong>
-              </div>
-              <div class="d-flex justify-content-between gap-3">
-                <span>{{ $t('common.fields.updated') }}</span>
-                <strong class="text-right">{{ formatDateTime(selectedCustomer.updated_at) }}</strong>
-              </div>
-            </article>
+            <p class="text-secondary text-sm">
+              <span>{{ $t('common.fields.created') }}: </span>
+              <span class="mr-2">{{ formatDateTime(selectedCustomer.created_at) }}</span>
+              •
+              <span>{{ $t('common.fields.updated') }}: </span>
+              <span>{{ formatDateTime(selectedCustomer.updated_at) }}</span>
+            </p>
+            
+            
             <hr>
+
             <article>
               <header class="d-flex justify-content-between align-items-center gap-3 mb-4">
-                <h4 class="text-xl">
+                <h4 class="text-lg">
                   {{ $t('minishop.customers.relatedReceipts') }}  ({{ selectedCustomerReceipts.length }})
                 </h4>
               </header>
@@ -176,28 +177,21 @@
 
                 <li v-for="receipt in selectedCustomerReceipts" :key="receipt.id">
 
-                  <div class="d-flex p-3 bg-neutral-100 mb-1 hover:bg-neutral-200 border-strong rounded">
-                    <div class="mr-2">
+                  <div role="button" class="d-flex align-items-center p-3 bg-neutral-100 mb-1 hover:bg-neutral-200 border-strong rounded"
+                        :disabled="isLoadingReceiptDetail && activeReceiptId === receipt.id"
+                        @click="openReceiptDetailDialog(receipt.id)" 
+                  >
+                    <div class="mr-3">
                       <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-receipt-text-icon lucide-receipt-text"><path d="M13 16H8"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"/></svg>
                     </div>
                     <div>
                       <h6 class="mb-1"> {{ $t('common.fields.soldAt') }}:  {{ formatDateTime(receipt.sold_at) }}</h6>
-                      <div class="d-flex gap-2 mb-1">
+                      <div class="d-flex gap-2">
                         <p> {{ $t('minishop.main.total') }}: {{ formatMoney(receipt.total_amount) }}</p> • 
                         <p> 💵 {{ $t('minishop.paymentLabels.' + receipt.payment_status) }}</p> • 
                         <p v-if="Number(receipt.due_amount) > 0" class="text-red"> {{ $t('minishop.sales.due') }}: {{ formatMoney(receipt.due_amount) }} </p> 
                       </div>
                       <p v-if="receipt.note" class="text-secondary">{{ receipt.note }}</p>
-                    </div>
-                    <div class="ml-auto">
-                      <button
-                        type="button"
-                        class="btn btn-default"
-                        :disabled="isLoadingReceiptDetail && activeReceiptId === receipt.id"
-                        @click="openReceiptDetailDialog(receipt.id)"
-                      >
-                        {{ $t('common.actions.viewDetail') }}
-                      </button>
                     </div>
                   </div>
                 </li>

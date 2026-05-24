@@ -1,12 +1,11 @@
 <template>
   <dialog ref="dialogRef" class="dialog-sm mt-10" @cancel="emit('cancel', $event)" @close="emit('close')">
     <header class="dialog-header">
-      <h5>{{ $t('minishop.dialogs.paymentOverview') }}</h5>
+      <h5>{{ $t('minishop.sales.addPayment') }} </h5>
       <button type="button" class="btn btn-icon" :disabled="isSavingSale" @click="close">
         <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
       </button>
     </header>
-
     <div class="dialog-body">
       <form @submit.prevent="emit('submit')">
         <div v-if="errorMessage" class="alert alert-danger mb-3" role="alert">
@@ -68,7 +67,6 @@
         </nav>
 
         <div class="mb-1">
-          <div class="text-right font-semibold">
             <input
               id="checkout-payment-paid"
               :value="paidInput"
@@ -80,7 +78,6 @@
               @input="handlePaidInput"
               @blur="emit('normalize-paid')"
             >
-          </div>
         </div>
 
         <div class="mb-2">
@@ -97,7 +94,7 @@
           </div>
         </div>
 
-        <div class="pt-4">
+        <div class="pt-2">
           <button type="submit" class="btn btn-lg w-full btn-primary" :disabled="isSavingSale || cartItemsLength === 0">
             <span v-if="isSavingSale">{{ $t('common.states.saving') }}</span>
             <strong v-else>{{ $t('minishop.dialogs.savePayment') }}</strong>

@@ -1,5 +1,5 @@
 <template>
-  <dialog ref="dialogRef" :class="dialogClass" @cancel="emit('cancel', $event)" @close="handleClose">
+  <dialog ref="dialogRef" class="dialog-sm mt-10" @cancel="emit('cancel', $event)" @close="handleClose">
     <header class="dialog-header">
       <h5>{{ $t('minishop.sales.addPayment') }}</h5>
       <button class="btn btn-icon" :disabled="isSaving" @click="close">
@@ -14,7 +14,7 @@
 
         <div class="d-flex justify-content-between mb-3">
           <span>{{ $t('common.fields.subtotal') }}</span>
-          <div class="text-right font-semibold">{{ formatMoney(paymentSummarySubtotal) }}</div>
+          <div class="text-right">{{ formatMoney(paymentSummarySubtotal) }}</div>
         </div>
 
         <div class="row justify-content-between mb-3">
@@ -24,9 +24,9 @@
               :id="discountInputId"
               v-model.trim="discountInput"
               type="number"
-              class="form-control min-h-5 h-8 font-semibold"
+              class="form-control text-right min-h-5 h-8"
               min="0"
-              step="0.01"
+              step="0.1"
               :disabled="isSaving"
               @blur="normalizeDiscountInput"
             >
@@ -35,84 +35,77 @@
 
         <div v-if="paymentSummaryDiscountAmount > 0" class="row justify-content-between mb-3">
           <span class="col-6">{{ $t('common.fields.total') }}</span>
-          <div class="col-6 text-right font-semibold">{{ formatMoney(paymentSummaryTotal) }}</div>
+          <div class="col-6 text-right">{{ formatMoney(paymentSummaryTotal) }}</div>
         </div>
 
         <hr>
 
-        <div class="mb-3">
-          <label class="form-label d-block">{{ $t('common.fields.method') }}</label>
-          <div class="d-flex gap-4">
-            <label class="form-check d-flex align-items-center gap-2">
+        <nav class="tabs-boxed w-full mb-4">
+            <label tabindex="0" class="tab-link flex-1">
               <input
                 v-model="paymentMethod"
-                class="form-check-input"
                 :name="paymentMethodName"
                 type="radio"
                 value="cash"
                 :disabled="isSaving"
               >
-              <span>{{ $t('minishop.paymentMethods.cash') }}</span>
+              {{ $t('minishop.paymentMethods.cash') }}  
             </label>
-            <label class="form-check d-flex align-items-center gap-2">
+            <label tabindex="0" class="tab-link flex-1">
               <input
                 v-model="paymentMethod"
-                class="form-check-input"
                 :name="paymentMethodName"
                 type="radio"
                 value="card"
                 :disabled="isSaving"
               >
-              <span>{{ $t('minishop.paymentMethods.card') }}</span>
+              {{ $t('minishop.paymentMethods.card') }} 
             </label>
-          </div>
-        </div>
+        </nav>
 
-        <div class="row justify-content-between mb-3">
-          <label class="col-6 form-label" :for="paidInputId">{{ $t('common.fields.paid') }}</label>
-          <div class="col-6 text-right font-semibold">
+        <div class="mb-1">
             <input
               :id="paidInputId"
               v-model.trim="paidInput"
               type="number"
-              class="form-control min-h-5 h-8 font-semibold"
+              class="form-control text-xl font-semibold"
               min="0"
               step="0.01"
               :disabled="isSaving"
               @blur="normalizePaidInput"
             >
-          </div>
         </div>
 
-        <div class="mb-5">
-          <div v-if="paymentSummaryChangeAmount > 0" class="d-flex justify-content-between gap-3 text-green">
+        <div class="mb-2">
+          <div v-if="paymentSummaryChangeAmount > 0" class="text-green">
             <span>{{ $t('minishop.sales.returnChange') }}</span>
-            <strong>{{ formatMoney(paymentSummaryChangeAmount) }}</strong>
+            <strong class="text-sm">{{ formatMoney(paymentSummaryChangeAmount) }}</strong>
           </div>
-          <div v-else-if="paymentSummaryRemainingAmount > 0" class="d-flex justify-content-between gap-3 text-orange">
+          <div v-else-if="paymentSummaryRemainingAmount > 0" class="text-orange">
             <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-            <strong>{{ formatMoney(paymentSummaryRemainingAmount) }}</strong>
+            <strong class="text-sm">{{ formatMoney(paymentSummaryRemainingAmount) }}</strong>
           </div>
-          <div v-else class="d-flex justify-content-between gap-3 text-green">
-            <span>{{ $t('common.fields.status') }}</span>
-            <strong>{{ $t('common.states.paidInFull') }}</strong>
+          <div v-else class="text-green">
+            <strong class="text-sm">{{ $t('common.states.paidInFull') }}</strong>
           </div>
         </div>
 
-        <div class="border-top d-flex pt-4 gap-2">
-          <button type="button" class="btn btn-default flex-1" :disabled="isSaving" @click="close">
-            {{ $t('common.actions.cancel') }}
-          </button>
-          <button
-            type="submit"
-            class="btn btn-primary flex-1"
+        <div class="pt-2">
+          <button type="submit" class="btn btn-lg w-full btn-primary"
             :disabled="isSaving || !sale || paymentSummaryPaidAmount <= 0"
           >
             <span v-if="isSaving">{{ $t('common.states.saving') }}</span>
             <span v-else>{{ $t('minishop.sales.addPayment') }}</span>
           </button>
+
+          <div class="text-center mt-4">
+            <a role="button" href="#" class="text-secondary btn-sm"  :disabled="isSaving" @click="close">
+              {{ $t('common.actions.cancel') }}
+            </a>
+          </div>
         </div>
       </form>
+
     </div>
   </dialog>
 </template>
@@ -121,10 +114,6 @@
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
-  dialogClass: {
-    type: String,
-    default: 'dialog-sm',
-  },
   discountInputId: {
     type: String,
     required: true,
