@@ -62,12 +62,12 @@
             <strong>- {{ formatMoney(sale.discount_amount) }}</strong>
           </div>
           <div class="d-flex col-6 justify-content-between gap-3">
-            <span>{{ $t('common.fields.total') }}</span>
+            <span>{{ $t('minishop.main.totalForPay') }}</span>
             <strong>{{ formatMoney(sale.total_amount) }}</strong>
           </div>
           <div class="d-flex col-6 justify-content-between gap-3">
-            <span>{{ $t('common.fields.paid') }}</span>
-            <strong>{{ formatMoney(sale.paid_amount) }}</strong>
+            <span class="text-green">{{ $t('common.fields.paid') }}</span>
+            <strong class="text-green">{{ formatMoney(sale.paid_amount) }}</strong>
           </div>
           <div v-if="Number(sale.due_amount) > 0" class="d-flex col-6 justify-content-between gap-3 text-orange">
             <span>{{ $t('minishop.sales.remainingDebt') }}</span>
@@ -79,32 +79,32 @@
           </div>
         </div>
 
-        <article class="mt-4 pt-4 border-top">
+        <article class="mt-4 py-4 border-top">
           
-          <h6 class="text-lg mb-3">{{ $t('minishop.sales.paymentRecords') }}</h6>
+          <h6 class="text-lg mb-3"> 💵  {{ $t('minishop.sales.paymentRecords') }}</h6>
 
           <div v-if="payments.length === 0" class="text-secondary mb-4">
             <p>{{ $t('minishop.sales.noPaymentRecords') }}</p>
           </div>
 
           <div v-else class="mb-4">
-            <div v-for="payment in payments" :key="payment.id" class="border rounded p-3 bg-lower">
-              <div class="d-flex justify-content-between gap-3 mobile:flex-col">
+            <div v-for="payment in payments" :key="payment.id" class="border mb-1 border-color-green-300 rounded p-2 bg-green-100">
+              <div class="d-flex justify-content-between gap-2">
                 <div>
-                  <p class="mb-1"><strong>{{ $t('common.fields.date') }}:</strong> {{ formatDateTime(payment.paid_at || payment.created_at) }}</p>
-                  <p class="mb-0"><strong>{{ $t('common.fields.method') }}:</strong> {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
-                </div>
-                <div class="text-right mobile:text-left">
-                  <p class="mb-2"><strong>{{ formatMoney(payment.amount) }}</strong></p>
-                  <button
-                    type="button"
-                    class="btn btn-outline text-red"
+                  <p><strong>{{ $t('common.fields.date') }}:</strong> {{ formatDateTime(payment.paid_at || payment.created_at) }}</p>
+                  <a href="#"
+                    role="button"
+                    class="link text-secondary"
                     :disabled="deletingPaymentId === payment.id || isSavingPayment || isDeletingReceipt"
                     @click="emit('delete-payment', payment)"
                   >
                     <span v-if="deletingPaymentId === payment.id">{{ $t('common.states.deleting') }}</span>
-                    <span v-else>{{ $t('minishop.sales.deletePayment') }}</span>
-                  </button>
+                    <span v-else> 🗑️ {{ $t('minishop.sales.deletePayment') }}</span>
+                  </a>
+                </div>
+                <div class="text-right">
+                  <p><strong class="text-green"> {{ formatMoney(payment.amount) }}</strong></p>
+                  <p> {{ $t('common.fields.method') }}: {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
                 </div>
               </div>
             </div>
@@ -113,29 +113,29 @@
           <button
             v-if="canAddPaymentToReceipt"
             type="button"
-            class="btn btn-primary mr-2"
+            class="btn btn-green mr-2"
             :disabled="isLoadingReceiptDetail || isSavingPayment || isDeletingReceipt"
             @click="emit('open-add-payment')"
           >
             {{ $t('minishop.sales.addPayment') }}
           </button>
         </article>
-
       </div>
 
       <footer class="pt-3 border-top">
-        <button type="button" class="btn btn-default mr-2" :disabled="isLoadingReceiptDetail || isDeletingReceipt" @click="close">
-          {{ $t('common.actions.close') }}
-        </button>
         <button
             type="button"
-            class="btn text-red float-right"
+            class="btn text-red"
             :disabled="!sale || isLoadingReceiptDetail || isDeletingReceipt || isSavingPayment"
             @click="emit('delete-receipt')"
           >
             <span v-if="isDeletingReceipt">{{ $t('common.states.deleting') }}</span>
             <span v-else>{{ $t('minishop.sales.deleteSale') }}</span>
-          </button>
+        </button>
+
+        <button type="button" class="btn btn-default float-right" :disabled="isLoadingReceiptDetail || isDeletingReceipt" @click="close">
+          {{ $t('common.actions.ok') }}
+        </button>
       </footer>
       
     </div>

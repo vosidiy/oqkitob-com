@@ -60,12 +60,13 @@
                 </div>
 
                 <div class="text-right flex-shrink-0">
-                  <p class="mb-1" :class="{ 'text-red': Number(customer.outstanding_balance) > 0 }">
-                  {{ $t('minishop.customers.outstandingDebt') }}:  {{ formatMoney(customer.outstanding_balance) }}
-                  </p>
-                  <p class="text-sm">
+                  <p>
                     🧾 {{ $t('minishop.customers.receiptCount', { count: formatInteger(customer.receipt_count) }) }}
                   </p>
+                  <p class="mt-1 text-secondary" :class="{ 'text-red': Number(customer.outstanding_balance) > 0 }">
+                  {{ $t('minishop.customers.outstandingDebt') }}:  {{ formatMoney(customer.outstanding_balance) }}
+                  </p>
+                  
                 </div>
               </div>
             </div>
