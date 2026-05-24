@@ -4,6 +4,7 @@ import App from './App.vue'
 import { i18n } from './i18n'
 import router from './router'
 import { authStore } from '@/stores/auth'
+import 'vue-select/dist/vue-select.css'
 
 const app = createApp(App)
 

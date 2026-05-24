@@ -338,7 +338,6 @@ export const messages = {
         receipts: 'Receipts',
         totalSales: 'Total sales',
         totalPaid: 'Total paid',
-        lastReceipt: 'Last receipt',
         relatedReceipts: 'Related receipts',
         itemCount: '{count} items',
         noReceipts: 'No receipts linked to this customer yet.',
@@ -362,9 +361,9 @@ export const messages = {
         confirmDeleteSale: 'Delete this sale and restore stock?',
       },
       paymentLabels: {
-        paid: 'Paid',
-        partial: 'Partial',
-        unpaid: 'Unpaid',
+        paid: '✅ Paid',
+        partial: '⏳ Partial payment',
+        unpaid: '❓ Unpaid',
       },
       paymentMethods: {
         cash: 'Cash',
@@ -740,7 +739,6 @@ export const messages = {
         receipts: 'Cheklar',
         totalSales: 'Jami savdo',
         totalPaid: "Jami to'lov",
-        lastReceipt: 'Oxirgi chek',
         relatedReceipts: 'Bog‘liq cheklar',
         itemCount: '{count} ta',
         noReceipts: 'Bu mijozga hali cheklar biriktirilmagan.',
@@ -764,9 +762,9 @@ export const messages = {
         confirmDeleteSale: 'Bu savdo o‘chirilib, ombor qoldig‘i qaytarilsinmi?',
       },
       paymentLabels: {
-        paid: "To'langan",
-        partial: 'Qisman',
-        unpaid: "To'lanmagan",
+        paid: "✅ To'landi",
+        partial: '⏳ Qisman tulov',
+        unpaid: "❓ To'lanmagan",
       },
       paymentMethods: {
         cash: 'Naqd',
@@ -1142,7 +1140,6 @@ export const messages = {
         receipts: 'Чеки',
         totalSales: 'Всего продаж',
         totalPaid: 'Всего оплачено',
-        lastReceipt: 'Последний чек',
         relatedReceipts: 'Связанные чеки',
         itemCount: '{count} элементов',
         noReceipts: 'У этого клиента пока нет связанных чеков.',
@@ -1166,9 +1163,9 @@ export const messages = {
         confirmDeleteSale: 'Удалить эту продажу и вернуть остатки на склад?',
       },
       paymentLabels: {
-        paid: 'Оплачено',
-        partial: 'Частично',
-        unpaid: 'Не оплачено',
+        paid: '✅ Оплачено',
+        partial: '⏳ Частично',
+        unpaid: '❓  Не оплачено',
       },
       paymentMethods: {
         cash: 'Наличные',

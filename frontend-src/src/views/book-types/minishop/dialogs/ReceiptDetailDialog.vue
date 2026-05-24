@@ -1,0 +1,237 @@
+<template>
+  <dialog ref="dialogRef" class="dialog-md mt-10" @cancel="emit('cancel', $event)" @close="emit('close')">
+    <header class="dialog-header">
+      <div class="mr-auto">
+        <h5>🧾 {{ $t('minishop.sales.receipt') }} </h5>
+        <p v-if="sale" class="text-secondary text-sm">{{ sale.id }}</p>
+      </div>      
+      <button class="btn btn-icon" :disabled="isLoadingReceiptDetail" @click="close">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
+      </button>
+    </header>
+    <div class="dialog-body">
+      <div v-if="errorMessage" class="alert alert-danger mb-4" role="alert">
+        {{ errorMessage }}
+      </div>
+
+      <div v-if="isLoadingReceiptDetail" class="text-secondary">
+        {{ $t('minishop.sales.loadingReceipt') }}
+      </div>
+
+      <div v-else-if="sale">
+
+        <article class="mb-3">
+          <p><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ formatDateTime(sale.sold_at) }}</p>
+          <p><strong>{{ $t('common.fields.customer') }}:</strong>
+            {{ sale.customer_name || $t('minishop.sales.noCustomer') }}
+            <span v-if="sale.customer_phone"> · {{ sale.customer_phone }}</span>
+          </p>
+          <p><strong>{{ $t('common.fields.currency') }}:</strong> {{ sale.currency_code }}</p>
+          <p><strong>{{ $t('common.fields.status') }}:</strong> {{ $t('minishop.paymentLabels.' + sale.payment_status) }}</p>
+          <p v-if="sale.note"> <strong>{{ $t('common.fields.note') }}</strong>  {{ sale.note }} </p>
+        </article>
+
+        <div class="table-responsive mb-4">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>{{ $t('common.fields.item') }}</th>
+                <th>{{ $t('minishop.main.quantityShort') }}</th>
+                <th class="text-right">{{ $t('common.fields.price') }}</th>
+                <th class="text-right"> = </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in items" :key="item.id">
+                <td>{{ item.product_name }}</td>
+                <td>{{ formatQuantity(item.quantity) }}</td>
+                <td class="text-right">{{ formatMoney(item.unit_price) }}</td>
+                <td class="text-right">{{ formatMoney(item.line_total) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex flex-col align-items-end pr-2">
+          <div class="d-flex col-6 justify-content-between gap-3">
+            <span>{{ $t('common.fields.subtotal') }}</span>
+            <strong>{{ formatMoney(sale.subtotal_amount) }}</strong>
+          </div>
+          <div class="d-flex col-6 justify-content-between gap-3">
+            <span>{{ $t('common.fields.discount') }}</span>
+            <strong>- {{ formatMoney(sale.discount_amount) }}</strong>
+          </div>
+          <div class="d-flex col-6 justify-content-between gap-3">
+            <span>{{ $t('common.fields.total') }}</span>
+            <strong>{{ formatMoney(sale.total_amount) }}</strong>
+          </div>
+          <div class="d-flex col-6 justify-content-between gap-3">
+            <span>{{ $t('common.fields.paid') }}</span>
+            <strong>{{ formatMoney(sale.paid_amount) }}</strong>
+          </div>
+          <div v-if="Number(sale.due_amount) > 0" class="d-flex col-6 justify-content-between gap-3 text-orange">
+            <span>{{ $t('minishop.sales.remainingDebt') }}</span>
+            <strong>{{ formatMoney(sale.due_amount) }}</strong>
+          </div>
+          <div v-else class="d-flex col-6 justify-content-between gap-3 text-green">
+            <span>{{ $t('common.fields.status') }}</span>
+            <strong>{{ $t('common.states.paidInFull') }}</strong>
+          </div>
+        </div>
+
+        <article class="mt-4 pt-4 border-top">
+          
+          <h6 class="text-lg mb-3">{{ $t('minishop.sales.paymentRecords') }}</h6>
+
+          <div v-if="payments.length === 0" class="text-secondary mb-4">
+            <p>{{ $t('minishop.sales.noPaymentRecords') }}</p>
+          </div>
+
+          <div v-else class="mb-4">
+            <div v-for="payment in payments" :key="payment.id" class="border rounded p-3 bg-lower">
+              <div class="d-flex justify-content-between gap-3 mobile:flex-col">
+                <div>
+                  <p class="mb-1"><strong>{{ $t('common.fields.date') }}:</strong> {{ formatDateTime(payment.paid_at || payment.created_at) }}</p>
+                  <p class="mb-0"><strong>{{ $t('common.fields.method') }}:</strong> {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
+                </div>
+                <div class="text-right mobile:text-left">
+                  <p class="mb-2"><strong>{{ formatMoney(payment.amount) }}</strong></p>
+                  <button
+                    type="button"
+                    class="btn btn-outline text-red"
+                    :disabled="deletingPaymentId === payment.id || isSavingPayment || isDeletingReceipt"
+                    @click="emit('delete-payment', payment)"
+                  >
+                    <span v-if="deletingPaymentId === payment.id">{{ $t('common.states.deleting') }}</span>
+                    <span v-else>{{ $t('minishop.sales.deletePayment') }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            v-if="canAddPaymentToReceipt"
+            type="button"
+            class="btn btn-primary mr-2"
+            :disabled="isLoadingReceiptDetail || isSavingPayment || isDeletingReceipt"
+            @click="emit('open-add-payment')"
+          >
+            {{ $t('minishop.sales.addPayment') }}
+          </button>
+        </article>
+
+      </div>
+
+      <footer class="pt-3 border-top">
+        <button type="button" class="btn btn-default mr-2" :disabled="isLoadingReceiptDetail || isDeletingReceipt" @click="close">
+          {{ $t('common.actions.close') }}
+        </button>
+        <button
+            type="button"
+            class="btn text-red float-right"
+            :disabled="!sale || isLoadingReceiptDetail || isDeletingReceipt || isSavingPayment"
+            @click="emit('delete-receipt')"
+          >
+            <span v-if="isDeletingReceipt">{{ $t('common.states.deleting') }}</span>
+            <span v-else>{{ $t('minishop.sales.deleteSale') }}</span>
+          </button>
+      </footer>
+      
+    </div>
+  </dialog>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+
+defineProps({
+  canAddPaymentToReceipt: {
+    type: Boolean,
+    default: false,
+  },
+  deletingPaymentId: {
+    type: String,
+    default: '',
+  },
+  errorMessage: {
+    type: String,
+    default: '',
+  },
+  isDeletingReceipt: {
+    type: Boolean,
+    default: false,
+  },
+  isLoadingReceiptDetail: {
+    type: Boolean,
+    default: false,
+  },
+  isSavingPayment: {
+    type: Boolean,
+    default: false,
+  },
+  items: {
+    type: Array,
+    default: () => [],
+  },
+  payments: {
+    type: Array,
+    default: () => [],
+  },
+  sale: {
+    type: Object,
+    default: null,
+  },
+})
+
+const emit = defineEmits(['cancel', 'close', 'delete-payment', 'delete-receipt', 'open-add-payment'])
+const dialogRef = ref(null)
+
+function open() {
+  if (!dialogRef.value?.open) {
+    dialogRef.value?.showModal()
+  }
+}
+
+function close() {
+  if (dialogRef.value?.open) {
+    dialogRef.value.close()
+  }
+}
+
+function isOpen() {
+  return dialogRef.value?.open === true
+}
+
+function formatMoney(value) {
+  const amount = Number.parseFloat(String(value ?? 0))
+  return Number.isFinite(amount) ? amount.toFixed(2) : '0.00'
+}
+
+function formatQuantity(value) {
+  const quantity = Number.parseFloat(String(value ?? 0))
+  if (!Number.isFinite(quantity)) {
+    return '0'
+  }
+  return quantity.toFixed(3).replace(/\.?0+$/, '')
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return '-'
+  }
+
+  const parsedDate = new Date(String(value).replace(' ', 'T'))
+  if (Number.isNaN(parsedDate.getTime())) {
+    return String(value)
+  }
+
+  return parsedDate.toLocaleString()
+}
+
+defineExpose({
+  close,
+  isOpen,
+  open,
+})
+</script>

@@ -202,18 +202,18 @@
         <div v-if="cartItems.length > 0" class="px-3 pb-3">
           <div class="border rounded p-3 bg-neutral-100">
             <div class="d-flex gap-2 mb-2">
-              <select
-                id="minishop-cart-customer"
-                :value="selectedCustomerId"
-                class="form-select"
+              <v-select
+                v-model="selectedCustomerIdModel"
+                input-id="minishop-cart-customer"
+                class="flex-1"
+                :class="{ 'is-disabled': isLoadingCustomers || isSavingSale }"
+                :clearable="true"
                 :disabled="isLoadingCustomers || isSavingSale"
-                @change="updateSelectedCustomerId"
-              >
-                <option value="">{{ $t('minishop.main.noCustomer') }}</option>
-                <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                  {{ formatCustomerOption(customer) }}
-                </option>
-              </select>
+                :options="customerOptionsWithSearchLabel"
+                :placeholder="$t('minishop.main.noCustomer')"
+                :reduce="(customer) => customer.id"
+                label="search_label"
+              />
 
               <button
                 type="button"
@@ -233,7 +233,7 @@
               <p v-else-if="isLoadingCustomers" class="text-secondary">
                 {{ $t('minishop.main.loadingCustomers') }}
               </p>
-              <p v-else-if="customers.length === 0" class="text-secondary">
+              <p v-else-if="customerOptions.length === 0" class="text-secondary">
                 {{ $t('minishop.main.noCustomers') }}
               </p>
               <p v-else-if="selectedCustomer" class="text-secondary">
@@ -268,6 +268,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import vSelect from 'vue-select'
 
 const props = defineProps({
   cartItems: {
@@ -294,7 +295,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  customers: {
+  customerOptions: {
     type: Array,
     required: true,
   },
@@ -370,8 +371,29 @@ const emit = defineEmits([
   'update:selectedCustomerId',
 ])
 
+const customerOptionsWithSearchLabel = computed(() => {
+  return props.customerOptions.map((customer) => {
+    const name = String(customer?.name ?? '').trim()
+    const phone = String(customer?.phone ?? '').trim()
+
+    return {
+      ...customer,
+      search_label: phone !== '' ? `${name} · ${phone}` : name,
+    }
+  })
+})
+
 const selectedCustomer = computed(() => {
-  return props.customers.find((customer) => customer.id === props.selectedCustomerId) ?? null
+  return props.customerOptions.find((customer) => customer.id === props.selectedCustomerId) ?? null
+})
+
+const selectedCustomerIdModel = computed({
+  get() {
+    return props.selectedCustomerId === '' ? null : props.selectedCustomerId
+  },
+  set(value) {
+    emit('update:selectedCustomerId', value ?? '')
+  },
 })
 
 const showClearFiltersAction = computed(() => {
@@ -384,10 +406,6 @@ function updateSelectedCategoryId(event) {
 
 function updateProductSearchQuery(event) {
   emit('update:productSearchQuery', event.target.value)
-}
-
-function updateSelectedCustomerId(event) {
-  emit('update:selectedCustomerId', event.target.value)
 }
 
 function decrementCartItem(item) {
@@ -404,13 +422,6 @@ function incrementCartItem(item) {
 
   emit('update-cart-item-quantity', item.productId, String(nextQuantity))
   emit('normalize-cart-item-quantity', item.productId)
-}
-
-function formatCustomerOption(customer) {
-  const name = String(customer?.name ?? '').trim()
-  const phone = String(customer?.phone ?? '').trim()
-
-  return phone !== '' ? `${name} (${phone})` : name
 }
 
 function isLowStock(product) {

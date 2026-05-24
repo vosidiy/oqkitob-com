@@ -34,7 +34,7 @@
       :categories="categories"
       :category-error-message="categoryErrorMessage"
       :customer-error-message="customerErrorMessage"
-      :customers="customers"
+      :customer-options="customerOptions"
       :error-message="errorMessage"
       :filtered-products="filteredProducts"
       :is-loading-categories="isLoadingCategories"
@@ -73,587 +73,88 @@
       @customers-changed="handleCustomersChanged"
     />
 
-    <dialog
+    <CreateCustomerDialog
       ref="createCustomerDialog"
-      class="mt-10"
+      :error-message="createCustomerErrorMessage"
+      :form="createCustomerForm"
+      :is-submit-disabled="isCreateCustomerSubmitDisabled"
+      :is-submitting="isCreatingCustomer"
+      name-id="create-customer-name"
+      :name-placeholder="$t('minishop.customers.enterCustomerName')"
+      note-id="create-customer-note"
+      phone-id="create-customer-phone"
+      :submit-label="$t('common.actions.create')"
+      :title="$t('minishop.dialogs.createCustomer')"
       @cancel="handleCreateCustomerDialogCancel"
       @close="handleCreateCustomerDialogClose"
-    >
-      <header class="dialog-header">
-        <h5>{{ $t('minishop.dialogs.createCustomer') }}</h5>
-        <button class="btn btn-icon" :disabled="isCreatingCustomer" @click="closeCreateCustomerDialog">
-          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-        </button>
-      </header>
-      <div class="dialog-body">
-        <form @submit.prevent="handleCreateCustomer">
-          <div v-if="createCustomerErrorMessage" class="alert alert-danger" role="alert">
-            {{ createCustomerErrorMessage }}
-          </div>
+      @submit="handleCreateCustomer"
+    />
 
-          <div class="mb-4">
-            <label class="form-label" for="create-customer-name">{{ $t('common.fields.name') }}</label>
-            <input
-              id="create-customer-name"
-              v-model.trim="createCustomerForm.name"
-              type="text"
-              class="form-control"
-              :placeholder="$t('minishop.customers.enterCustomerName')"
-              :disabled="isCreatingCustomer"
-              required
-            >
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label" for="create-customer-phone">{{ $t('common.fields.phone') }}</label>
-            <input
-              id="create-customer-phone"
-              v-model.trim="createCustomerForm.phone"
-              type="text" 
-              class="form-control"
-              :disabled="isCreatingCustomer"
-            >
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label" for="create-customer-note">{{ $t('common.fields.note') }}</label>
-            <textarea
-              id="create-customer-note"
-              v-model.trim="createCustomerForm.note"
-              class="form-control"
-              rows="2"
-              :disabled="isCreatingCustomer"
-            ></textarea>
-          </div>
-
-          <div class="pt-4 d-flex gap-2">
-            <button type="submit" class="btn btn-primary" :disabled="isCreateCustomerSubmitDisabled">
-              <span v-if="isCreatingCustomer">{{ $t('common.states.saving') }}</span>
-              <span v-else>{{ $t('common.actions.create') }}</span>
-            </button>
-            <button
-              type="button"
-              class="btn btn-default"
-              :disabled="isCreatingCustomer"
-              @click="closeCreateCustomerDialog"
-            >
-              {{ $t('common.actions.cancel') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </dialog>
-
-    <dialog
+    <CreateProductDialog
       ref="createProductDialog"
-      class="mt-10"
+      :categories="categories"
+      :create-category-option-value="CREATE_CATEGORY_OPTION_VALUE"
+      :error-message="createProductErrorMessage"
+      :form="createProductForm"
+      :is-creating-product="isCreatingProduct"
+      :is-loading-categories="isLoadingCategories"
+      :is-new-category-selected="isCreateProductNewCategorySelected"
+      :is-submit-disabled="isCreateProductSubmitDisabled"
       @cancel="handleCreateProductDialogCancel"
       @close="handleCreateProductDialogClose"
-    >
-      <header class="dialog-header">
-        <h5>{{ $t('minishop.dialogs.createProduct') }}</h5>
-        <button class="btn btn-icon" 
-            @click="closeCreateProductDialog"
-            :disabled="isCreatingProduct">
-            <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-        </button>
-      </header>
-      <div class="dialog-body">
-        <form  @submit.prevent="handleCreateProduct">
-            
-            <div v-if="createProductErrorMessage" class="alert alert-danger" role="alert">
-              {{ createProductErrorMessage }}
-            </div>
+      @submit="handleCreateProduct"
+    />
 
-            <div class="mb-4">
-              <label class="form-label" for="create-product-name">{{ $t('common.fields.name') }}</label>
-              <input
-                id="create-product-name"
-                v-model.trim="createProductForm.name"
-                type="text"
-                class="form-control"
-                :placeholder="$t('minishop.dialogs.enterProductName')"
-                :disabled="isCreatingProduct"
-                required
-              >
-            </div>
-
-            <div class="row  gap-3">
-              <div class="col-6 mb-4">
-                <label class="form-label" for="create-product-category">{{ $t('common.fields.category') }}</label>
-                <select
-                  id="create-product-category"
-                  v-model="createProductForm.category_id"
-                  class="form-select"
-                  :disabled="isCreatingProduct || isLoadingCategories"
-                >
-                  <option value="">--- {{ $t('minishop.main.noCategory') }} ---</option>
-                  <option :value="CREATE_CATEGORY_OPTION_VALUE">+ {{ $t('minishop.dialogs.addCategory') }}</option>
-                  <option
-                    v-for="category in categories"
-                    :key="category.id"
-                    :value="category.id"
-                  >
-                    {{ category.name }}
-                  </option>
-                </select>
-                <input
-                  v-if="isCreateProductNewCategorySelected"
-                  id="create-product-new-category"
-                  v-model.trim="createProductForm.new_category_name"
-                  type="text"
-                  class="form-control mt-3"
-                  :placeholder="$t('minishop.dialogs.enterCategoryName')"
-                  :disabled="isCreatingProduct"
-                >
-              </div>
-              <div class="col-6 mb-4">
-                <label class="form-label" for="create-product-sku">{{ $t('minishop.dialogs.productCode') }}</label>
-                <input
-                  id="create-product-sku"
-                  v-model.trim="createProductForm.sku"
-                  type="text"
-                  class="form-control"
-                  :placeholder="$t('minishop.dialogs.optionalSku')"
-                  :disabled="isCreatingProduct"
-                >
-              </div>
-            </div>
-
-            <div class="row gap-3">
-              <div class="col-6 mb-4">
-                <label class="form-label" for="create-product-price">{{ $t('common.fields.price') }}</label>
-                <input
-                  id="create-product-price"
-                  v-model.trim="createProductForm.price"
-                  type="number"
-                  class="form-control"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  :disabled="isCreatingProduct"
-                  required
-                >
-              </div>
-              <div class="col-3 mb-4">
-                <label class="form-label" for="create-product-quantity">{{ $t('common.fields.quantity') }}</label>
-                <input
-                  id="create-product-quantity"
-                  v-model.trim="createProductForm.quantity"
-                  type="number"
-                  class="form-control"
-                  min="0"
-                  step="0.001"
-                  placeholder="0"
-                  :disabled="isCreatingProduct"
-                  required
-                >
-              </div>
-              <div class="col-3 mb-4">
-                <label class="form-label" for="create-product-low-stock-alert">{{ $t('minishop.dialogs.lowStockAlert') }}</label>
-                <input
-                  id="create-product-low-stock-alert"
-                  v-model.trim="createProductForm.low_stock_alert"
-                  type="number"
-                  class="form-control"
-                  min="0"
-                  step="0.001"
-                  :placeholder="$t('minishop.dialogs.optionalThreshold')"
-                  :disabled="isCreatingProduct"
-                >
-              </div>
-            </div>
-
-            <div class="pt-4 d-flex gap-2">
-              <button type="submit" class="btn btn-primary" :disabled="isCreateProductSubmitDisabled">
-                <span v-if="isCreatingProduct">{{ $t('common.states.saving') }}</span>
-                <span v-else>{{ $t('common.actions.create') }}</span>
-              </button>
-              <button
-                type="button"
-                class="btn btn-default"
-                @click="closeCreateProductDialog"
-                :disabled="isCreatingProduct"
-              >
-                {{ $t('common.actions.cancel') }}
-              </button>
-              
-            </div>
-        </form>
-      </div> <!-- dialog-body.// -->
-    </dialog>
-
-    <dialog
+    <EditProductDialog
       ref="editProductDialog"
-      class="mt-10"
+      :can-deactivate="editingProductId !== ''"
+      :categories="categories"
+      :create-category-option-value="CREATE_CATEGORY_OPTION_VALUE"
+      :error-message="editProductErrorMessage"
+      :form="editProductForm"
+      :is-deactivating-product="isDeactivatingProduct"
+      :is-loading-categories="isLoadingCategories"
+      :is-new-category-selected="isEditProductNewCategorySelected"
+      :is-submit-disabled="isEditProductSubmitDisabled"
+      :is-updating-product="isUpdatingProduct"
       @cancel="handleEditProductDialogCancel"
       @close="handleEditProductDialogClose"
-    >
-      <header class="dialog-header">
-        <h5>{{ $t('minishop.dialogs.editProduct') }}</h5>
-        <button
-          class="btn btn-icon"
-          @click="closeEditProductDialog"
-          :disabled="isUpdatingProduct || isDeactivatingProduct"
-        >
-          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-        </button>
-      </header>
-      <div class="dialog-body">
-        <form @submit.prevent="handleUpdateProduct">
-          <div v-if="editProductErrorMessage" class="alert alert-danger" role="alert">
-            {{ editProductErrorMessage }}
-          </div>
+      @deactivate="handleDeactivateProduct"
+      @submit="handleUpdateProduct"
+    />
 
-          <div class="mb-4">
-            <label class="form-label" for="edit-product-name">{{ $t('common.fields.name') }}</label>
-              <input
-                id="edit-product-name"
-                v-model.trim="editProductForm.name"
-                type="text"
-                class="form-control"
-                :placeholder="$t('minishop.dialogs.enterProductName')"
-                :disabled="isUpdatingProduct || isDeactivatingProduct"
-                required
-              >
-          </div>
-
-          <div class="row gap-3">
-            <div class="col-6 mb-4">
-              <label class="form-label" for="edit-product-category">{{ $t('common.fields.category') }}</label>
-              <select
-                id="edit-product-category"
-                v-model="editProductForm.category_id"
-                class="form-select"
-                :disabled="isUpdatingProduct || isDeactivatingProduct || isLoadingCategories"
-              >
-                <option value="">{{ $t('minishop.main.noCategory') }}</option>
-                <option :value="CREATE_CATEGORY_OPTION_VALUE">+ {{ $t('minishop.dialogs.addCategory') }}</option>
-                <option
-                  v-for="category in categories"
-                  :key="category.id"
-                  :value="category.id"
-                >
-                  {{ category.name }}
-                </option>
-              </select>
-              <input
-                v-if="isEditProductNewCategorySelected"
-                id="edit-product-new-category"
-                v-model.trim="editProductForm.new_category_name"
-                type="text"
-                class="form-control mt-3"
-                :placeholder="$t('minishop.dialogs.enterCategoryName')"
-                :disabled="isUpdatingProduct || isDeactivatingProduct"
-              >
-            </div>
-            <div class="col-6 mb-4">
-              <label class="form-label" for="edit-product-sku">{{ $t('minishop.dialogs.productCode') }}</label>
-              <input
-                id="edit-product-sku"
-                v-model.trim="editProductForm.sku"
-                type="text"
-                class="form-control"
-                :placeholder="$t('minishop.dialogs.optionalSku')"
-                :disabled="isUpdatingProduct || isDeactivatingProduct"
-              >
-            </div>
-          </div>
-
-          <div class="row gap-3">
-            <div class="col-6 mb-4">
-              <label class="form-label" for="edit-product-price">{{ $t('common.fields.price') }}</label>
-              <input
-                id="edit-product-price"
-                v-model.trim="editProductForm.price"
-                type="number"
-                class="form-control"
-                min="0"
-                step="1"
-                placeholder="0.00"
-                :disabled="isUpdatingProduct || isDeactivatingProduct"
-                required
-              >
-            </div>
-            <div class="col-3 mb-4">
-              <label class="form-label" for="edit-product-quantity">{{ $t('common.fields.quantity') }}</label>
-              <input
-                id="edit-product-quantity"
-                v-model.trim="editProductForm.quantity"
-                type="number"
-                class="form-control"
-                min="0"
-                step="1"
-                placeholder="0"
-                :disabled="isUpdatingProduct || isDeactivatingProduct"
-                required
-              >
-            </div>
-            <div class="col-3 mb-4">
-              <label class="form-label" for="edit-product-low-stock-alert">{{ $t('minishop.dialogs.lowStockAlert') }}</label>
-              <input
-                id="edit-product-low-stock-alert"
-                v-model.trim="editProductForm.low_stock_alert"
-                type="number"
-                class="form-control"
-                min="0"
-                step="0.001"
-                :placeholder="$t('minishop.dialogs.optionalThreshold')"
-                :disabled="isUpdatingProduct || isDeactivatingProduct"
-              >
-            </div>
-          </div>
-
-          <div class="pt-4 d-flex justify-content-between gap-2">
-              <button type="submit" class="btn btn-primary" :disabled="isEditProductSubmitDisabled">
-                <span v-if="isUpdatingProduct">{{ $t('common.states.saving') }}</span>
-                <span v-else>{{ $t('common.actions.saveChanges') }}</span>
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-default"
-                @click="closeEditProductDialog"
-                :disabled="isUpdatingProduct || isDeactivatingProduct"
-              >
-                {{ $t('common.actions.cancel') }}
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-red-subtle ml-auto"
-                :disabled="isUpdatingProduct || isDeactivatingProduct || editingProductId === ''"
-                @click="handleDeactivateProduct"
-              >
-                <span v-if="isDeactivatingProduct">{{ $t('common.states.updating') }}</span>
-                <span v-else>{{ $t('common.actions.deactivate') }}</span>
-              </button>
-              
-          </div>
-        </form>
-      </div>
-    </dialog>
-
-    <dialog
+    <CheckoutPaymentDialog
       ref="checkoutPaymentDialog"
-      class="dialog-sm mt-10"
+      :cart-items-length="cartItems.length"
+      :change-amount="changeAmount"
+      :discount-amount="discountAmount"
+      :discount-input="discountInput"
+      :error-message="saleErrorMessage"
+      :is-saving-sale="isSavingSale"
+      :paid-input="paidInput"
+      :payment-method="paymentMethod"
+      :remaining-amount="remainingAmount"
+      :subtotal="subtotal"
+      :total="total"
       @cancel="handleCheckoutPaymentDialogCancel"
       @close="handleCheckoutPaymentDialogClose"
-    >
-      <header class="dialog-header">
-        <h5>{{ $t('minishop.dialogs.paymentOverview') }}</h5>
-        <button
-          type="button"
-          class="btn btn-icon"
-          :disabled="isSavingSale"
-          @click="closeCheckoutPaymentDialog"
-        >
-          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-        </button>
-      </header>
+      @mark-paid-manually-edited="markPaidManuallyEdited"
+      @normalize-discount="normalizeDiscountInput"
+      @normalize-paid="normalizePaidInput"
+      @submit="handleCheckoutPaymentSubmit"
+      @update:discount-input="discountInput = $event"
+      @update:paid-input="paidInput = $event"
+      @update:payment-method="paymentMethod = $event"
+    />
 
-      <div class="dialog-body">
-        <form @submit.prevent="handleCheckoutPaymentSubmit">
-          <div v-if="saleErrorMessage" class="alert alert-danger mb-3" role="alert">
-            {{ saleErrorMessage }}
-          </div>
-
-          <div class="d-flex justify-content-between mb-3">
-            <span>{{ $t('common.fields.subtotal') }}</span>
-            <div class="text-right">
-              {{ formatMoneyValue(subtotal) }}
-            </div>
-          </div>
-
-          <div class="row justify-content-between mb-3">
-            <label class="col-6 form-label" for="checkout-payment-discount">{{ $t('common.fields.discount') }}</label>
-            <div class="col-6 text-right font-semibold">
-              <input
-                id="checkout-payment-discount"
-                v-model.trim="discountInput"
-                type="number"
-                class="form-control text-right min-h-5 h-8"
-                min="0"
-                step="0.1"
-                :disabled="isSavingSale"
-                @blur="normalizeDiscountInput"
-              >
-            </div>
-          </div>
-
-          <div v-if="discountAmount > 0" class="row justify-content-between mb-3">
-            <span class="col-6">{{ $t('common.fields.total') }}</span>
-            <div class="col-6 text-right">
-              {{ formatMoneyValue(total) }}
-            </div>
-          </div>
-
-          <hr>
-
-          <nav class="tabs-boxed w-full mb-4">
-            <label tabindex="0" class="tab-link flex-1">
-              <input
-                  v-model="paymentMethod"
-                  type="radio"
-                  name="checkout-payment-method"
-                  value="cash"
-                  checked
-                  :disabled="isSavingSale"
-                >
-              {{ $t('minishop.paymentMethods.cash') }}
-            </label>
-            <label tabindex="0" class="tab-link flex-1">
-              <input
-                  v-model="paymentMethod"
-                  type="radio"
-                  name="checkout-payment-method"
-                  value="card"
-                  :disabled="isSavingSale"
-                >
-              {{ $t('minishop.paymentMethods.card') }}
-            </label>
-          </nav>
-
-          <div class="mb-1">
-            <div class="text-right font-semibold">
-              <input
-                id="checkout-payment-paid"
-                v-model.trim="paidInput"
-                type="number"
-                class="form-control text-xl font-semibold"
-                min="0"
-                step="0.01"
-                :disabled="isSavingSale"
-                @input="markPaidManuallyEdited"
-                @blur="normalizePaidInput"
-              >
-            </div>
-          </div>
-
-          <div class="mb-2">
-            <div v-if="changeAmount > 0" class="text-green">
-              <span>{{ $t('minishop.sales.returnChange') }}: </span>
-              <strong class="text-sm"> {{ formatMoneyValue(changeAmount) }} </strong>
-            </div>
-            <div  v-else-if="remainingAmount > 0" class="text-orange">
-              <span> {{ $t('minishop.sales.remainingDebt') }}: </span>
-              <strong class="text-sm"> {{ formatMoneyValue(remainingAmount) }}</strong>
-            </div>
-            <div v-else class="text-green">
-              <strong class="text-sm">{{ $t('common.states.paidInFull') }}</strong>
-            </div>
-          </div>
-
-          <div class="pt-4">
-            <button type="submit" class="btn btn-lg w-full btn-primary" :disabled="isSavingSale || cartItems.length === 0">
-              <span v-if="isSavingSale">{{ $t('common.states.saving') }}</span>
-              <strong v-else>{{ $t('minishop.dialogs.savePayment') }}</strong>
-            </button>
-
-            <div class="text-center mt-4">
-              <a role="button" href="#"
-                class="text-secondary btn-sm"
-                :disabled="isSavingSale"
-                @click="closeCheckoutPaymentDialog"
-              >
-                {{ $t('common.actions.cancel') }}
-              </a>
-            </div>
-
-          </div>
-        </form>
-      </div>
-    </dialog>
-
-    <dialog
+    <ReceiptDialog
       ref="receiptDialog"
-      class="mt-10"
+      :book="book"
+      :receipt-state="receiptState"
       @cancel="handleReceiptDialogCancel"
       @close="handleReceiptDialogClose"
-    >
-      <header class="dialog-header">
-        <h5> ✅  {{ $t('minishop.dialogs.saleSaved') }}</h5>
-        <button class="btn btn-icon" @click="closeReceiptDialog">
-          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-        </button>
-      </header>
-
-      <div v-if="receiptState" class="dialog-body" id="minishop-receipt-content">
-        <div class="mb-3">
-          <div><strong>{{ $t('common.fields.book') }}:</strong> {{ book.title }}</div>
-          <div><strong>{{ $t('common.fields.receipt') }} ID:</strong> {{ receiptState.sale.id }}</div>
-          <div><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ receiptState.sale.sold_at }}</div>
-          <div><strong>{{ $t('common.fields.currency') }}:</strong> {{ receiptState.sale.currency_code }}</div>
-          <div v-if="receiptState.sale.customer_name">
-            <strong>{{ $t('common.fields.customer') }}:</strong>
-            {{ receiptState.sale.customer_name }}
-            <span v-if="receiptState.sale.customer_phone"> · {{ receiptState.sale.customer_phone }}</span>
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <table class="table table-sm mb-0">
-            <thead>
-              <tr>
-                <th>{{ $t('common.fields.item') }}</th>
-                <th>{{ $t('minishop.main.quantityShort') }}</th>
-                <th>{{ $t('common.fields.price') }}</th>
-                <th>{{ $t('common.fields.total') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in receiptState.items" :key="item.id">
-                <td>{{ item.product_name }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.unit_price }}</td>
-                <td>{{ item.line_total }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="d-flex flex-col mb-4 align-items-end">
-          <div class="d-flex justify-content-between">
-            <span>{{ $t('common.fields.subtotal') }}</span>
-            <strong class="min-w-40 text-right">{{ receiptState.sale.subtotal_amount }}</strong>
-          </div>
-          <div class="d-flex justify-content-between">
-            <span>{{ $t('common.fields.discount') }}</span>
-            <strong class="min-w-40 text-right">- {{ receiptState.sale.discount_amount }}</strong>
-          </div>
-          <div class="d-flex justify-content-between">
-            <span>{{ $t('common.fields.total') }}</span>
-            <strong class="min-w-40 text-right">{{ receiptState.sale.total_amount }}</strong>
-          </div>
-          <div class="d-flex justify-content-between">
-            <span>{{ $t('common.fields.paid') }}</span>
-            <strong class="min-w-40 text-right">{{ formatMoneyValue(receiptState.tenderedAmount) }}</strong>
-          </div>
-          <div v-if="receiptState.changeAmount > 0" class="d-flex justify-content-between text-green">
-            <span>{{ $t('minishop.sales.returnChange') }}</span>
-            <strong class="min-w-40 text-right">{{ formatMoneyValue(receiptState.changeAmount) }}</strong>
-          </div>
-          <div v-else-if="Number(receiptState.sale.due_amount) > 0" class="d-flex justify-content-between text-orange">
-            <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-            <strong class="min-w-40 text-right">{{ receiptState.sale.due_amount }}</strong>
-          </div>
-          <div v-else class="d-flex justify-content-between text-green">
-            <span>{{ $t('common.fields.status') }}</span>
-            <strong class="min-w-40 text-right">{{ $t('common.states.paidInFull') }}</strong>
-          </div>
-        </div>
-
-        <div class="d-flex flex-row gap-2 border-top pt-3">
-          <button type="button" class="btn flex-1 btn-outline" @click="printReceipt">
-            🖨️ {{ $t('common.actions.printReceipt') }}
-          </button>
-          <button type="button" class="btn flex-1 btn-primary" @click="closeReceiptDialog">
-            {{ $t('common.actions.ok') }} 
-          </button>
-        </div>
-        
-      </div>  <!-- dialog-body .// -->
-    </dialog>
+      @print="printReceipt"
+    />
   </div>
 </template>
 
@@ -668,7 +169,7 @@ import {
   createMinishopSale,
   deactivateMinishopProduct,
   fetchMinishopCategories,
-  fetchMinishopCustomers,
+  fetchMinishopCustomersList,
   fetchMinishopProducts,
   updateMinishopProduct,
 } from '@/api/minishop'
@@ -676,6 +177,11 @@ import BookPageHeader from '@/components/BookPageHeader.vue'
 import CustomersTab from '@/views/book-types/minishop/CustomersTab.vue'
 import NewSaleTab from '@/views/book-types/minishop/NewSaleTab.vue'
 import SalesTab from '@/views/book-types/minishop/SalesTab.vue'
+import CheckoutPaymentDialog from '@/views/book-types/minishop/dialogs/CheckoutPaymentDialog.vue'
+import CreateCustomerDialog from '@/views/book-types/minishop/dialogs/CreateCustomerDialog.vue'
+import CreateProductDialog from '@/views/book-types/minishop/dialogs/CreateProductDialog.vue'
+import EditProductDialog from '@/views/book-types/minishop/dialogs/EditProductDialog.vue'
+import ReceiptDialog from '@/views/book-types/minishop/dialogs/ReceiptDialog.vue'
 
 const NO_CATEGORY_FILTER_VALUE = '__no_category__'
 const CREATE_CATEGORY_OPTION_VALUE = '__create_category__'
@@ -703,7 +209,7 @@ const checkoutPaymentDialog = ref(null)
 const receiptDialog = ref(null)
 const products = ref([])
 const categories = ref([])
-const customers = ref([])
+const customerOptions = ref([])
 const cartItems = ref([])
 const isLoadingProducts = ref(false)
 const isLoadingCategories = ref(false)
@@ -714,7 +220,7 @@ const isUpdatingProduct = ref(false)
 const isDeactivatingProduct = ref(false)
 const isSavingSale = ref(false)
 const hasLoadedMainData = ref(false)
-const hasLoadedCustomers = ref(false)
+const hasLoadedCustomerOptions = ref(false)
 const isHydratingMainData = ref(false)
 const errorMessage = ref('')
 const categoryErrorMessage = ref('')
@@ -966,7 +472,7 @@ watch(normalizedPageParam, async (page) => {
   }
 
   if (page === '' || page === 'main') {
-    await ensureCustomersLoaded()
+    await ensureCustomerOptionsLoaded()
   }
 }, { immediate: true })
 
@@ -989,21 +495,18 @@ async function ensureMainDataLoaded() {
   }
 }
 
-async function ensureCustomersLoaded() {
-  if (hasLoadedCustomers.value || isLoadingCustomers.value) {
+async function ensureCustomerOptionsLoaded() {
+  if (hasLoadedCustomerOptions.value || isLoadingCustomers.value) {
     return
   }
 
-  hasLoadedCustomers.value = await loadCustomers()
+  hasLoadedCustomerOptions.value = await loadCustomerOptions()
 }
 
 async function openCreateProductDialog() {
   createProductErrorMessage.value = ''
   await ensureMainDataLoaded()
-
-  if (!createProductDialog.value?.open) {
-    createProductDialog.value?.showModal()
-  }
+  createProductDialog.value?.open()
 }
 
 async function openEditProductDialog(product) {
@@ -1021,36 +524,25 @@ async function openEditProductDialog(product) {
     ? ''
     : String(product.low_stock_alert)
 
-  if (!editProductDialog.value?.open) {
-    editProductDialog.value?.showModal()
-  }
+  editProductDialog.value?.open()
 }
 
 async function openCreateCustomerDialogFromCheckout() {
   createCustomerErrorMessage.value = ''
-  await ensureCustomersLoaded()
-
-  if (!createCustomerDialog.value?.open) {
-    createCustomerDialog.value?.showModal()
-  }
+  await ensureCustomerOptionsLoaded()
+  createCustomerDialog.value?.open()
 }
 
 function closeCreateProductDialog() {
-  if (createProductDialog.value?.open) {
-    createProductDialog.value.close()
-  }
+  createProductDialog.value?.close()
 }
 
 function closeEditProductDialog() {
-  if (editProductDialog.value?.open) {
-    editProductDialog.value.close()
-  }
+  editProductDialog.value?.close()
 }
 
 function closeCreateCustomerDialog() {
-  if (createCustomerDialog.value?.open) {
-    createCustomerDialog.value.close()
-  }
+  createCustomerDialog.value?.close()
 }
 
 function addProductToCart(product) {
@@ -1137,16 +629,11 @@ function openCheckoutPaymentDialog() {
   }
 
   saleErrorMessage.value = ''
-
-  if (!checkoutPaymentDialog.value?.open) {
-    checkoutPaymentDialog.value?.showModal()
-  }
+  checkoutPaymentDialog.value?.open()
 }
 
 function closeCheckoutPaymentDialog() {
-  if (checkoutPaymentDialog.value?.open) {
-    checkoutPaymentDialog.value.close()
-  }
+  checkoutPaymentDialog.value?.close()
 }
 
 function handleCheckoutPaymentDialogCancel(event) {
@@ -1196,15 +683,11 @@ function handleCreateCustomerDialogCancel(event) {
 }
 
 function openReceiptDialog() {
-  if (!receiptDialog.value?.open) {
-    receiptDialog.value?.showModal()
-  }
+  receiptDialog.value?.open()
 }
 
 function closeReceiptDialog() {
-  if (receiptDialog.value?.open) {
-    receiptDialog.value.close()
-  }
+  receiptDialog.value?.close()
 }
 
 function handleReceiptDialogCancel(event) {
@@ -1449,18 +932,18 @@ async function loadCategories() {
   }
 }
 
-async function loadCustomers() {
+async function loadCustomerOptions() {
   isLoadingCustomers.value = true
   customerErrorMessage.value = ''
 
   try {
-    const { data } = await fetchMinishopCustomers(props.book.id)
-    customers.value = sortCustomers(data.customers ?? [])
-    hasLoadedCustomers.value = true
+    const { data } = await fetchMinishopCustomersList(props.book.id)
+    customerOptions.value = sortCustomers(data.customers ?? [])
+    hasLoadedCustomerOptions.value = true
 
     if (
       selectedCustomerId.value !== ''
-      && !customers.value.some((customer) => customer.id === selectedCustomerId.value)
+      && !customerOptions.value.some((customer) => customer.id === selectedCustomerId.value)
     ) {
       selectedCustomerId.value = ''
     }
@@ -1563,7 +1046,7 @@ async function handleCreateCustomer() {
 
     upsertCustomer(data.customer)
     selectedCustomerId.value = data.customer.id
-    await loadCustomers()
+    await loadCustomerOptions()
     closeCreateCustomerDialog()
   } catch (error) {
     if (isUnauthorizedError(error)) {
@@ -1694,10 +1177,10 @@ function upsertProduct(product) {
 }
 
 function upsertCustomer(customer) {
-  const nextCustomers = customers.value.filter((item) => item.id !== customer.id)
+  const nextCustomers = customerOptions.value.filter((item) => item.id !== customer.id)
   nextCustomers.push(customer)
-  customers.value = sortCustomers(nextCustomers)
-  hasLoadedCustomers.value = true
+  customerOptions.value = sortCustomers(nextCustomers)
+  hasLoadedCustomerOptions.value = true
   customerErrorMessage.value = ''
 }
 
@@ -1718,7 +1201,7 @@ function sortCustomers(items) {
 }
 
 async function refreshCustomerData() {
-  return loadCustomers()
+  return loadCustomerOptions()
 }
 
 async function handleCustomersChanged() {

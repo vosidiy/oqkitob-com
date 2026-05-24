@@ -19,17 +19,18 @@
       </header>
 
       <div class="flex-1 overflow-y-auto">
-        <div v-if="customerErrorMessage" class="alert alert-danger m-4" role="alert">
+        
+        <p v-if="customerErrorMessage" class="alert alert-danger m-4" role="alert">
           {{ customerErrorMessage }}
-        </div>
+        </p>
 
-        <div v-else-if="isLoadingCustomers" class="px-4 py-4 text-secondary">
+        <p v-else-if="isLoadingCustomers" class="px-4 py-4 text-secondary">
           {{ $t('minishop.customers.loadingCustomers') }}
-        </div>
+        </p>
 
-        <div v-else-if="customerList.length === 0" class="px-4 py-4 text-secondary">
+        <p v-else-if="customerList.length === 0" class="px-4 py-4 text-secondary">
           {{ $t('minishop.customers.noCustomers') }}
-        </div>
+        </p>
 
         <ul v-else class="mt-1">
           <li
@@ -39,33 +40,31 @@
           >
             <div
               role="button"
-              class="px-4 p-3"
+              class="px-4 d-flex p-3"
               :class="{ 'bg-primary-200': selectedCustomerId === customer.id }"
               @click="selectCustomer(customer)"
             >
-              <div class="d-flex justify-content-between gap-3">
+
+              <div class="mr-3 avatar bg-neutral-200 text-base">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-icon lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 
+              </div>
+
+              <div class="d-flex flex-grow  justify-content-between gap-3">
+
                 <div class="overflow-hidden">
-                  <h6 class="mb-1">{{ customer.name }}</h6>
-                  <p v-if="customer.phone" class="text-sm text-secondary mb-1">
-                    {{ customer.phone }}
-                  </p>
-                  <p v-if="customer.note" class="text-sm text-secondary mb-0 text-truncate">
+                  <h6 class="mb-1 text-capitalize">{{ customer.name }} </h6>
+                  <p class="mb-1" v-if="customer.phone"> 📞 {{ customer.phone }} </p>  
+                  <p v-if="customer.note" class="text-secondary">
                     {{ customer.note }}
                   </p>
                 </div>
 
                 <div class="text-right flex-shrink-0">
-                  <p
-                    class="mb-1"
-                    :class="{ 'text-red': Number(customer.outstanding_balance) > 0 }"
-                  >
-                    {{ formatMoney(customer.outstanding_balance) }}
+                  <p class="mb-1" :class="{ 'text-red': Number(customer.outstanding_balance) > 0 }">
+                  {{ $t('minishop.customers.outstandingDebt') }}:  {{ formatMoney(customer.outstanding_balance) }}
                   </p>
-                  <p class="text-sm text-secondary mb-0">
-                    {{ $t('minishop.customers.receiptCount', { count: formatInteger(customer.receipt_count) }) }}
-                  </p>
-                  <p v-if="customer.last_sale_at" class="text-xs text-secondary mb-0 mt-1">
-                    {{ formatDateTime(customer.last_sale_at) }}
+                  <p class="text-sm">
+                    🧾 {{ $t('minishop.customers.receiptCount', { count: formatInteger(customer.receipt_count) }) }}
                   </p>
                 </div>
               </div>
@@ -76,7 +75,7 @@
     </aside>
 
     <aside class="col-6">
-      <section class="flex-1 overflow-y-auto p-4 bg-lower h-full">
+      <section class="flex-1 overflow-y-auto p-4 bg-neutral-200 h-full">
         <div v-if="selectedCustomerErrorMessage" class="alert alert-danger mb-4" role="alert">
           {{ selectedCustomerErrorMessage }}
         </div>
@@ -85,57 +84,72 @@
           <div class="p-10 text-secondary">{{ $t('minishop.customers.loadingCustomer') }}</div>
         </div>
 
-        <div v-else-if="selectedCustomer" class="card">
+        <div v-else-if="selectedCustomer" class="card shadow">
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start gap-3 mb-4 mobile:flex-col">
-              <div>
-                <h3 class="text-2xl mb-1">{{ selectedCustomer.name }}</h3>
-                <p class="text-secondary mb-0">{{ selectedCustomer.id }}</p>
+            
+            <div class="d-flex align-items-start gap-3 mb-4 mobile:flex-col">
+              <div class="d-flex flex-grow align-items-start">
+                
+                <div class="mr-3 avatar avatar-lg text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-icon lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 
+                </div>
+                
+                <div>
+                  <h3 class="text-2xl text-capitalize">{{ selectedCustomer.name }}</h3>
+                  <p class="text-secondary text-xs mb-2"> ID: {{ selectedCustomer.id }}</p>
+
+                  <p class="mb-1">
+                    <span>📞 {{ $t('common.fields.phone') }}: </span>
+                    <strong class="text-right">{{ selectedCustomer.phone || '-' }}</strong>
+                  </p>
+                  <p>
+                    <span>💬 {{ $t('common.fields.note') }}: </span>
+                    <span>{{ selectedCustomer.note }}</span>
+                  </p>
+                </div>
               </div>
 
-              <div class="d-flex gap-2 mobile:w-full">
-                <button type="button" class="btn btn-default" @click="clearSelectedCustomer">
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-icon btn-default" @click="openEditCustomerDialog">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-icon lucide-pencil"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button type="button" class="btn btn-neutral" @click="clearSelectedCustomer">
                   {{ $t('common.actions.close') }}
                 </button>
-                <button type="button" class="btn btn-primary" @click="openEditCustomerDialog">
-                  {{ $t('minishop.customers.editCustomer') }}
-                </button>
               </div>
             </div>
 
-            <div class="row gap-3 mb-4">
-              <div class="col border rounded p-3 bg-lower">
-                <p class="text-secondary mb-1">{{ $t('minishop.customers.outstandingDebt') }}</p>
-                <strong
-                  class="text-lg"
-                  :class="{ 'text-red': Number(selectedCustomer.outstanding_balance) > 0 }"
-                >
-                  {{ formatMoney(selectedCustomer.outstanding_balance) }}
-                </strong>
+            <article class="row row-cols-4 gap-2 mb-4">
+              <div>
+                <div class="border rounded bg-lower p-2">
+                  <p class="text-secondary mb-1">{{ $t('minishop.customers.receipts') }}</p>
+                  <strong class="text-lg">{{ formatInteger(selectedCustomer.receipt_count) }} 🧾 </strong>
+                </div>
               </div>
-              <div class="col border rounded p-3 bg-lower">
-                <p class="text-secondary mb-1">{{ $t('minishop.customers.receipts') }}</p>
-                <strong class="text-lg">{{ formatInteger(selectedCustomer.receipt_count) }}</strong>
+              <div>
+                <div class="border rounded bg-lower p-2">
+                  <p class="text-secondary mb-1">{{ $t('minishop.customers.outstandingDebt') }}</p>
+                  <strong class="text-lg"  :class="{ 'text-red': Number(selectedCustomer.outstanding_balance) > 0 }"
+                  >
+                    {{ formatMoney(selectedCustomer.outstanding_balance) }}
+                  </strong>
+                </div>
               </div>
-              <div class="col border rounded p-3 bg-lower">
-                <p class="text-secondary mb-1">{{ $t('minishop.customers.totalSales') }}</p>
-                <strong class="text-lg">{{ formatMoney(selectedCustomer.total_sales_amount) }}</strong>
+              <div>
+                <div class="border rounded bg-lower p-2">
+                  <p class="text-secondary mb-1">{{ $t('minishop.customers.totalSales') }}</p>
+                  <strong class="text-lg">{{ formatMoney(selectedCustomer.total_sales_amount) }}</strong>
+                </div>
               </div>
-              <div class="col border rounded p-3 bg-lower">
-                <p class="text-secondary mb-1">{{ $t('minishop.customers.totalPaid') }}</p>
-                <strong class="text-lg">{{ formatMoney(selectedCustomer.total_paid_amount) }}</strong>
+              <div>
+                <div class="border rounded bg-lower p-2">
+                  <p class="text-secondary mb-1">{{ $t('minishop.customers.totalPaid') }}</p>
+                  <strong class="text-lg">{{ formatMoney(selectedCustomer.total_paid_amount) }}</strong>
+                </div>
               </div>
-            </div>
+            </article>
 
-            <div class="d-flex flex-col gap-2 mb-4">
-              <div class="d-flex justify-content-between gap-3">
-                <span>{{ $t('common.fields.phone') }}</span>
-                <strong class="text-right">{{ selectedCustomer.phone || '-' }}</strong>
-              </div>
-              <div class="d-flex justify-content-between gap-3">
-                <span>{{ $t('minishop.customers.lastReceipt') }}</span>
-                <strong class="text-right">{{ formatDateTime(selectedCustomer.last_sale_at) }}</strong>
-              </div>
+            <article class="d-flex flex-col gap-2 mb-4">
               <div class="d-flex justify-content-between gap-3">
                 <span>{{ $t('common.fields.created') }}</span>
                 <strong class="text-right">{{ formatDateTime(selectedCustomer.created_at) }}</strong>
@@ -144,65 +158,55 @@
                 <span>{{ $t('common.fields.updated') }}</span>
                 <strong class="text-right">{{ formatDateTime(selectedCustomer.updated_at) }}</strong>
               </div>
-            </div>
-
-            <div v-if="selectedCustomer.note" class="mb-4">
-              <h4 class="h6 mb-2">{{ $t('common.fields.note') }}</h4>
-              <p class="mb-0">{{ selectedCustomer.note }}</p>
-            </div>
-
-            <div>
-              <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-                <h4 class="h6 mb-0">{{ $t('minishop.customers.relatedReceipts') }}</h4>
-                <span class="text-secondary text-sm">
-                  {{ $t('minishop.customers.itemCount', { count: selectedCustomerReceipts.length }) }}
-                </span>
-              </div>
+            </article>
+            <hr>
+            <article>
+              <header class="d-flex justify-content-between align-items-center gap-3 mb-4">
+                <h4 class="text-xl">
+                  {{ $t('minishop.customers.relatedReceipts') }}  ({{ selectedCustomerReceipts.length }})
+                </h4>
+              </header>
 
               <div v-if="selectedCustomerReceipts.length === 0" class="text-secondary">
                 {{ $t('minishop.customers.noReceipts') }}
               </div>
 
-              <div v-else class="table-responsive">
-                <table class="table table-sm mb-0">
-                  <thead>
-                    <tr>
-                      <th>{{ $t('common.fields.receipt') }}</th>
-                      <th>{{ $t('common.fields.soldAt') }}</th>
-                      <th>{{ $t('common.fields.total') }}</th>
-                      <th>{{ $t('minishop.sales.due') }}</th>
-                      <th>{{ $t('common.fields.status') }}</th>
-                      <th>{{ $t('common.actions.viewDetail') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="receipt in selectedCustomerReceipts" :key="receipt.id">
-                      <td>
-                        <div>{{ receipt.id }}</div>
-                        <small v-if="receipt.note" class="text-secondary">{{ receipt.note }}</small>
-                      </td>
-                      <td>{{ formatDateTime(receipt.sold_at) }}</td>
-                      <td>{{ formatMoney(receipt.total_amount) }}</td>
-                      <td>{{ formatMoney(receipt.due_amount) }}</td>
-                      <td class="text-capitalize">{{ $t('minishop.paymentLabels.' + receipt.payment_status) }}</td>
-                      <td>
-                        <button
-                          type="button"
-                          class="btn btn-default"
-                          :disabled="isLoadingReceiptDetail && activeReceiptId === receipt.id"
-                          @click="openReceiptDetailDialog(receipt.id)"
-                        >
-                          {{ $t('common.actions.viewDetail') }}
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
+              <ul v-else class="table-responsive">
 
+                <li v-for="receipt in selectedCustomerReceipts" :key="receipt.id">
+
+                  <div class="d-flex p-3 bg-neutral-100 mb-1 hover:bg-neutral-200 border-strong rounded">
+                    <div class="mr-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-receipt-text-icon lucide-receipt-text"><path d="M13 16H8"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"/></svg>
+                    </div>
+                    <div>
+                      <h6 class="mb-1"> {{ $t('common.fields.soldAt') }}:  {{ formatDateTime(receipt.sold_at) }}</h6>
+                      <div class="d-flex gap-2 mb-1">
+                        <p> {{ $t('minishop.main.total') }}: {{ formatMoney(receipt.total_amount) }}</p> • 
+                        <p> 💵 {{ $t('minishop.paymentLabels.' + receipt.payment_status) }}</p> • 
+                        <p v-if="Number(receipt.due_amount) > 0" class="text-red"> {{ $t('minishop.sales.due') }}: {{ formatMoney(receipt.due_amount) }} </p> 
+                      </div>
+                      <p v-if="receipt.note" class="text-secondary">{{ receipt.note }}</p>
+                    </div>
+                    <div class="ml-auto">
+                      <button
+                        type="button"
+                        class="btn btn-default"
+                        :disabled="isLoadingReceiptDetail && activeReceiptId === receipt.id"
+                        @click="openReceiptDetailDialog(receipt.id)"
+                      >
+                        {{ $t('common.actions.viewDetail') }}
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+
+            </article>
+          </div>
+          <!-- card-body .//end -->
+        </div>
+        <!-- card .//end -->
         <div v-else class="card">
           <div class="card-body text-center py-6">
             <h3 class="h6 mb-2">{{ $t('minishop.customers.selectCustomer') }}</h3>
@@ -214,464 +218,59 @@
       </section>
     </aside>
 
-    <dialog
+    <CustomersCreateDialog
       ref="createCustomerDialog"
+      :error-message="createCustomerErrorMessage"
+      :form="createCustomerForm"
+      :is-submit-disabled="isCreateCustomerSubmitDisabled"
+      :is-submitting="isCreatingCustomer"
       @cancel="handleCreateCustomerDialogCancel"
       @close="handleCreateCustomerDialogClose"
-    >
-      <header class="dialog-header">
-        <h5>{{ $t('minishop.customers.createCustomer') }}</h5>
-        <button class="btn btn-icon" :disabled="isCreatingCustomer" @click="closeCreateCustomerDialog">
-          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-        </button>
-      </header>
-      <div class="dialog-body">
-        <form @submit.prevent="handleCreateCustomer">
-          <div v-if="createCustomerErrorMessage" class="alert alert-danger" role="alert">
-            {{ createCustomerErrorMessage }}
-          </div>
+      @submit="handleCreateCustomer"
+    />
 
-          <div class="mb-4">
-            <label class="form-label" for="customers-tab-create-name">{{ $t('common.fields.name') }}</label>
-            <input
-              id="customers-tab-create-name"
-              v-model.trim="createCustomerForm.name"
-              type="text"
-              class="form-control"
-              :placeholder="$t('minishop.customers.enterCustomerName')"
-              :disabled="isCreatingCustomer"
-              required
-            >
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label" for="customers-tab-create-phone">{{ $t('common.fields.phone') }}</label>
-            <input
-              id="customers-tab-create-phone"
-              v-model.trim="createCustomerForm.phone"
-              type="text"
-              class="form-control"
-              :placeholder="$t('minishop.customers.optionalPhone')"
-              :disabled="isCreatingCustomer"
-            >
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label" for="customers-tab-create-note">{{ $t('common.fields.note') }}</label>
-            <textarea
-              id="customers-tab-create-note"
-              v-model.trim="createCustomerForm.note"
-              class="form-control"
-              rows="4"
-              :placeholder="$t('minishop.customers.optionalNote')"
-              :disabled="isCreatingCustomer"
-            ></textarea>
-          </div>
-
-          <div class="pt-4 d-flex gap-2">
-            <button type="submit" class="btn btn-primary" :disabled="isCreateCustomerSubmitDisabled">
-              <span v-if="isCreatingCustomer">{{ $t('common.states.saving') }}</span>
-              <span v-else>{{ $t('common.actions.create') }}</span>
-            </button>
-            <button
-              type="button"
-              class="btn btn-default"
-              :disabled="isCreatingCustomer"
-              @click="closeCreateCustomerDialog"
-            >
-              {{ $t('common.actions.cancel') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </dialog>
-
-    <dialog
+    <EditCustomerDialog
       ref="editCustomerDialog"
+      :error-message="editCustomerErrorMessage"
+      :form="editCustomerForm"
+      :is-submit-disabled="isEditCustomerSubmitDisabled"
+      :is-updating-customer="isUpdatingCustomer"
       @cancel="handleEditCustomerDialogCancel"
       @close="handleEditCustomerDialogClose"
-    >
-      <header class="dialog-header">
-        <h5>{{ $t('minishop.customers.editCustomerTitle') }}</h5>
-        <button class="btn btn-icon" :disabled="isUpdatingCustomer" @click="closeEditCustomerDialog">
-          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-        </button>
-      </header>
-      <div class="dialog-body">
-        <form @submit.prevent="handleUpdateCustomer">
-          <div v-if="editCustomerErrorMessage" class="alert alert-danger" role="alert">
-            {{ editCustomerErrorMessage }}
-          </div>
+      @submit="handleUpdateCustomer"
+    />
 
-          <div class="mb-4">
-            <label class="form-label" for="customers-tab-edit-name">{{ $t('common.fields.name') }}</label>
-            <input
-              id="customers-tab-edit-name"
-              v-model.trim="editCustomerForm.name"
-              type="text"
-              class="form-control"
-              :placeholder="$t('minishop.customers.enterCustomerName')"
-              :disabled="isUpdatingCustomer"
-              required
-            >
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label" for="customers-tab-edit-phone">{{ $t('common.fields.phone') }}</label>
-            <input
-              id="customers-tab-edit-phone"
-              v-model.trim="editCustomerForm.phone"
-              type="text"
-              class="form-control"
-              :placeholder="$t('minishop.customers.optionalPhone')"
-              :disabled="isUpdatingCustomer"
-            >
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label" for="customers-tab-edit-note">{{ $t('common.fields.note') }}</label>
-            <textarea
-              id="customers-tab-edit-note"
-              v-model.trim="editCustomerForm.note"
-              class="form-control"
-              rows="4"
-              :placeholder="$t('minishop.customers.optionalNote')"
-              :disabled="isUpdatingCustomer"
-            ></textarea>
-          </div>
-
-          <div class="pt-4 d-flex gap-2">
-            <button type="submit" class="btn btn-primary" :disabled="isEditCustomerSubmitDisabled">
-              <span v-if="isUpdatingCustomer">{{ $t('common.states.saving') }}</span>
-              <span v-else>{{ $t('common.actions.saveChanges') }}</span>
-            </button>
-            <button
-              type="button"
-              class="btn btn-default"
-              :disabled="isUpdatingCustomer"
-              @click="closeEditCustomerDialog"
-            >
-              {{ $t('common.actions.cancel') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </dialog>
-
-    <dialog
+    <ReceiptDetailDialog
       ref="receiptDetailDialog"
-      class="dialog-md"
+      :can-add-payment-to-receipt="canAddPaymentToReceipt"
+      :deleting-payment-id="deletingPaymentId"
+      :error-message="receiptDetailErrorMessage"
+      :is-deleting-receipt="isDeletingReceipt"
+      :is-loading-receipt-detail="isLoadingReceiptDetail"
+      :is-saving-payment="isSavingPayment"
+      :items="selectedReceiptItems"
+      :payments="selectedReceiptPayments"
+      :sale="selectedReceiptSale"
       @cancel="handleReceiptDetailDialogCancel"
       @close="handleReceiptDetailDialogClose"
-    >
-      <header class="dialog-header">
-        <h5>{{ $t('common.actions.viewDetail') }}</h5>
-        <button class="btn btn-icon" :disabled="isLoadingReceiptDetail" @click="closeReceiptDetailDialog">
-          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-        </button>
-      </header>
-      <div class="dialog-body">
-        <div v-if="receiptDetailErrorMessage" class="alert alert-danger mb-4" role="alert">
-          {{ receiptDetailErrorMessage }}
-        </div>
+      @delete-payment="handleDeletePayment"
+      @delete-receipt="handleDeleteReceipt"
+      @open-add-payment="openAddPaymentDialog"
+    />
 
-        <div v-if="isLoadingReceiptDetail" class="text-secondary">
-          {{ $t('minishop.sales.loadingReceipt') }}
-        </div>
-
-        <div v-else-if="selectedReceiptSale">
-          <div class="d-flex justify-content-between align-items-start gap-3 mb-4 mobile:flex-col">
-            <div>
-              <h3 class="text-2xl mb-1">{{ $t('minishop.sales.receipt') }}</h3>
-              <p class="text-secondary mb-0">{{ selectedReceiptSale.id }}</p>
-            </div>
-
-            <div class="text-right mobile:text-left">
-              <p class="mb-1"><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ formatDateTime(selectedReceiptSale.sold_at) }}</p>
-              <p class="mb-1"><strong>{{ $t('common.fields.currency') }}:</strong> {{ selectedReceiptSale.currency_code }}</p>
-              <p class="mb-1">
-                <strong>{{ $t('common.fields.customer') }}:</strong>
-                {{ selectedReceiptSale.customer_name || $t('minishop.sales.noCustomer') }}
-                <span v-if="selectedReceiptSale.customer_phone"> · {{ selectedReceiptSale.customer_phone }}</span>
-              </p>
-              <p class="mb-3 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ $t('minishop.paymentLabels.' + selectedReceiptSale.payment_status) }}</p>
-              <button
-                type="button"
-                class="btn btn-default mr-2"
-                :disabled="isLoadingReceiptDetail || isDeletingReceipt"
-                @click="closeReceiptDetailDialog"
-              >
-                {{ $t('common.actions.close') }}
-              </button>
-              <button
-                v-if="canAddPaymentToReceipt"
-                type="button"
-                class="btn btn-primary mr-2"
-                :disabled="isLoadingReceiptDetail || isSavingPayment || isDeletingReceipt"
-                @click="openAddPaymentDialog"
-              >
-                {{ $t('minishop.sales.addPayment') }}
-              </button>
-              <button
-                type="button"
-                class="btn btn-outline text-red"
-                :disabled="isLoadingReceiptDetail || isDeletingReceipt || isSavingPayment"
-                @click="handleDeleteReceipt"
-              >
-                <span v-if="isDeletingReceipt">{{ $t('common.states.deleting') }}</span>
-                <span v-else>{{ $t('minishop.sales.deleteSale') }}</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="table-responsive mb-4">
-            <table class="table table-sm mb-0">
-              <thead>
-                <tr>
-                  <th>{{ $t('common.fields.item') }}</th>
-                  <th>{{ $t('minishop.main.quantityShort') }}</th>
-                  <th>{{ $t('common.fields.price') }}</th>
-                  <th>{{ $t('common.fields.total') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in selectedReceiptItems" :key="item.id">
-                  <td>{{ item.product_name }}</td>
-                  <td>{{ formatQuantity(item.quantity) }}</td>
-                  <td>{{ formatMoney(item.unit_price) }}</td>
-                  <td>{{ formatMoney(item.line_total) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="d-flex flex-col gap-2">
-            <div
-              v-if="selectedReceiptSale.customer_name"
-              class="d-flex justify-content-between gap-3"
-            >
-              <span>{{ $t('common.fields.customer') }}</span>
-              <strong class="text-right">
-                {{ selectedReceiptSale.customer_name }}
-                <span v-if="selectedReceiptSale.customer_phone"> · {{ selectedReceiptSale.customer_phone }}</span>
-              </strong>
-            </div>
-            <div
-              v-if="selectedReceiptSale.note"
-              class="d-flex justify-content-between gap-3"
-            >
-              <span>{{ $t('common.fields.note') }}</span>
-              <strong class="text-right">{{ selectedReceiptSale.note }}</strong>
-            </div>
-            <div class="d-flex justify-content-between gap-3">
-              <span>{{ $t('common.fields.subtotal') }}</span>
-              <strong>{{ formatMoney(selectedReceiptSale.subtotal_amount) }}</strong>
-            </div>
-            <div class="d-flex justify-content-between gap-3">
-              <span>{{ $t('common.fields.discount') }}</span>
-              <strong>- {{ formatMoney(selectedReceiptSale.discount_amount) }}</strong>
-            </div>
-            <div class="d-flex justify-content-between gap-3">
-              <span>{{ $t('common.fields.total') }}</span>
-              <strong>{{ formatMoney(selectedReceiptSale.total_amount) }}</strong>
-            </div>
-            <div class="d-flex justify-content-between gap-3">
-              <span>{{ $t('common.fields.paid') }}</span>
-              <strong>{{ formatMoney(selectedReceiptSale.paid_amount) }}</strong>
-            </div>
-            <div
-              v-if="Number(selectedReceiptSale.due_amount) > 0"
-              class="d-flex justify-content-between gap-3 text-orange"
-            >
-              <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-              <strong>{{ formatMoney(selectedReceiptSale.due_amount) }}</strong>
-            </div>
-            <div v-else class="d-flex justify-content-between gap-3 text-green">
-              <span>{{ $t('common.fields.status') }}</span>
-              <strong>{{ $t('common.states.paidInFull') }}</strong>
-            </div>
-          </div>
-
-          <div class="mt-4 pt-4 border-top">
-            <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-              <h4 class="h6 mb-0">{{ $t('minishop.sales.paymentRecords') }}</h4>
-            </div>
-
-            <div v-if="selectedReceiptPayments.length === 0" class="text-secondary">
-              {{ $t('minishop.sales.noPaymentRecords') }}
-            </div>
-
-            <div v-else class="d-flex flex-col gap-3">
-              <div
-                v-for="payment in selectedReceiptPayments"
-                :key="payment.id"
-                class="border rounded p-3 bg-lower"
-              >
-                <div class="d-flex justify-content-between gap-3 mobile:flex-col">
-                  <div>
-                    <p class="mb-1"><strong>{{ $t('common.fields.date') }}:</strong> {{ formatDateTime(payment.paid_at || payment.created_at) }}</p>
-                    <p class="mb-0"><strong>{{ $t('common.fields.method') }}:</strong> {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
-                  </div>
-                  <div class="text-right mobile:text-left">
-                    <p class="mb-2"><strong>{{ formatMoney(payment.amount) }}</strong></p>
-                    <button
-                      type="button"
-                      class="btn btn-outline text-red"
-                      :disabled="deletingPaymentId === payment.id || isSavingPayment || isDeletingReceipt"
-                      @click="handleDeletePayment(payment)"
-                    >
-                      <span v-if="deletingPaymentId === payment.id">{{ $t('common.states.deleting') }}</span>
-                      <span v-else>{{ $t('minishop.sales.deletePayment') }}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </dialog>
-
-    <dialog
+    <AddPaymentDialog
       ref="addPaymentDialog"
-      class="dialog-sm"
+      dialog-class="dialog-sm"
+      discount-input-id="customer-receipt-payment-discount"
+      :error-message="paymentErrorMessage"
+      :is-saving="isSavingPayment"
+      paid-input-id="customer-receipt-payment-paid"
+      payment-method-name="customer-receipt-payment-method"
+      :sale="selectedReceiptSale"
       @cancel="handleAddPaymentDialogCancel"
       @close="handleAddPaymentDialogClose"
-    >
-      <header class="dialog-header">
-        <h5>{{ $t('minishop.sales.addPayment') }}</h5>
-        <button
-          class="btn btn-icon"
-          :disabled="isSavingPayment"
-          @click="closeAddPaymentDialog"
-        >
-          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-        </button>
-      </header>
-      <div class="dialog-body">
-        <form @submit.prevent="handleAddPayment">
-          <div v-if="paymentErrorMessage" class="alert alert-danger mb-3" role="alert">
-            {{ paymentErrorMessage }}
-          </div>
-
-          <div class="d-flex justify-content-between mb-3">
-            <span>{{ $t('common.fields.subtotal') }}</span>
-            <div class="text-right font-semibold">
-              {{ formatMoney(paymentSummarySubtotal) }}
-            </div>
-          </div>
-
-          <div class="row justify-content-between mb-3">
-            <label class="col-6 form-label" for="customer-receipt-payment-discount">{{ $t('common.fields.discount') }}</label>
-            <div class="col-6 text-right font-semibold">
-              <input
-                id="customer-receipt-payment-discount"
-                v-model.trim="paymentForm.discountInput"
-                type="number"
-                class="form-control min-h-5 h-8 font-semibold"
-                min="0"
-                step="0.01"
-                :disabled="isSavingPayment"
-                @blur="normalizePaymentDiscountInput"
-              >
-            </div>
-          </div>
-
-          <div v-if="paymentSummaryDiscountAmount > 0" class="row justify-content-between mb-3">
-            <span class="col-6">{{ $t('common.fields.total') }}</span>
-            <div class="col-6 text-right font-semibold">
-              {{ formatMoney(paymentSummaryTotal) }}
-            </div>
-          </div>
-
-          <hr>
-
-          <div class="mb-3">
-            <label class="form-label d-block">{{ $t('common.fields.method') }}</label>
-            <div class="d-flex gap-4">
-              <label class="form-check d-flex align-items-center gap-2">
-                <input
-                  v-model="paymentForm.paymentMethod"
-                  class="form-check-input"
-                  type="radio"
-                  name="customer-receipt-payment-method"
-                  value="cash"
-                  :disabled="isSavingPayment"
-                >
-                <span>{{ $t('minishop.paymentMethods.cash') }}</span>
-              </label>
-              <label class="form-check d-flex align-items-center gap-2">
-                <input
-                  v-model="paymentForm.paymentMethod"
-                  class="form-check-input"
-                  type="radio"
-                  name="customer-receipt-payment-method"
-                  value="card"
-                  :disabled="isSavingPayment"
-                >
-                <span>{{ $t('minishop.paymentMethods.card') }}</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="row justify-content-between mb-3">
-            <label class="col-6 form-label" for="customer-receipt-payment-paid">{{ $t('common.fields.paid') }}</label>
-            <div class="col-6 text-right font-semibold">
-              <input
-                id="customer-receipt-payment-paid"
-                v-model.trim="paymentForm.paidInput"
-                type="number"
-                class="form-control min-h-5 h-8 font-semibold"
-                min="0"
-                step="0.01"
-                :disabled="isSavingPayment"
-                @blur="normalizePaymentPaidInput"
-              >
-            </div>
-          </div>
-
-          <div class="mb-5">
-            <div
-              v-if="paymentSummaryChangeAmount > 0"
-              class="d-flex justify-content-between gap-3 text-green"
-            >
-              <span>{{ $t('minishop.sales.returnChange') }}</span>
-              <strong>{{ formatMoney(paymentSummaryChangeAmount) }}</strong>
-            </div>
-            <div
-              v-else-if="paymentSummaryRemainingAmount > 0"
-              class="d-flex justify-content-between gap-3 text-orange"
-            >
-              <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-              <strong>{{ formatMoney(paymentSummaryRemainingAmount) }}</strong>
-            </div>
-            <div v-else class="d-flex justify-content-between gap-3 text-green">
-              <span>{{ $t('common.fields.status') }}</span>
-              <strong>{{ $t('common.states.paidInFull') }}</strong>
-            </div>
-          </div>
-
-          <div class="border-top d-flex pt-4 gap-2">
-            <button
-              type="button"
-              class="btn btn-default flex-1"
-              :disabled="isSavingPayment"
-              @click="closeAddPaymentDialog"
-            >
-              {{ $t('common.actions.cancel') }}
-            </button>
-            <button
-              type="submit"
-              class="btn btn-primary flex-1"
-              :disabled="isSavingPayment || !selectedReceiptSale || paymentSummaryPaidAmount <= 0"
-            >
-              <span v-if="isSavingPayment">{{ $t('common.states.saving') }}</span>
-              <span v-else>{{ $t('minishop.sales.addPayment') }}</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </dialog>
+      @submit="handleAddPayment"
+    />
   </section>
 </template>
 
@@ -686,10 +285,14 @@ import {
   deleteMinishopSale,
   deleteMinishopSalePayment,
   fetchMinishopCustomer,
-  fetchMinishopCustomers,
+  fetchMinishopCustomersListData,
   fetchMinishopSale,
   updateMinishopCustomer,
 } from '@/api/minishop'
+import AddPaymentDialog from '@/views/book-types/minishop/dialogs/AddPaymentDialog.vue'
+import CustomersCreateDialog from '@/views/book-types/minishop/dialogs/CustomersCreateDialog.vue'
+import EditCustomerDialog from '@/views/book-types/minishop/dialogs/EditCustomerDialog.vue'
+import ReceiptDetailDialog from '@/views/book-types/minishop/dialogs/ReceiptDetailDialog.vue'
 
 const props = defineProps({
   book: {
@@ -746,12 +349,6 @@ const editCustomerForm = reactive({
   note: '',
 })
 
-const paymentForm = reactive({
-  discountInput: '0.00',
-  paidInput: '0.00',
-  paymentMethod: 'cash',
-})
-
 const isCreateCustomerSubmitDisabled = computed(() => {
   return isCreatingCustomer.value || createCustomerForm.name === ''
 })
@@ -769,49 +366,6 @@ const canAddPaymentToReceipt = computed(() => {
     || ['unpaid', 'partial'].includes(String(selectedReceiptSale.value.payment_status ?? ''))
 })
 
-const paymentSummarySubtotal = computed(() => {
-  return parseNonNegativeAmount(selectedReceiptSale.value?.subtotal_amount ?? 0, 0)
-})
-
-const paymentSummaryDiscountAmount = computed(() => {
-  return Math.min(parseNonNegativeAmount(paymentForm.discountInput, 0), paymentSummarySubtotal.value)
-})
-
-const paymentSummaryTotal = computed(() => {
-  return Math.max(paymentSummarySubtotal.value - paymentSummaryDiscountAmount.value, 0)
-})
-
-const paymentSummaryRecordedPaidAmount = computed(() => {
-  return parseNonNegativeAmount(selectedReceiptSale.value?.paid_amount ?? 0, 0)
-})
-
-const paymentSummaryRemainingBeforePayment = computed(() => {
-  return Math.max(paymentSummaryTotal.value - paymentSummaryRecordedPaidAmount.value, 0)
-})
-
-const paymentSummaryPaidAmount = computed(() => {
-  return parseNonNegativeAmount(paymentForm.paidInput, 0)
-})
-
-const paymentSummaryAppliedAmount = computed(() => {
-  return paymentForm.paymentMethod === 'cash'
-    ? Math.min(paymentSummaryPaidAmount.value, paymentSummaryRemainingBeforePayment.value)
-    : paymentSummaryPaidAmount.value
-})
-
-const paymentSummaryChangeAmount = computed(() => {
-  return paymentForm.paymentMethod === 'cash' && paymentSummaryPaidAmount.value > paymentSummaryRemainingBeforePayment.value
-    ? paymentSummaryPaidAmount.value - paymentSummaryRemainingBeforePayment.value
-    : 0
-})
-
-const paymentSummaryRemainingAmount = computed(() => {
-  return Math.max(
-    paymentSummaryTotal.value - paymentSummaryRecordedPaidAmount.value - paymentSummaryAppliedAmount.value,
-    0,
-  )
-})
-
 watch(() => props.book.id, () => {
   clearSelectedCustomer()
   customerSearchQuery.value = ''
@@ -823,7 +377,7 @@ async function loadCustomerList(search = customerSearchQuery.value.trim()) {
   customerErrorMessage.value = ''
 
   try {
-    const { data } = await fetchMinishopCustomers(props.book.id, { search })
+    const { data } = await fetchMinishopCustomersListData(props.book.id, { search })
     customerList.value = sortCustomers(data.customers ?? [])
     syncSelectedCustomerSummary()
 
@@ -927,10 +481,7 @@ function clearSelectedCustomer() {
 
 function openCreateCustomerDialog() {
   createCustomerErrorMessage.value = ''
-
-  if (!createCustomerDialog.value?.open) {
-    createCustomerDialog.value?.showModal()
-  }
+  createCustomerDialog.value?.open()
 }
 
 function openEditCustomerDialog() {
@@ -944,21 +495,15 @@ function openEditCustomerDialog() {
   editCustomerForm.phone = String(selectedCustomer.value.phone ?? '')
   editCustomerForm.note = String(selectedCustomer.value.note ?? '')
 
-  if (!editCustomerDialog.value?.open) {
-    editCustomerDialog.value?.showModal()
-  }
+  editCustomerDialog.value?.open()
 }
 
 function closeCreateCustomerDialog() {
-  if (createCustomerDialog.value?.open) {
-    createCustomerDialog.value.close()
-  }
+  createCustomerDialog.value?.close()
 }
 
 function closeEditCustomerDialog() {
-  if (editCustomerDialog.value?.open) {
-    editCustomerDialog.value.close()
-  }
+  editCustomerDialog.value?.close()
 }
 
 function openReceiptDetailDialog(receiptId) {
@@ -966,9 +511,7 @@ function openReceiptDetailDialog(receiptId) {
 }
 
 function closeReceiptDetailDialog() {
-  if (receiptDetailDialog.value?.open) {
-    receiptDetailDialog.value.close()
-  }
+  receiptDetailDialog.value?.close()
 }
 
 function openAddPaymentDialog() {
@@ -977,19 +520,11 @@ function openAddPaymentDialog() {
   }
 
   paymentErrorMessage.value = ''
-  paymentForm.discountInput = formatMoney(selectedReceiptSale.value.discount_amount)
-  paymentForm.paidInput = formatMoney(selectedReceiptSale.value.due_amount)
-  paymentForm.paymentMethod = 'cash'
-
-  if (!addPaymentDialog.value?.open) {
-    addPaymentDialog.value?.showModal()
-  }
+  addPaymentDialog.value?.open()
 }
 
 function closeAddPaymentDialog() {
-  if (addPaymentDialog.value?.open) {
-    addPaymentDialog.value.close()
-  }
+  addPaymentDialog.value?.close()
 }
 
 function handleReceiptDetailDialogCancel(event) {
@@ -1011,9 +546,6 @@ function handleAddPaymentDialogCancel(event) {
 
 function handleAddPaymentDialogClose() {
   paymentErrorMessage.value = ''
-  paymentForm.discountInput = '0.00'
-  paymentForm.paidInput = '0.00'
-  paymentForm.paymentMethod = 'cash'
   isSavingPayment.value = false
 }
 
@@ -1106,9 +638,7 @@ async function loadReceiptSale(receiptId) {
       throw new Error(t('minishop.dialogs.saleResponseMissing'))
     }
 
-    if (!receiptDetailDialog.value?.open) {
-      receiptDetailDialog.value?.showModal()
-    }
+    receiptDetailDialog.value?.open()
   } catch (error) {
     const didHandle = await handleReceiptActionError(error, receiptId)
 
@@ -1125,23 +655,8 @@ async function loadReceiptSale(receiptId) {
   }
 }
 
-function normalizePaymentDiscountInput() {
-  paymentForm.discountInput = formatMoney(paymentSummaryDiscountAmount.value)
-}
-
-function normalizePaymentPaidInput() {
-  const normalizedAmount = paymentSummaryPaidAmount.value
-
-  if (paymentForm.paymentMethod === 'card' && normalizedAmount > paymentSummaryRemainingBeforePayment.value) {
-    paymentForm.paidInput = formatMoney(paymentSummaryRemainingBeforePayment.value)
-    return
-  }
-
-  paymentForm.paidInput = formatMoney(normalizedAmount)
-}
-
-async function handleAddPayment() {
-  if (!selectedReceiptSale.value || isSavingPayment.value || paymentSummaryPaidAmount.value <= 0) {
+async function handleAddPayment(paymentPayload) {
+  if (!selectedReceiptSale.value || isSavingPayment.value || !paymentPayload || paymentPayload.amount <= 0) {
     return
   }
 
@@ -1151,9 +666,9 @@ async function handleAddPayment() {
 
   try {
     const { data } = await createMinishopSalePayment(props.book.id, receiptId, {
-      discount_amount: paymentSummaryDiscountAmount.value,
-      payment_method: paymentForm.paymentMethod,
-      amount: paymentSummaryPaidAmount.value,
+      discount_amount: paymentPayload.discount_amount,
+      payment_method: paymentPayload.payment_method,
+      amount: paymentPayload.amount,
       paid_at: makeLocalDateTimeString(),
     })
 
@@ -1362,12 +877,6 @@ function normalizeOptionalInput(value) {
   const normalizedValue = String(value ?? '').trim()
 
   return normalizedValue === '' ? null : normalizedValue
-}
-
-function parseNonNegativeAmount(value, fallback) {
-  const parsedValue = Number.parseFloat(String(value ?? '').trim())
-
-  return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : fallback
 }
 
 function sortCustomers(items) {

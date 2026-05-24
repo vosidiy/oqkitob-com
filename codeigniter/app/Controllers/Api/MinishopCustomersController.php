@@ -12,6 +12,7 @@ use RuntimeException;
  * Authenticated minishop customer endpoints.
  *
  * Routes:
+ * GET  /api/books/{bookId}/minishop/customers/list
  * GET  /api/books/{bookId}/minishop/customers
  * GET  /api/books/{bookId}/minishop/customers/{customerId}
  * POST /api/books/{bookId}/minishop/customers
@@ -24,6 +25,20 @@ class MinishopCustomersController extends AuthenticatedApiController
         private readonly MinishopCustomerModel $customers = new MinishopCustomerModel(),
         private readonly MinishopSaleModel $sales = new MinishopSaleModel()
     ) {
+    }
+
+    public function listOptions(string $bookId)
+    {
+        $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
+        return $this->respond([
+            'customers' => $this->customers->findOptionsByBook($bookId),
+        ]);
     }
 
     public function index(string $bookId)

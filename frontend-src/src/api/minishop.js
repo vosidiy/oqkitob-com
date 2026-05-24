@@ -20,7 +20,11 @@ export function fetchMinishopCategories(bookId) {
   return apiClient.get(`/books/${bookId}/minishop/categories`)
 }
 
-export function fetchMinishopCustomers(bookId, params = {}) {
+export function fetchMinishopCustomersList(bookId) {
+  return apiClient.get(`/books/${bookId}/minishop/customers/list`)
+}
+
+export function fetchMinishopCustomersListData(bookId, params = {}) {
   return apiClient.get(`/books/${bookId}/minishop/customers`, { params })
 }
 

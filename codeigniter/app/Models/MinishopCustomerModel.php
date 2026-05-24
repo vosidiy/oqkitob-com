@@ -49,6 +49,21 @@ class MinishopCustomerModel extends Model
     }
 
     /**
+     * Lightweight customer options for searchable sale pickers.
+     */
+    public function findOptionsByBook(string $bookId): array
+    {
+        return $this->select([
+            'id',
+            'name',
+            'phone',
+        ])->where('book_id', $bookId)
+            ->where('deleted_at', null)
+            ->orderBy('name', 'ASC')
+            ->findAll();
+    }
+
+    /**
      * Full customer summary list for customer tabs and sale dropdown metadata.
      */
     public function findCustomerListByBook(string $bookId, string $search = ''): array
@@ -68,7 +83,6 @@ class MinishopCustomerModel extends Model
             'COALESCE(SUM(minishop_sales.total_amount), 0) AS total_sales_amount',
             'COALESCE(SUM(minishop_sales.paid_amount), 0) AS total_paid_amount',
             'COALESCE(SUM(minishop_sales.due_amount), 0) AS outstanding_balance',
-            'MAX(minishop_sales.sold_at) AS last_sale_at',
         ])->join(
             'minishop_sales',
             'minishop_sales.customer_id = minishop_customers.id'
@@ -113,7 +127,6 @@ class MinishopCustomerModel extends Model
             'COALESCE(SUM(minishop_sales.total_amount), 0) AS total_sales_amount',
             'COALESCE(SUM(minishop_sales.paid_amount), 0) AS total_paid_amount',
             'COALESCE(SUM(minishop_sales.due_amount), 0) AS outstanding_balance',
-            'MAX(minishop_sales.sold_at) AS last_sale_at',
         ])->join(
             'minishop_sales',
             'minishop_sales.customer_id = minishop_customers.id'

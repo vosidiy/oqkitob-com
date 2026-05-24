@@ -299,151 +299,23 @@
     </aside>
   </section>
 
-  <dialog
+  <AddPaymentDialog
     ref="addPaymentDialog"
-    class="dialog-sm"
+    dialog-class="dialog-sm"
+    discount-input-id="sales-add-payment-discount"
+    :error-message="paymentErrorMessage"
+    :is-saving="isSavingPayment"
+    paid-input-id="sales-add-payment-paid"
+    payment-method-name="sales-add-payment-method"
+    :sale="selectedSale"
     @cancel="handleAddPaymentDialogCancel"
     @close="handleAddPaymentDialogClose"
-  >
-    <header class="dialog-header">
-      <h5>{{ $t('minishop.sales.addPayment') }}</h5>
-      <button
-        class="btn btn-icon"
-        :disabled="isSavingPayment"
-        @click="closeAddPaymentDialog"
-      >
-        <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
-      </button>
-    </header>
-
-    <div class="dialog-body">
-      <form @submit.prevent="handleAddPayment">
-        <div v-if="paymentErrorMessage" class="alert alert-danger mb-3" role="alert">
-          {{ paymentErrorMessage }}
-        </div>
-
-        <div class="d-flex justify-content-between mb-3">
-          <span>{{ $t('common.fields.subtotal') }}</span>
-          <div class="text-right font-semibold">
-            {{ formatMoney(paymentSummarySubtotal) }}
-          </div>
-        </div>
-
-        <div class="row justify-content-between mb-3">
-          <label class="col-6 form-label" for="sales-add-payment-discount">{{ $t('common.fields.discount') }}</label>
-          <div class="col-6 text-right font-semibold">
-            <input
-              id="sales-add-payment-discount"
-              v-model.trim="paymentForm.discountInput"
-              type="number"
-              class="form-control min-h-5 h-8 font-semibold"
-              min="0"
-              step="0.01"
-              :disabled="isSavingPayment"
-              @blur="normalizePaymentDiscountInput"
-            >
-          </div>
-        </div>
-
-        <div v-if="paymentSummaryDiscountAmount > 0" class="row justify-content-between mb-3">
-          <span class="col-6">{{ $t('common.fields.total') }}</span>
-          <div class="col-6 text-right font-semibold">
-            {{ formatMoney(paymentSummaryTotal) }}
-          </div>
-        </div>
-
-        <hr>
-
-        <div class="mb-3">
-          <label class="form-label d-block">{{ $t('common.fields.method') }}</label>
-          <div class="d-flex gap-4">
-            <label class="form-check d-flex align-items-center gap-2">
-              <input
-                v-model="paymentForm.paymentMethod"
-                class="form-check-input"
-                type="radio"
-                name="sales-add-payment-method"
-                value="cash"
-                :disabled="isSavingPayment"
-              >
-              <span>{{ $t('minishop.paymentMethods.cash') }}</span>
-            </label>
-            <label class="form-check d-flex align-items-center gap-2">
-              <input
-                v-model="paymentForm.paymentMethod"
-                class="form-check-input"
-                type="radio"
-                name="sales-add-payment-method"
-                value="card"
-                :disabled="isSavingPayment"
-              >
-              <span>{{ $t('minishop.paymentMethods.card') }}</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="row justify-content-between mb-3">
-          <label class="col-6 form-label" for="sales-add-payment-paid">{{ $t('common.fields.paid') }}</label>
-          <div class="col-6 text-right font-semibold">
-            <input
-              id="sales-add-payment-paid"
-              v-model.trim="paymentForm.paidInput"
-              type="number"
-              class="form-control min-h-5 h-8 font-semibold"
-              min="0"
-              step="0.01"
-              :disabled="isSavingPayment"
-              @blur="normalizePaymentPaidInput"
-            >
-          </div>
-        </div>
-
-        <div class="mb-5">
-          <div
-            v-if="paymentSummaryChangeAmount > 0"
-            class="d-flex justify-content-between gap-3 text-green"
-          >
-            <span>{{ $t('minishop.sales.returnChange') }}</span>
-            <strong>{{ formatMoney(paymentSummaryChangeAmount) }}</strong>
-          </div>
-          <div
-            v-else-if="paymentSummaryRemainingAmount > 0"
-            class="d-flex justify-content-between gap-3 text-orange"
-          >
-            <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-            <strong>{{ formatMoney(paymentSummaryRemainingAmount) }}</strong>
-          </div>
-          <div v-else class="d-flex justify-content-between gap-3 text-green">
-            <span>{{ $t('common.fields.status') }}</span>
-            <strong>{{ $t('common.states.paidInFull') }}</strong>
-          </div>
-        </div>
-
-        <div class="border-top d-flex pt-4 gap-2">
-          <button
-            type="button"
-            class="btn btn-default flex-1"
-            :disabled="isSavingPayment"
-            @click="closeAddPaymentDialog"
-          >
-            {{ $t('common.actions.cancel') }}
-          </button>
-          <button
-            type="submit"
-            class="btn btn-primary flex-1"
-            :disabled="isSavingPayment || !selectedSale || paymentSummaryPaidAmount <= 0"
-          >
-            <span v-if="isSavingPayment">{{ $t('common.states.saving') }}</span>
-            <span v-else>{{ $t('minishop.sales.addPayment') }}</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </dialog>
+    @submit="handleAddPayment"
+  />
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
@@ -454,6 +326,7 @@ import {
   fetchMinishopSale,
   fetchMinishopSales,
 } from '@/api/minishop'
+import AddPaymentDialog from '@/views/book-types/minishop/dialogs/AddPaymentDialog.vue'
 
 const props = defineProps({
   book: {
@@ -488,55 +361,6 @@ const salesSearchQuery = ref('')
 
 let salesSearchDebounceTimer = null
 let latestSalesRequestId = 0
-
-const paymentForm = reactive({
-  discountInput: '0.00',
-  paidInput: '0.00',
-  paymentMethod: 'cash',
-})
-
-const paymentSummarySubtotal = computed(() => {
-  return parseNonNegativeAmount(selectedSale.value?.subtotal_amount ?? 0, 0)
-})
-
-const paymentSummaryDiscountAmount = computed(() => {
-  return Math.min(parseNonNegativeAmount(paymentForm.discountInput, 0), paymentSummarySubtotal.value)
-})
-
-const paymentSummaryTotal = computed(() => {
-  return Math.max(paymentSummarySubtotal.value - paymentSummaryDiscountAmount.value, 0)
-})
-
-const paymentSummaryRecordedPaidAmount = computed(() => {
-  return parseNonNegativeAmount(selectedSale.value?.paid_amount ?? 0, 0)
-})
-
-const paymentSummaryRemainingBeforePayment = computed(() => {
-  return Math.max(paymentSummaryTotal.value - paymentSummaryRecordedPaidAmount.value, 0)
-})
-
-const paymentSummaryPaidAmount = computed(() => {
-  return parseNonNegativeAmount(paymentForm.paidInput, 0)
-})
-
-const paymentSummaryAppliedAmount = computed(() => {
-  return paymentForm.paymentMethod === 'cash'
-    ? Math.min(paymentSummaryPaidAmount.value, paymentSummaryRemainingBeforePayment.value)
-    : paymentSummaryPaidAmount.value
-})
-
-const paymentSummaryChangeAmount = computed(() => {
-  return paymentForm.paymentMethod === 'cash' && paymentSummaryPaidAmount.value > paymentSummaryRemainingBeforePayment.value
-    ? paymentSummaryPaidAmount.value - paymentSummaryRemainingBeforePayment.value
-    : 0
-})
-
-const paymentSummaryRemainingAmount = computed(() => {
-  return Math.max(
-    paymentSummaryTotal.value - paymentSummaryRecordedPaidAmount.value - paymentSummaryAppliedAmount.value,
-    0,
-  )
-})
 
 const salesFilterLabelKeys = {
   all_time: 'minishop.sales.filters.allTime',
@@ -584,15 +408,6 @@ watch(selectedFilterTime, async () => {
   cancelPendingSalesSearch()
   await loadSales()
 })
-
-watch(
-  [() => paymentForm.paymentMethod, paymentSummaryRemainingBeforePayment],
-  ([nextMethod, nextRemaining]) => {
-    if (nextMethod === 'card' && paymentSummaryPaidAmount.value > nextRemaining) {
-      paymentForm.paidInput = formatMoney(nextRemaining)
-    }
-  },
-)
 
 async function loadSales(search = salesSearchQuery.value) {
   const requestId = ++latestSalesRequestId
@@ -737,19 +552,11 @@ function openAddPaymentDialog() {
   }
 
   paymentErrorMessage.value = ''
-  paymentForm.discountInput = formatMoney(selectedSale.value.discount_amount)
-  paymentForm.paidInput = formatMoney(selectedSale.value.due_amount)
-  paymentForm.paymentMethod = 'cash'
-
-  if (!addPaymentDialog.value?.open) {
-    addPaymentDialog.value?.showModal()
-  }
+  addPaymentDialog.value?.open()
 }
 
 function closeAddPaymentDialog() {
-  if (addPaymentDialog.value?.open) {
-    addPaymentDialog.value.close()
-  }
+  addPaymentDialog.value?.close()
 }
 
 function handleAddPaymentDialogCancel(event) {
@@ -760,29 +567,11 @@ function handleAddPaymentDialogCancel(event) {
 
 function handleAddPaymentDialogClose() {
   paymentErrorMessage.value = ''
-  paymentForm.discountInput = '0.00'
-  paymentForm.paidInput = '0.00'
-  paymentForm.paymentMethod = 'cash'
   isSavingPayment.value = false
 }
 
-function normalizePaymentDiscountInput() {
-  paymentForm.discountInput = formatMoney(paymentSummaryDiscountAmount.value)
-}
-
-function normalizePaymentPaidInput() {
-  const normalizedAmount = paymentSummaryPaidAmount.value
-
-  if (paymentForm.paymentMethod === 'card' && normalizedAmount > paymentSummaryRemainingBeforePayment.value) {
-    paymentForm.paidInput = formatMoney(paymentSummaryRemainingBeforePayment.value)
-    return
-  }
-
-  paymentForm.paidInput = formatMoney(normalizedAmount)
-}
-
-async function handleAddPayment() {
-  if (!selectedSale.value || isSavingPayment.value || paymentSummaryPaidAmount.value <= 0) {
+async function handleAddPayment(paymentPayload) {
+  if (!selectedSale.value || isSavingPayment.value || !paymentPayload || paymentPayload.amount <= 0) {
     return
   }
 
@@ -792,9 +581,9 @@ async function handleAddPayment() {
 
   try {
     const { data } = await createMinishopSalePayment(props.book.id, saleId, {
-      discount_amount: paymentSummaryDiscountAmount.value,
-      payment_method: paymentForm.paymentMethod,
-      amount: paymentSummaryPaidAmount.value,
+      discount_amount: paymentPayload.discount_amount,
+      payment_method: paymentPayload.payment_method,
+      amount: paymentPayload.amount,
       paid_at: makeLocalDateTimeString(),
     })
 
@@ -942,12 +731,6 @@ function sumSaleAmounts(fieldName) {
   return sales.value.reduce((total, sale) => {
     return total + (Number(sale?.[fieldName]) || 0)
   }, 0)
-}
-
-function parseNonNegativeAmount(value, fallback) {
-  const parsedValue = Number.parseFloat(String(value ?? '').trim())
-
-  return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : fallback
 }
 
 function makeLocalDateTimeString(date = new Date()) {
