@@ -76,8 +76,8 @@
     </aside>
 
     <aside class="col-6">
-      <section class="flex-1 overflow-y-auto p-4 bg-neutral-200 h-full">
-        <div v-if="selectedCustomerErrorMessage" class="alert alert-danger mb-4" role="alert">
+      <section class="flex-1 overflow-y-auto p-4 bg-neutral-100 h-full">
+        <div v-if="selectedCustomerErrorMessage" class="alert alert-danger mb-2" role="alert">
           {{ selectedCustomerErrorMessage }}
         </div>
 
@@ -85,7 +85,7 @@
           <div class="p-10 text-secondary">{{ $t('minishop.customers.loadingCustomer') }}</div>
         </div>
 
-        <div v-else-if="selectedCustomer" class="card shadow">
+        <article v-else-if="selectedCustomer" class="card shadow">
           <div class="card-body">
             
             <div class="d-flex align-items-start gap-3 mb-4 mobile:flex-col">
@@ -200,16 +200,20 @@
             </article>
           </div>
           <!-- card-body .//end -->
-        </div>
+        </article>
         <!-- card .//end -->
-        <div v-else class="card">
-          <div class="card-body text-center py-6">
-            <h3 class="h6 mb-2">{{ $t('minishop.customers.selectCustomer') }}</h3>
-            <p class="text-secondary mb-0">
-              {{ $t('minishop.customers.selectCustomerHint') }}
-            </p>
+        
+        <article v-else>
+
+          <div class="p-10 text-center">
+            <p class="text-lg">  👈 {{ $t('minishop.customers.selectCustomer') }}</p>
+            <p class="text-secondary">  {{ $t('minishop.customers.selectCustomerHint') }} </p>
           </div>
-        </div>
+
+          <hr>
+        </article>
+
+
       </section>
     </aside>
 

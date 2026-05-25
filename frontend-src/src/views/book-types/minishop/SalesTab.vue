@@ -30,17 +30,24 @@
         </div>
       </header>
 
-      <div class="flex-1 overflow-y-auto">
+      <section class="flex-1 overflow-y-auto">
+
+        <div class="p-4">
+          <RouterLink :to="{ name: 'book-detail', params: { bookId: props.book.id } }" class="btn w-full btn-default">
+              {{ $t('minishop.sales.createSale') }}
+          </RouterLink>
+        </div>
+
         <div v-if="salesListErrorMessage" class="alert alert-danger m-4" role="alert">
           {{ salesListErrorMessage }}
         </div>
-
-        <div v-else-if="isLoadingSalesList" class="px-4 py-4 text-secondary">
+        
+        <div v-if="isLoadingSalesList" class="p-4 text-secondary">
           {{ $t('minishop.sales.loadingSales') }}
         </div>
 
-        <div v-else-if="sales.length === 0" class="px-4 py-4 text-secondary">
-          <p class="mb-0">
+        <div v-else-if="sales.length === 0" class="p-4 text-secondary">
+          <p class="mb-0 text-lg text-center">
             {{ hasActiveSalesSearch ? $t('minishop.sales.noSearchResults') : $t('minishop.sales.noSales') }}
           </p>
           <div v-if="hasActiveSalesSearch" class="d-flex gap-2 mt-3 mobile:flex-col">
@@ -63,11 +70,6 @@
         </div>
 
         <ul v-else class="mt-1">
-          <li class="p-3">
-            <RouterLink :to="{ name: 'book-detail', params: { bookId: props.book.id } }" class="btn text-left w-full btn-default">
-              {{ $t('minishop.sales.createSale') }}
-            </RouterLink>
-          </li>
           <li v-for="sale in sales" :key="sale.id" class="border-bottom hover:bg-neutral-100">
             <a href="#" role="button" class="px-4 p-3 text-base d-block"
               :class="{ 'bg-primary-200': selectedSaleId === sale.id }"
@@ -99,20 +101,20 @@
             </a>
           </li>
         </ul>
-      </div>
+      </section>
     </aside>
 
     <aside class="col-6">
       <section class="flex-1 overflow-y-auto p-4 bg-lower h-full">
-        <div v-if="selectedSaleErrorMessage" class="alert alert-danger mb-4" role="alert">
+        <div v-if="selectedSaleErrorMessage" class="alert alert-danger" role="alert">
           {{ selectedSaleErrorMessage }}
         </div>
 
-        <div v-if="isLoadingSelectedSale" class="card">
-          <div class="p-10 text-secondary">{{ $t('minishop.sales.loadingReceipt') }}</div>
-        </div>
+        <article v-if="isLoadingSelectedSale" class="card">
+          <div class="p-10 text-center text-secondary text-lg">{{ $t('minishop.sales.loadingReceipt') }}</div>
+        </article>
 
-        <div v-else-if="selectedSale" class="card">
+        <article v-else-if="selectedSale" class="card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start gap-3 mb-4 mobile:flex-col">
               <div>
@@ -262,37 +264,46 @@
               </div>
             </div>
           </div>
-        </div>
+        </article>
 
-        <div v-else class="card">
-          <div class="card-body text-center py-6">
-            <h3 class="h6 mb-2">{{ $t('minishop.sales.selectSale') }}</h3>
-            <p class="text-secondary mb-0">
-              {{ $t('minishop.sales.selectSaleHint') }}
-            </p>
-            <div class="mt-5 pt-4 border-top text-left">
-              <h4 class="h6 mb-4">{{ salesSummaryTitle }}</h4>
-              <div class="d-flex flex-col gap-3">
-                <div class="d-flex justify-content-between gap-3">
-                  <span>{{ $t('minishop.sales.summaryCount') }}</span>
-                  <strong>{{ salesSummaryCount }}</strong>
-                </div>
-                <div class="d-flex justify-content-between gap-3">
-                  <span>{{ $t('minishop.sales.summaryTotalAmount') }}</span>
-                  <strong>{{ formatMoney(salesSummaryTotalAmount) }}</strong>
-                </div>
-                <div class="d-flex justify-content-between gap-3">
-                  <span>{{ $t('minishop.sales.summaryPaidAmount') }}</span>
-                  <strong>{{ formatMoney(salesSummaryPaidAmount) }}</strong>
-                </div>
-                <div class="d-flex justify-content-between gap-3 text-orange">
-                  <span>{{ $t('minishop.sales.summaryDueAmount') }}</span>
-                  <strong>{{ formatMoney(salesSummaryDueAmount) }}</strong>
-                </div>
-              </div>
-            </div>
+        <article v-else>
+
+          <p class="text-lg p-10 text-secondary text-center">
+              👈  {{ $t('minishop.sales.selectSaleHint') }}
+          </p>
+
+          <hr>
+          
+
+          <div class="card card-body mb-4">
+            <h6 class="text-lg mb-4">{{ salesSummaryTitle }}</h6>
+            <ul class="d-grid gap-2 grid-template-cols-4 lh-sm">
+              <li class="card p-2 bg-neutral-100">
+                <p class="mb-2">{{ $t('minishop.sales.summaryCount') }}: </p>
+                <strong>{{ salesSummaryCount }}</strong>
+              </li>
+              <li class="card p-2 bg-neutral-100">
+                <p class="mb-2">{{ $t('minishop.sales.summaryTotalAmount') }}: </p>
+                <strong>{{ formatMoney(salesSummaryTotalAmount) }}</strong>
+              </li>
+              <li class="card p-2 bg-neutral-100">
+                <p class="mb-2">{{ $t('minishop.sales.summaryPaidAmount') }}: </p>
+                <strong class="text-green">{{ formatMoney(salesSummaryPaidAmount) }}</strong>
+              </li>
+              <li class="card p-2 bg-neutral-100">
+                <p class="mb-2">{{ $t('minishop.sales.summaryDueAmount') }}: </p>
+                <strong class="text-orange">{{ formatMoney(salesSummaryDueAmount) }} </strong>
+              </li>
+            </ul>
           </div>
-        </div>
+
+          <div class="card card-body">
+            <h6 class="text-lg mb-4">By each products (Selected period: Today) </h6>
+            A table that shows sales by each product number of sales and amount
+          </div>
+
+          
+        </article>
 
 
       </section>
