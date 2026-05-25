@@ -56,7 +56,7 @@
           </p>
         </div>
 
-        <ul v-else class="mt-1">
+        <ul v-else class="mt-1 mb-10">
           <li v-for="sale in sales" :key="sale.id" class="border-bottom hover:bg-neutral-100">
             <a href="#" role="button" class="px-4 p-3 text-base d-block"
               :class="{ 'bg-primary-200': selectedSaleId === sale.id }"
@@ -89,8 +89,7 @@
           </li>
         </ul>
 
-
-        <div v-if="hasActiveSalesSearch && !isLoadingSalesList" class="d-flex flex-col text-center p-4 gap-1">
+        <div v-if="hasActiveSalesSearch && !isLoadingSalesList" class="d-flex flex-col p-4 gap-1">
           <a v-if="shouldShowAllPeriodsAction"
             role="button"
             class="link"
@@ -106,6 +105,38 @@
           </a>
         </div>
 
+        <nav
+          v-if="sales.length > 0 && salesPagination.total_pages > 1"
+          class="d-flex flex-wrap gap-1 px-4 mb-10"
+        >
+          <button type="button"
+            class="btn btn-neutral"
+            :disabled="isLoadingSalesList || salesCurrentPage <= 1"
+            @click="changeSalesPage(salesCurrentPage - 1)"
+          >
+            {{ $t('minishop.sales.previousPage') }}
+          </button>
+          <button  type="button"
+            v-for="page in salesPageNumbers"
+            :key="page"
+            class="btn min-w-10"
+            :class="page === salesCurrentPage ? 'btn-primary' : 'btn-neutral'"
+            :disabled="isLoadingSalesList || page === salesCurrentPage"
+            @click="changeSalesPage(page)"
+          >
+            {{ page }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-neutral"
+            :disabled="isLoadingSalesList || salesCurrentPage >= salesPagination.total_pages"
+            @click="changeSalesPage(salesCurrentPage + 1)"
+          >
+            {{ $t('minishop.sales.nextPage') }}
+          </button>
+        </nav>
+
+        
       </section>
     </aside>
 
@@ -266,32 +297,35 @@
           </div>
 
           <div class="card card-body mb-4">
+            
             <h6 class="text-lg mb-4">
               {{ $t('minishop.sales.summaryTitle') }}
               ({{ $t(salesFilterTitleKeys[selectedFilterTime] || salesFilterTitleKeys.today) }})
             </h6>
+            
             <div v-if="isLoadingSalesAnalytics" class="text-secondary">
               {{ $t('minishop.sales.loadingAnalytics') }}
             </div>
-            <div v-else-if="salesAnalyticsErrorMessage" class="text-secondary">
+            <div v-else-if="salesAnalyticsErrorMessage" class="alert alert-danger">
               {{ $t('minishop.sales.unableLoadAnalytics') }}
             </div>
+
             <ul v-else class="d-grid gap-2 grid-template-cols-2 mobile:grid-template-cols-1 lh-sm">
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryCount') }}: </p>
-                <strong>{{ salesAnalyticsSummary.sale_count }}</strong>
+                <strong class="text-xl">{{ salesAnalyticsSummary.sale_count }}</strong>
               </li>
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryTotalAmount') }}: </p>
-                <strong>{{ formatMoney(salesAnalyticsSummary.total_amount) }}</strong>
+                <strong class="text-xl">{{ formatMoney(salesAnalyticsSummary.total_amount) }}</strong>
               </li>
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryPaidAmount') }}: </p>
-                <strong class="text-green">{{ formatMoney(salesAnalyticsSummary.paid_amount) }}</strong>
+                <strong class="text-xl text-green">{{ formatMoney(salesAnalyticsSummary.paid_amount) }}</strong>
               </li>
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryDueAmount') }}: </p>
-                <strong class="text-orange">{{ formatMoney(salesAnalyticsSummary.due_amount) }} </strong>
+                <strong class="text-xl text-orange">{{ formatMoney(salesAnalyticsSummary.due_amount) }} </strong>
               </li>
             </ul>
           </div>
@@ -311,7 +345,7 @@
               {{ $t('minishop.sales.noSoldProducts') }}
             </p>
             <div v-else class="table-responsive">
-              <table class="table table-sm mb-0">
+              <table class="table table-bordered mb-0">
                 <thead>
                   <tr>
                     <th>{{ $t('common.fields.item') }}</th>
@@ -343,7 +377,15 @@
                       </small>
                     </th>
                     <th class="text-right">{{ formatQuantity(salesAnalyticsProductsTotalUnits) }}</th>
-                    <th class="text-right">{{ formatMoney(salesAnalyticsProductsTotalAmount) }}</th>
+                    <th class="text-right">
+                      <strong class="text-lg">
+                        {{ formatMoney(salesAnalyticsProductsTotalAmount) }} 
+                      </strong>
+                      <p>
+                        <span class="text-secondary">{{ $t('minishop.sales.summaryDiscountAmount') }}: </span>
+                        <strong>- {{ formatMoney(salesAnalyticsSummary.total_discount_amount) }}</strong>
+                      </p>
+                    </th>
                   </tr>
                 </tfoot>
               </table>
@@ -418,6 +460,9 @@ const selectedSaleErrorMessage = ref('')
 const paymentErrorMessage = ref('')
 const selectedFilterTime = ref('today')
 const salesSearchQuery = ref('')
+const salesCurrentPage = ref(1)
+const salesPerPage = 20
+const salesPagination = ref(makeEmptySalesPagination())
 
 let salesSearchDebounceTimer = null
 let latestSalesRequestId = 0
@@ -445,6 +490,9 @@ const salesAnalyticsProductsTotalAmount = computed(() => {
     return total + (Number(product?.total_amount) || 0)
   }, 0)
 })
+const salesPageNumbers = computed(() => {
+  return Array.from({ length: salesPagination.value.total_pages }, (_, index) => index + 1)
+})
 
 const hasActiveSalesSearch = computed(() => salesSearchQuery.value !== '')
 const shouldShowAllPeriodsAction = computed(() => {
@@ -454,23 +502,29 @@ const shouldShowAllPeriodsAction = computed(() => {
 watch(() => props.book.id, async () => {
   cancelPendingSalesSearch()
   salesSearchQuery.value = ''
+  salesCurrentPage.value = 1
   const localNow = makeLocalDateTimeString()
   await Promise.all([
-    loadSales('', localNow),
+    loadSales('', localNow, 1),
     loadSalesAnalytics(localNow),
   ])
 }, { immediate: true })
 
 watch(selectedFilterTime, async () => {
   cancelPendingSalesSearch()
+  salesCurrentPage.value = 1
   const localNow = makeLocalDateTimeString()
   await Promise.all([
-    loadSales(salesSearchQuery.value, localNow),
+    loadSales(salesSearchQuery.value, localNow, 1),
     loadSalesAnalytics(localNow),
   ])
 })
 
-async function loadSales(search = salesSearchQuery.value, localNow = makeLocalDateTimeString()) {
+async function loadSales(
+  search = salesSearchQuery.value,
+  localNow = makeLocalDateTimeString(),
+  page = salesCurrentPage.value
+) {
   const requestId = ++latestSalesRequestId
 
   isLoadingSalesList.value = true
@@ -483,6 +537,8 @@ async function loadSales(search = salesSearchQuery.value, localNow = makeLocalDa
       filter_time: selectedFilterTime.value,
       local_now: localNow,
       search,
+      page,
+      per_page: salesPerPage,
     })
 
     if (!isLatestSalesRequest(requestId)) {
@@ -490,6 +546,8 @@ async function loadSales(search = salesSearchQuery.value, localNow = makeLocalDa
     }
 
     sales.value = Array.isArray(data.sales) ? data.sales : []
+    salesPagination.value = normalizeSalesPagination(data.pagination, page, salesPerPage)
+    salesCurrentPage.value = salesPagination.value.page
   } catch (error) {
     if (!isLatestSalesRequest(requestId)) {
       return
@@ -501,6 +559,8 @@ async function loadSales(search = salesSearchQuery.value, localNow = makeLocalDa
     }
 
     sales.value = []
+    salesPagination.value = makeEmptySalesPagination()
+    salesCurrentPage.value = 1
     salesListErrorMessage.value = getApiErrorMessage(error, t('minishop.sales.unableLoadSales'))
   } finally {
     if (isLatestSalesRequest(requestId)) {
@@ -552,14 +612,16 @@ function handleSalesSearchInput() {
 
   salesSearchDebounceTimer = window.setTimeout(() => {
     salesSearchDebounceTimer = null
-    void loadSales(salesSearchQuery.value)
+    salesCurrentPage.value = 1
+    void loadSales(salesSearchQuery.value, makeLocalDateTimeString(), 1)
   }, 500)
 }
 
 function clearSalesSearch() {
   cancelPendingSalesSearch()
   salesSearchQuery.value = ''
-  void loadSales('')
+  salesCurrentPage.value = 1
+  void loadSales('', makeLocalDateTimeString(), 1)
 }
 
 function showAllPeriods() {
@@ -568,7 +630,22 @@ function showAllPeriods() {
   }
 
   cancelPendingSalesSearch()
+  salesCurrentPage.value = 1
   selectedFilterTime.value = 'all_time'
+}
+
+function changeSalesPage(page) {
+  if (
+    isLoadingSalesList.value
+    || page < 1
+    || page > salesPagination.value.total_pages
+    || page === salesCurrentPage.value
+  ) {
+    return
+  }
+
+  salesCurrentPage.value = page
+  void loadSales(salesSearchQuery.value, makeLocalDateTimeString(), page)
 }
 
 async function selectSale(sale) {
@@ -625,6 +702,13 @@ async function handleDeleteSelectedSale() {
     const { data } = await deleteMinishopSale(props.book.id, saleId)
     removeSaleFromList(data.saleId ?? saleId)
     clearSelectedSale()
+    syncSalesPaginationAfterLocalDelete()
+
+    if (sales.value.length === 0 && salesCurrentPage.value > 1) {
+      salesCurrentPage.value -= 1
+      await loadSales(salesSearchQuery.value, makeLocalDateTimeString(), salesCurrentPage.value)
+    }
+
     await loadSalesAnalytics()
   } catch (error) {
     if (isUnauthorizedError(error)) {
@@ -788,6 +872,20 @@ function removeSaleFromList(saleId) {
   sales.value = sales.value.filter((sale) => sale.id !== saleId)
 }
 
+function syncSalesPaginationAfterLocalDelete() {
+  const totalItems = Math.max(0, salesPagination.value.total_items - 1)
+  const totalPages = Math.max(1, Math.ceil(totalItems / salesPerPage))
+  const currentPage = Math.min(salesCurrentPage.value, totalPages)
+
+  salesPagination.value = {
+    page: currentPage,
+    per_page: salesPerPage,
+    total_items: totalItems,
+    total_pages: totalPages,
+  }
+  salesCurrentPage.value = currentPage
+}
+
 function cancelPendingSalesSearch() {
   if (salesSearchDebounceTimer !== null) {
     window.clearTimeout(salesSearchDebounceTimer)
@@ -847,18 +945,43 @@ function makeLocalDateTimeString(date = new Date()) {
 function makeEmptySalesAnalyticsSummary() {
   return {
     sale_count: 0,
+    total_discount_amount: '0.00',
     total_amount: '0.00',
     paid_amount: '0.00',
     due_amount: '0.00',
   }
 }
 
+function makeEmptySalesPagination() {
+  return {
+    page: 1,
+    per_page: salesPerPage,
+    total_items: 0,
+    total_pages: 1,
+  }
+}
+
 function normalizeSalesAnalyticsSummary(summary) {
   return {
     sale_count: Number(summary?.sale_count) || 0,
+    total_discount_amount: String(summary?.total_discount_amount ?? '0.00'),
     total_amount: String(summary?.total_amount ?? '0.00'),
     paid_amount: String(summary?.paid_amount ?? '0.00'),
     due_amount: String(summary?.due_amount ?? '0.00'),
+  }
+}
+
+function normalizeSalesPagination(pagination, fallbackPage = 1, fallbackPerPage = salesPerPage) {
+  const page = Math.max(1, Number(pagination?.page) || fallbackPage)
+  const perPage = Math.max(1, Number(pagination?.per_page) || fallbackPerPage)
+  const totalItems = Math.max(0, Number(pagination?.total_items) || 0)
+  const totalPages = Math.max(1, Number(pagination?.total_pages) || 1)
+
+  return {
+    page,
+    per_page: perPage,
+    total_items: totalItems,
+    total_pages: totalPages,
   }
 }
 </script>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Model;
 
 class MinishopSaleModel extends Model
@@ -38,40 +39,34 @@ class MinishopSaleModel extends Model
         string $bookId,
         ?string $soldFrom = null,
         ?string $soldTo = null,
-        string $search = ''
+        string $search = '',
+        int $page = 1,
+        int $perPage = 20
     ): array
     {
-        $query = $this->makeSaleSummaryQuery()
-            ->where('minishop_sales.book_id', $bookId)
-            ->where('minishop_sales.deleted_at', null);
+        $currentPage = max(1, $page);
+        $itemsPerPage = max(1, $perPage);
+        $totalItems = $this->countByBook($bookId, $soldFrom, $soldTo, $search);
+        $totalPages = max(1, (int) ceil($totalItems / $itemsPerPage));
+        $currentPage = min($currentPage, $totalPages);
+        $offset = ($currentPage - 1) * $itemsPerPage;
 
-        if ($soldFrom !== null) {
-            $query->where('minishop_sales.sold_at >=', $soldFrom);
-        }
-
-        if ($soldTo !== null) {
-            $query->where('minishop_sales.sold_at <=', $soldTo);
-        }
-
-        $normalizedSearch = trim($search);
-
-        if ($normalizedSearch !== '') {
-            $query->join(
-                'minishop_sale_items',
-                'minishop_sale_items.sale_id = minishop_sales.id',
-                'left'
-            )->groupStart()
-                ->like('minishop_sales.id', $normalizedSearch)
-                ->orLike('minishop_customers.name', $normalizedSearch)
-                ->orLike('minishop_sale_items.product_name', $normalizedSearch)
-                ->orLike('minishop_sale_items.product_sku', $normalizedSearch)
-                ->groupEnd()
-                ->distinct();
-        }
-
-        return $query->orderBy('minishop_sales.sold_at', 'DESC')
+        $sales = $this->makeSaleListQuery($bookId, $soldFrom, $soldTo, $search)
+            ->orderBy('minishop_sales.sold_at', 'DESC')
             ->orderBy('minishop_sales.created_at', 'DESC')
-            ->findAll();
+            ->limit($itemsPerPage, $offset)
+            ->get()
+            ->getResultArray();
+
+        return [
+            'sales' => $sales,
+            'pagination' => [
+                'page' => $currentPage,
+                'per_page' => $itemsPerPage,
+                'total_items' => $totalItems,
+                'total_pages' => $totalPages,
+            ],
+        ];
     }
 
     /**
@@ -147,6 +142,7 @@ class MinishopSaleModel extends Model
         $query = $this->builder()
             ->select([
                 'COUNT(minishop_sales.id) AS sale_count',
+                'COALESCE(SUM(minishop_sales.discount_amount), 0) AS total_discount_amount',
                 'COALESCE(SUM(minishop_sales.total_amount), 0) AS total_amount',
                 'COALESCE(SUM(minishop_sales.paid_amount), 0) AS paid_amount',
                 'COALESCE(SUM(minishop_sales.due_amount), 0) AS due_amount',
@@ -166,6 +162,7 @@ class MinishopSaleModel extends Model
 
         return [
             'sale_count' => (int) ($row['sale_count'] ?? 0),
+            'total_discount_amount' => $this->formatAggregateMoney($row['total_discount_amount'] ?? 0),
             'total_amount' => $this->formatAggregateMoney($row['total_amount'] ?? 0),
             'paid_amount' => $this->formatAggregateMoney($row['paid_amount'] ?? 0),
             'due_amount' => $this->formatAggregateMoney($row['due_amount'] ?? 0),
@@ -174,7 +171,104 @@ class MinishopSaleModel extends Model
 
     private function makeSaleSummaryQuery(?array $columns = null): self
     {
-        return $this->select($columns ?? [
+        return $this->select($columns ?? $this->saleSummaryColumns())->join(
+            'minishop_customers',
+            'minishop_customers.id = minishop_sales.customer_id'
+            . ' AND minishop_customers.deleted_at IS NULL',
+            'left'
+        );
+    }
+
+    private function makeSaleListQuery(
+        string $bookId,
+        ?string $soldFrom = null,
+        ?string $soldTo = null,
+        string $search = ''
+    ): BaseBuilder {
+        $query = $this->builder()
+            ->select($this->saleSummaryColumns())
+            ->join(
+                'minishop_customers',
+                'minishop_customers.id = minishop_sales.customer_id'
+                . ' AND minishop_customers.deleted_at IS NULL',
+                'left'
+            )
+            ->where('minishop_sales.book_id', $bookId)
+            ->where('minishop_sales.deleted_at', null);
+
+        if ($soldFrom !== null) {
+            $query->where('minishop_sales.sold_at >=', $soldFrom);
+        }
+
+        if ($soldTo !== null) {
+            $query->where('minishop_sales.sold_at <=', $soldTo);
+        }
+
+        $normalizedSearch = trim($search);
+
+        if ($normalizedSearch !== '') {
+            $query->join(
+                'minishop_sale_items',
+                'minishop_sale_items.sale_id = minishop_sales.id',
+                'left'
+            )->groupStart()
+                ->like('minishop_sales.id', $normalizedSearch)
+                ->orLike('minishop_customers.name', $normalizedSearch)
+                ->orLike('minishop_sale_items.product_name', $normalizedSearch)
+                ->orLike('minishop_sale_items.product_sku', $normalizedSearch)
+                ->groupEnd()
+                ->distinct();
+        }
+
+        return $query;
+    }
+
+    private function countByBook(
+        string $bookId,
+        ?string $soldFrom = null,
+        ?string $soldTo = null,
+        string $search = ''
+    ): int {
+        $query = $this->builder()
+            ->select('COUNT(DISTINCT minishop_sales.id) AS total_items', false)
+            ->join(
+                'minishop_customers',
+                'minishop_customers.id = minishop_sales.customer_id'
+                . ' AND minishop_customers.deleted_at IS NULL',
+                'left'
+            )
+            ->where('minishop_sales.book_id', $bookId)
+            ->where('minishop_sales.deleted_at', null);
+
+        if ($soldFrom !== null) {
+            $query->where('minishop_sales.sold_at >=', $soldFrom);
+        }
+
+        if ($soldTo !== null) {
+            $query->where('minishop_sales.sold_at <=', $soldTo);
+        }
+
+        $normalizedSearch = trim($search);
+
+        if ($normalizedSearch !== '') {
+            $query->join(
+                'minishop_sale_items',
+                'minishop_sale_items.sale_id = minishop_sales.id',
+                'left'
+            )->groupStart()
+                ->like('minishop_sales.id', $normalizedSearch)
+                ->orLike('minishop_customers.name', $normalizedSearch)
+                ->orLike('minishop_sale_items.product_name', $normalizedSearch)
+                ->orLike('minishop_sale_items.product_sku', $normalizedSearch)
+                ->groupEnd();
+        }
+
+        return (int) ($query->get()->getRowArray()['total_items'] ?? 0);
+    }
+
+    private function saleSummaryColumns(): array
+    {
+        return [
             'minishop_sales.id',
             'minishop_sales.book_id',
             'minishop_sales.created_by',
@@ -192,12 +286,7 @@ class MinishopSaleModel extends Model
             'minishop_sales.updated_at',
             'minishop_customers.name AS customer_name',
             'minishop_customers.phone AS customer_phone',
-        ])->join(
-            'minishop_customers',
-            'minishop_customers.id = minishop_sales.customer_id'
-            . ' AND minishop_customers.deleted_at IS NULL',
-            'left'
-        );
+        ];
     }
 
     private function formatAggregateMoney(mixed $value): string

@@ -29,6 +29,9 @@ use RuntimeException;
  */
 class MinishopSalesController extends AuthenticatedApiController
 {
+    private const DEFAULT_PAGE = 1;
+    private const DEFAULT_PER_PAGE = 20;
+
     private const ALLOWED_FILTERS = [
         'today',
         'yesterday',
@@ -59,17 +62,25 @@ class MinishopSalesController extends AuthenticatedApiController
         $userId = $this->currentUserIdAndCloseSession();
         $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
         $search = trim((string) $this->request->getGet('search'));
+        $page = max(self::DEFAULT_PAGE, (int) $this->request->getGet('page'));
+        $perPage = (int) $this->request->getGet('per_page');
 
         if ($permission === 'none') {
             return $this->failNotFound('Book not found.');
         }
 
+        if ($perPage <= 0) {
+            $perPage = self::DEFAULT_PER_PAGE;
+        }
+
         $filter = $this->normalizeFilterTime((string) $this->request->getGet('filter_time'));
         $localNow = $this->parseLocalDateTime((string) $this->request->getGet('local_now')) ?? new DateTimeImmutable();
         $range = $this->makeSalesDateRange($filter, $localNow);
+        $result = $this->sales->findByBook($bookId, $range['sold_from'], $range['sold_to'], $search, $page, $perPage);
 
         return $this->respond([
-            'sales' => $this->sales->findByBook($bookId, $range['sold_from'], $range['sold_to'], $search),
+            'sales' => $result['sales'],
+            'pagination' => $result['pagination'],
         ]);
     }
 
