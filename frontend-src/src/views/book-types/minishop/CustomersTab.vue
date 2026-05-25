@@ -24,9 +24,11 @@
           {{ customerErrorMessage }}
         </p>
 
-        <p v-else-if="isLoadingCustomers" class="px-4 py-4 text-secondary">
-          {{ $t('minishop.customers.loadingCustomers') }}
-        </p>
+        <div v-else-if="isLoadingCustomers" class="p-4">
+          <div class="skeleton">
+                  <b> {{ $t('minishop.customers.loadingCustomers') }} </b> <b>Wait...</b>  <b> ... </b> 
+          </div>
+        </div>
 
         <p v-else-if="customerList.length === 0" class="px-4 py-4 text-secondary">
           {{ $t('minishop.customers.noCustomers') }}

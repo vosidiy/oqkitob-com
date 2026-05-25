@@ -87,8 +87,8 @@
             <p>{{ $t('minishop.sales.noPaymentRecords') }}</p>
           </div>
 
-          <div v-else class="mb-4">
-            <div v-for="payment in payments" :key="payment.id" class="border mb-1 border-color-green-300 rounded p-2 bg-green-100">
+          <ul v-else class="mb-4">
+            <li v-for="payment in payments" :key="payment.id" class="border mb-1 border-color-green-300 rounded p-2 bg-green-100">
               <div class="d-flex justify-content-between gap-2">
                 <div>
                   <p><strong>{{ $t('common.fields.date') }}:</strong> {{ formatDateTime(payment.paid_at || payment.created_at) }}</p>
@@ -107,8 +107,8 @@
                   <p> {{ $t('common.fields.method') }}: {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
                 </div>
               </div>
-            </div>
-          </div>
+            </li>
+          </ul>
 
           <button
             v-if="canAddPaymentToReceipt"

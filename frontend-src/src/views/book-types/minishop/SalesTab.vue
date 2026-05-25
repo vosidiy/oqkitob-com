@@ -20,20 +20,22 @@
           </select>
         </div>
         <div class="flex-grow">
-          <input
-            v-model.trim="salesSearchQuery"
-            type="search"
-            :placeholder="$t('minishop.sales.searchSales')"
-            class="form-control"
-            @input="handleSalesSearchInput"
-          >
+          <div class="relative">
+            <input v-model.trim="salesSearchQuery"
+              type="search"
+              :placeholder="$t('minishop.sales.searchSales')"
+              class="form-control"
+              @input="handleSalesSearchInput"
+            >
+            <button v-if="hasActiveSalesSearch" @click="clearSalesSearch" class="btn btn-neutral top-0 right-0 absolute" title="Clear search"> ✕ </button>
+          </div>
         </div>
       </header>
 
       <section class="flex-1 overflow-y-auto">
 
         <div class="p-4">
-          <RouterLink :to="{ name: 'book-detail', params: { bookId: props.book.id } }" class="btn w-full btn-default">
+          <RouterLink :to="{ name: 'book-detail', params: { bookId: props.book.id } }" class="btn w-full btn-primary-subtle">
               {{ $t('minishop.sales.createSale') }}
           </RouterLink>
         </div>
@@ -42,31 +44,16 @@
           {{ salesListErrorMessage }}
         </div>
         
-        <div v-if="isLoadingSalesList" class="p-4 text-secondary">
-          {{ $t('minishop.sales.loadingSales') }}
+        <div v-if="isLoadingSalesList" class="px-4">
+          <div class="skeleton">
+                <b> {{ $t('minishop.sales.loadingSales') }} </b> <b>Wait...</b>  <b> ... </b> 
+            </div>
         </div>
 
         <div v-else-if="sales.length === 0" class="p-4 text-secondary">
-          <p class="mb-0 text-lg text-center">
+          <p class="p-3 text-lg text-center">
             {{ hasActiveSalesSearch ? $t('minishop.sales.noSearchResults') : $t('minishop.sales.noSales') }}
           </p>
-          <div v-if="hasActiveSalesSearch" class="d-flex gap-2 mt-3 mobile:flex-col">
-            <button
-              v-if="shouldShowAllPeriodsAction"
-              type="button"
-              class="btn btn-primary"
-              @click="showAllPeriods"
-            >
-              {{ $t('minishop.sales.showAllPeriods') }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-default"
-              @click="clearSalesSearch"
-            >
-              {{ $t('minishop.sales.clearSearch') }}
-            </button>
-          </div>
         </div>
 
         <ul v-else class="mt-1">
@@ -101,6 +88,24 @@
             </a>
           </li>
         </ul>
+
+
+        <div v-if="hasActiveSalesSearch && !isLoadingSalesList" class="d-flex flex-col text-center p-4 gap-1">
+          <a v-if="shouldShowAllPeriodsAction"
+            role="button"
+            class="link"
+            @click="showAllPeriods"
+          >
+            🗓  {{ $t('minishop.sales.showAllPeriods') }}
+          </a> <br>
+          <a role="button"
+            class="link"
+            @click="clearSalesSearch"
+          >
+            🔄️  {{ $t('minishop.sales.clearSearch') }}
+          </a>
+        </div>
+
       </section>
     </aside>
 
@@ -116,153 +121,137 @@
 
         <article v-else-if="selectedSale" class="card">
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start gap-3 mb-4 mobile:flex-col">
-              <div>
-                <h3 class="text-2xl mb-1">{{ $t('minishop.sales.receipt') }}</h3>
-                <p class="text-secondary mb-0">{{ selectedSale.id }}</p>
+            
+            <header class="d-flex mb-2">
+              <div class="flex-grow">
+                <h3 class="text-2xl"> {{ $t('minishop.sales.receipt') }}</h3>
+                <p class="text-secondary text-xs"> ID: {{ selectedSale.id }}</p>
               </div>
-
-              <div class="text-right mobile:text-left">
-                <p class="mb-1"><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ formatDateTime(selectedSale.sold_at) }}</p>
-                <p class="mb-1"><strong>{{ $t('common.fields.currency') }}:</strong> {{ selectedSale.currency_code }}</p>
-                <p class="mb-1">
-                  <strong>{{ $t('common.fields.customer') }}:</strong>
-                  {{ selectedSale.customer_name || $t('minishop.sales.noCustomer') }}
-                  <span v-if="selectedSale.customer_phone"> · {{ selectedSale.customer_phone }}</span>
-                </p>
-                <p class="mb-3 text-capitalize"><strong>{{ $t('common.fields.status') }}:</strong> {{ $t('minishop.paymentLabels.' + selectedSale.payment_status) }}</p>
-                <button
-                  type="button"
-                  class="btn btn-default mr-2"
+              <div class="d-flex gap-2">
+                <button type="button"
+                  class="btn btn-neutral"
                   :disabled="isDeletingSelectedSale"
                   @click="clearSelectedSale"
                 >
                   {{ $t('common.actions.close') }}
                 </button>
-                <button
-                  type="button"
-                  class="btn btn-outline text-red"
-                  :disabled="isDeletingSelectedSale"
-                  @click="handleDeleteSelectedSale"
-                >
-                  <span v-if="isDeletingSelectedSale">{{ $t('common.states.deleting') }}</span>
-                  <span v-else>{{ $t('minishop.sales.deleteSale') }}</span>
-                </button>
               </div>
-            </div>
+            </header>
 
-            <div class="table-responsive mb-4">
-              <table class="table table-sm mb-0">
+            <article class="mb-3">
+              <p><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ formatDateTime(selectedSale.sold_at) }}</p>
+              <p>
+                <strong>{{ $t('common.fields.customer') }}:</strong>
+                {{ selectedSale.customer_name || $t('minishop.sales.noCustomer') }}
+                <span v-if="selectedSale.customer_phone"> · {{ selectedSale.customer_phone }}</span>
+              </p>
+              <p><strong>{{ $t('common.fields.currency') }}:</strong> {{ selectedSale.currency_code }}</p>
+              <p><strong>{{ $t('common.fields.status') }}:</strong> {{ $t('minishop.paymentLabels.' + selectedSale.payment_status) }}</p>
+              <p  v-if="selectedSale.note">
+                <strong>{{ $t('common.fields.note') }}</strong>
+                <span>{{ selectedSale.note }}</span>
+              </p>
+            </article>
+
+            <div class="table-responsive">
+              <table class="table table-bordered">
                 <thead>
                   <tr>
-                    <th>{{ $t('common.fields.item') }}</th>
+                    <th width="40%">{{ $t('common.fields.item') }}</th>
                     <th>{{ $t('minishop.main.quantityShort') }}</th>
-                    <th>{{ $t('common.fields.price') }}</th>
-                    <th>{{ $t('common.fields.total') }}</th>
+                    <th width="25%" class="text-right">{{ $t('common.fields.price') }}</th>
+                    <th width="25%" class="text-right"> = </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="item in selectedSaleItems" :key="item.id">
                     <td>{{ item.product_name }}</td>
                     <td>{{ formatQuantity(item.quantity) }}</td>
-                    <td>{{ formatMoney(item.unit_price) }}</td>
-                    <td>{{ formatMoney(item.line_total) }}</td>
+                    <td class="text-right">{{ formatMoney(item.unit_price) }}</td>
+                    <td class="text-right">{{ formatMoney(item.line_total) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <div class="d-flex flex-col gap-2">
-              <div
-                v-if="selectedSale.customer_name"
-                class="d-flex justify-content-between gap-3"
-              >
-                <span>{{ $t('common.fields.customer') }}</span>
-                <strong class="text-right">
-                  {{ selectedSale.customer_name }}
-                  <span v-if="selectedSale.customer_phone"> · {{ selectedSale.customer_phone }}</span>
-                </strong>
-              </div>
-              <div
-                v-if="selectedSale.note"
-                class="d-flex justify-content-between gap-3"
-              >
-                <span>{{ $t('common.fields.note') }}</span>
-                <strong class="text-right">{{ selectedSale.note }}</strong>
-              </div>
-              <div class="d-flex justify-content-between gap-3">
+            <div class="d-flex flex-col align-items-end pr-2"> 
+              <div class="d-flex col-6 justify-content-between gap-3">
                 <span>{{ $t('common.fields.subtotal') }}</span>
                 <strong>{{ formatMoney(selectedSale.subtotal_amount) }}</strong>
               </div>
-              <div class="d-flex justify-content-between gap-3">
+              <div class="d-flex col-6  justify-content-between gap-3">
                 <span>{{ $t('common.fields.discount') }}</span>
                 <strong>- {{ formatMoney(selectedSale.discount_amount) }}</strong>
               </div>
-              <div class="d-flex justify-content-between gap-3">
-                <span>{{ $t('common.fields.total') }}</span>
+              <div class="d-flex col-6  justify-content-between gap-3">
+                <span>{{ $t('minishop.main.totalForPay') }}</span>
                 <strong>{{ formatMoney(selectedSale.total_amount) }}</strong>
               </div>
-              <div class="d-flex justify-content-between gap-3">
-                <span>{{ $t('common.fields.paid') }}</span>
-                <strong>{{ formatMoney(selectedSale.paid_amount) }}</strong>
+              <div class="d-flex col-6  justify-content-between gap-3">
+                <span class="text-green">{{ $t('common.fields.paid') }}</span>
+                <strong class="text-green">{{ formatMoney(selectedSale.paid_amount) }}</strong>
               </div>
-              <div
-                v-if="Number(selectedSale.due_amount) > 0"
-                class="d-flex justify-content-between gap-3 text-orange"
-              >
+              <div v-if="Number(selectedSale.due_amount) > 0" class="d-flex col-6  justify-content-between gap-3 text-orange">
                 <span>{{ $t('minishop.sales.remainingDebt') }}</span>
                 <strong>{{ formatMoney(selectedSale.due_amount) }}</strong>
               </div>
-              <div v-else class="d-flex justify-content-between gap-3 text-green">
-                <span>{{ $t('common.fields.status') }}</span>
-                <strong>{{ $t('common.states.paidInFull') }}</strong>
+              <div v-else class="d-flex col-6 justify-content-between gap-3">
+                <span class="text-secondary">{{ $t('common.fields.status') }}</span>
+                <strong class="text-green">{{ $t('common.states.paidInFull') }}</strong>
               </div>
             </div>
 
-            <div class="mt-5 pt-4 border-top">
-              <div class="d-flex justify-content-between align-items-center gap-3 mb-3 mobile:flex-col mobile:align-items-start">
-                <h4 class="h6 mb-0">{{ $t('minishop.sales.paymentRecords') }}</h4>
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  :disabled="isDeletingSelectedSale || isSavingPayment"
-                  @click="openAddPaymentDialog"
-                >
-                  {{ $t('minishop.sales.addPayment') }}
-                </button>
-              </div>
+            <div class="mt-4 pt-4 border-top">
 
-              <div v-if="selectedSalePayments.length === 0" class="text-secondary">
+              <h6 class="text-lg mb-3"> 💵  {{ $t('minishop.sales.paymentRecords') }} </h6>
+
+              <div v-if="selectedSalePayments.length === 0" class="text-secondary mb-3">
                 {{ $t('minishop.sales.noPaymentRecords') }}
               </div>
 
-              <div v-else class="d-flex flex-col gap-3">
-                <div
-                  v-for="payment in selectedSalePayments"
-                  :key="payment.id"
-                  class="border rounded p-3 bg-lower"
+              <ul v-else class="mb-3">
+                <li v-for="payment in selectedSalePayments" :key="payment.id"
+                  class="border mb-2 border-color-green-300 rounded p-2 bg-green-100"
                 >
-                  <div class="d-flex justify-content-between gap-3 mobile:flex-col">
+                  <div class="d-flex justify-content-between gap-2">
                     <div>
-                      <p class="mb-1"><strong>{{ $t('common.fields.date') }}:</strong> {{ formatDateTime(payment.paid_at || payment.created_at) }}</p>
-                      <p class="mb-0"><strong>{{ $t('common.fields.method') }}:</strong> {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
-                    </div>
-                    <div class="text-right mobile:text-left">
-                      <p class="mb-2"><strong>{{ formatMoney(payment.amount) }}</strong></p>
-                      <button
-                        type="button"
-                        class="btn btn-outline text-red"
+                      <p class="mb-1"><strong>{{ $t('common.fields.date') }}: {{ formatDateTime(payment.paid_at || payment.created_at) }} </strong> </p>
+
+                      <a href="#" role="button"
+                        class="text-secondary link"
                         :disabled="deletingPaymentId === payment.id || isSavingPayment || isDeletingSelectedSale"
                         @click="handleDeletePayment(payment)"
                       >
                         <span v-if="deletingPaymentId === payment.id">{{ $t('common.states.deleting') }}</span>
-                        <span v-else>{{ $t('minishop.sales.deletePayment') }}</span>
-                      </button>
+                        <span v-else> 🗑️  {{ $t('minishop.sales.deletePayment') }}</span>
+                      </a>
+                    </div>
+                    <div class="text-right">
+                      <p><strong class="text-green text-lg">{{ formatMoney(payment.amount) }}</strong></p>
+                      <p> {{ $t('common.fields.method') }}:  {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
                     </div>
                   </div>
-                </div>
-              </div>
+                </li>
+              </ul>
+
+              <button type="button" class="btn btn-green"
+                  :disabled="isDeletingSelectedSale || isSavingPayment"
+                  @click="openAddPaymentDialog"
+                >
+                  {{ $t('minishop.sales.addPayment') }}
+              </button>
+
             </div>
+
+            <hr>
+            <button type="button"
+              class="btn text-secondary btn-sm"
+              :disabled="isDeletingSelectedSale"
+              @click="handleDeleteSelectedSale"
+            >
+              <span v-if="isDeletingSelectedSale">{{ $t('common.states.deleting') }}</span>
+              <span v-else>{{ $t('minishop.sales.deleteSale') }}</span>
+            </button>
           </div>
         </article>
 
@@ -277,7 +266,7 @@
 
           <div class="card card-body mb-4">
             <h6 class="text-lg mb-4">{{ salesSummaryTitle }}</h6>
-            <ul class="d-grid gap-2 grid-template-cols-4 lh-sm">
+            <ul class="d-grid gap-2 grid-template-cols-2 lh-sm">
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryCount') }}: </p>
                 <strong>{{ salesSummaryCount }}</strong>
