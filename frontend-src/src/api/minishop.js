@@ -48,6 +48,10 @@ export function fetchMinishopSales(bookId, params = {}) {
   return apiClient.get(`/books/${bookId}/minishop/sales`, { params })
 }
 
+export function fetchMinishopSalesAnalytics(bookId, params = {}) {
+  return apiClient.get(`/books/${bookId}/minishop/sales/analytics`, { params })
+}
+
 export function fetchMinishopSale(bookId, saleId) {
   return apiClient.get(`/books/${bookId}/minishop/sales/${saleId}`)
 }

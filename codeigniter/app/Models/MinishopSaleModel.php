@@ -139,6 +139,39 @@ class MinishopSaleModel extends Model
             ->findAll();
     }
 
+    public function findAnalyticsSummaryByBook(
+        string $bookId,
+        ?string $soldFrom = null,
+        ?string $soldTo = null
+    ): array {
+        $query = $this->builder()
+            ->select([
+                'COUNT(minishop_sales.id) AS sale_count',
+                'COALESCE(SUM(minishop_sales.total_amount), 0) AS total_amount',
+                'COALESCE(SUM(minishop_sales.paid_amount), 0) AS paid_amount',
+                'COALESCE(SUM(minishop_sales.due_amount), 0) AS due_amount',
+            ])
+            ->where('minishop_sales.book_id', $bookId)
+            ->where('minishop_sales.deleted_at', null);
+
+        if ($soldFrom !== null) {
+            $query->where('minishop_sales.sold_at >=', $soldFrom);
+        }
+
+        if ($soldTo !== null) {
+            $query->where('minishop_sales.sold_at <=', $soldTo);
+        }
+
+        $row = $query->get()->getRowArray() ?? [];
+
+        return [
+            'sale_count' => (int) ($row['sale_count'] ?? 0),
+            'total_amount' => $this->formatAggregateMoney($row['total_amount'] ?? 0),
+            'paid_amount' => $this->formatAggregateMoney($row['paid_amount'] ?? 0),
+            'due_amount' => $this->formatAggregateMoney($row['due_amount'] ?? 0),
+        ];
+    }
+
     private function makeSaleSummaryQuery(?array $columns = null): self
     {
         return $this->select($columns ?? [
@@ -165,5 +198,12 @@ class MinishopSaleModel extends Model
             . ' AND minishop_customers.deleted_at IS NULL',
             'left'
         );
+    }
+
+    private function formatAggregateMoney(mixed $value): string
+    {
+        $amount = is_numeric($value) ? (float) $value : 0.0;
+
+        return number_format($amount, 2, '.', '');
     }
 }

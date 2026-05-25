@@ -261,34 +261,93 @@
               👈  {{ $t('minishop.sales.selectSaleHint') }}
           </p>
 
-          <hr>
-          
+          <div v-if="salesAnalyticsErrorMessage" class="alert alert-danger mb-4" role="alert">
+            {{ salesAnalyticsErrorMessage }}
+          </div>
 
           <div class="card card-body mb-4">
-            <h6 class="text-lg mb-4">{{ salesSummaryTitle }}</h6>
-            <ul class="d-grid gap-2 grid-template-cols-2 lh-sm">
+            <h6 class="text-lg mb-4">
+              {{ $t('minishop.sales.summaryTitle') }}
+              ({{ $t(salesFilterTitleKeys[selectedFilterTime] || salesFilterTitleKeys.today) }})
+            </h6>
+            <div v-if="isLoadingSalesAnalytics" class="text-secondary">
+              {{ $t('minishop.sales.loadingAnalytics') }}
+            </div>
+            <div v-else-if="salesAnalyticsErrorMessage" class="text-secondary">
+              {{ $t('minishop.sales.unableLoadAnalytics') }}
+            </div>
+            <ul v-else class="d-grid gap-2 grid-template-cols-2 mobile:grid-template-cols-1 lh-sm">
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryCount') }}: </p>
-                <strong>{{ salesSummaryCount }}</strong>
+                <strong>{{ salesAnalyticsSummary.sale_count }}</strong>
               </li>
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryTotalAmount') }}: </p>
-                <strong>{{ formatMoney(salesSummaryTotalAmount) }}</strong>
+                <strong>{{ formatMoney(salesAnalyticsSummary.total_amount) }}</strong>
               </li>
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryPaidAmount') }}: </p>
-                <strong class="text-green">{{ formatMoney(salesSummaryPaidAmount) }}</strong>
+                <strong class="text-green">{{ formatMoney(salesAnalyticsSummary.paid_amount) }}</strong>
               </li>
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryDueAmount') }}: </p>
-                <strong class="text-orange">{{ formatMoney(salesSummaryDueAmount) }} </strong>
+                <strong class="text-orange">{{ formatMoney(salesAnalyticsSummary.due_amount) }} </strong>
               </li>
             </ul>
           </div>
 
           <div class="card card-body">
-            <h6 class="text-lg mb-4">By each products (Selected period: Today) </h6>
-            A table that shows sales by each product number of sales and amount
+            <h6 class="text-lg mb-4">
+              {{ $t('minishop.sales.productsTitle') }}
+              ({{ $t(salesFilterTitleKeys[selectedFilterTime] || salesFilterTitleKeys.today) }})
+            </h6>
+            <div v-if="isLoadingSalesAnalytics" class="text-secondary">
+              {{ $t('minishop.sales.loadingAnalytics') }}
+            </div>
+            <div v-else-if="salesAnalyticsErrorMessage" class="text-secondary">
+              {{ $t('minishop.sales.unableLoadAnalytics') }}
+            </div>
+            <p v-else-if="salesAnalyticsProducts.length === 0" class="text-secondary">
+              {{ $t('minishop.sales.noSoldProducts') }}
+            </p>
+            <div v-else class="table-responsive">
+              <table class="table table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>{{ $t('common.fields.item') }}</th>
+                    <th class="text-right">{{ $t('minishop.sales.unitsSold') }}</th>
+                    <th class="text-right">{{ $t('minishop.sales.productAmount') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="product in salesAnalyticsProducts"
+                    :key="product.product_id || `${product.product_name}-${product.product_sku || 'na'}`"
+                  >
+                    <td>
+                      <h6 class="font-semibold"> 📦 {{ product.product_name }}</h6>
+                      <small v-if="product.product_sku" class="d-block text-secondary mt-1">
+                        SKU: {{ product.product_sku }}
+                      </small>
+                    </td>
+                    <td class="text-right">{{ formatQuantity(product.units_sold) }}</td>
+                    <td class="text-right">{{ formatMoney(product.total_amount) }}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="bg-neutral-100">
+                    <th>
+                      {{ $t('minishop.sales.productsTotal') }}
+                      <small class="d-block text-secondary mt-1">
+                        {{ $t('minishop.sales.productCount', { count: salesAnalyticsProductsCount }) }}
+                      </small>
+                    </th>
+                    <th class="text-right">{{ formatQuantity(salesAnalyticsProductsTotalUnits) }}</th>
+                    <th class="text-right">{{ formatMoney(salesAnalyticsProductsTotalAmount) }}</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
           
@@ -324,6 +383,7 @@ import {
   deleteMinishopSale,
   deleteMinishopSalePayment,
   fetchMinishopSale,
+  fetchMinishopSalesAnalytics,
   fetchMinishopSales,
 } from '@/api/minishop'
 import AddPaymentDialog from '@/views/book-types/minishop/dialogs/AddPaymentDialog.vue'
@@ -335,25 +395,25 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits([
-  'sales-changed',
-])
-
 const router = useRouter()
 const { t } = useI18n()
 
 const addPaymentDialog = ref(null)
 const sales = ref([])
+const salesAnalyticsSummary = ref(makeEmptySalesAnalyticsSummary())
+const salesAnalyticsProducts = ref([])
 const selectedSaleId = ref('')
 const selectedSale = ref(null)
 const selectedSaleItems = ref([])
 const selectedSalePayments = ref([])
 const isLoadingSalesList = ref(false)
+const isLoadingSalesAnalytics = ref(false)
 const isLoadingSelectedSale = ref(false)
 const isDeletingSelectedSale = ref(false)
 const isSavingPayment = ref(false)
 const deletingPaymentId = ref('')
 const salesListErrorMessage = ref('')
+const salesAnalyticsErrorMessage = ref('')
 const selectedSaleErrorMessage = ref('')
 const paymentErrorMessage = ref('')
 const selectedFilterTime = ref('today')
@@ -361,8 +421,9 @@ const salesSearchQuery = ref('')
 
 let salesSearchDebounceTimer = null
 let latestSalesRequestId = 0
+let latestSalesAnalyticsRequestId = 0
 
-const salesFilterLabelKeys = {
+const salesFilterTitleKeys = {
   all_time: 'minishop.sales.filters.allTime',
   last_10_days: 'minishop.sales.filters.last10Days',
   last_20_days: 'minishop.sales.filters.last20Days',
@@ -373,24 +434,16 @@ const salesFilterLabelKeys = {
   yesterday: 'minishop.sales.filters.yesterday',
 }
 
-const salesSummaryCount = computed(() => sales.value.length)
-
-const salesSummaryTotalAmount = computed(() => {
-  return sumSaleAmounts('total_amount')
+const salesAnalyticsProductsCount = computed(() => salesAnalyticsProducts.value.length)
+const salesAnalyticsProductsTotalUnits = computed(() => {
+  return salesAnalyticsProducts.value.reduce((total, product) => {
+    return total + (Number(product?.units_sold) || 0)
+  }, 0)
 })
-
-const salesSummaryPaidAmount = computed(() => {
-  return sumSaleAmounts('paid_amount')
-})
-
-const salesSummaryDueAmount = computed(() => {
-  return sumSaleAmounts('due_amount')
-})
-
-const salesSummaryTitle = computed(() => {
-  return t('minishop.sales.summaryTitle', {
-    filter: t(salesFilterLabelKeys[selectedFilterTime.value] ?? salesFilterLabelKeys.today),
-  })
+const salesAnalyticsProductsTotalAmount = computed(() => {
+  return salesAnalyticsProducts.value.reduce((total, product) => {
+    return total + (Number(product?.total_amount) || 0)
+  }, 0)
 })
 
 const hasActiveSalesSearch = computed(() => salesSearchQuery.value !== '')
@@ -401,15 +454,23 @@ const shouldShowAllPeriodsAction = computed(() => {
 watch(() => props.book.id, async () => {
   cancelPendingSalesSearch()
   salesSearchQuery.value = ''
-  await loadSales('')
+  const localNow = makeLocalDateTimeString()
+  await Promise.all([
+    loadSales('', localNow),
+    loadSalesAnalytics(localNow),
+  ])
 }, { immediate: true })
 
 watch(selectedFilterTime, async () => {
   cancelPendingSalesSearch()
-  await loadSales()
+  const localNow = makeLocalDateTimeString()
+  await Promise.all([
+    loadSales(salesSearchQuery.value, localNow),
+    loadSalesAnalytics(localNow),
+  ])
 })
 
-async function loadSales(search = salesSearchQuery.value) {
+async function loadSales(search = salesSearchQuery.value, localNow = makeLocalDateTimeString()) {
   const requestId = ++latestSalesRequestId
 
   isLoadingSalesList.value = true
@@ -420,7 +481,7 @@ async function loadSales(search = salesSearchQuery.value) {
   try {
     const { data } = await fetchMinishopSales(props.book.id, {
       filter_time: selectedFilterTime.value,
-      local_now: makeLocalDateTimeString(),
+      local_now: localNow,
       search,
     })
 
@@ -444,6 +505,44 @@ async function loadSales(search = salesSearchQuery.value) {
   } finally {
     if (isLatestSalesRequest(requestId)) {
       isLoadingSalesList.value = false
+    }
+  }
+}
+
+async function loadSalesAnalytics(localNow = makeLocalDateTimeString()) {
+  const requestId = ++latestSalesAnalyticsRequestId
+
+  isLoadingSalesAnalytics.value = true
+  salesAnalyticsErrorMessage.value = ''
+
+  try {
+    const { data } = await fetchMinishopSalesAnalytics(props.book.id, {
+      filter_time: selectedFilterTime.value,
+      local_now: localNow,
+    })
+
+    if (!isLatestSalesAnalyticsRequest(requestId)) {
+      return
+    }
+
+    salesAnalyticsSummary.value = normalizeSalesAnalyticsSummary(data.summary)
+    salesAnalyticsProducts.value = Array.isArray(data.products) ? data.products : []
+  } catch (error) {
+    if (!isLatestSalesAnalyticsRequest(requestId)) {
+      return
+    }
+
+    if (isUnauthorizedError(error)) {
+      await router.replace({ name: 'login' })
+      return
+    }
+
+    salesAnalyticsSummary.value = makeEmptySalesAnalyticsSummary()
+    salesAnalyticsProducts.value = []
+    salesAnalyticsErrorMessage.value = getApiErrorMessage(error, t('minishop.sales.unableLoadAnalytics'))
+  } finally {
+    if (isLatestSalesAnalyticsRequest(requestId)) {
+      isLoadingSalesAnalytics.value = false
     }
   }
 }
@@ -526,7 +625,7 @@ async function handleDeleteSelectedSale() {
     const { data } = await deleteMinishopSale(props.book.id, saleId)
     removeSaleFromList(data.saleId ?? saleId)
     clearSelectedSale()
-    emit('sales-changed')
+    await loadSalesAnalytics()
   } catch (error) {
     if (isUnauthorizedError(error)) {
       await router.replace({ name: 'login' })
@@ -537,6 +636,7 @@ async function handleDeleteSelectedSale() {
       removeSaleFromList(saleId)
       clearSelectedSale()
       selectedSaleErrorMessage.value = t('minishop.sales.saleUnavailable')
+      await loadSalesAnalytics()
       return
     }
 
@@ -595,7 +695,7 @@ async function handleAddPayment(paymentPayload) {
     selectedSalePayments.value = Array.isArray(data.payments) ? data.payments : []
     patchSaleInList(data.sale)
     closeAddPaymentDialog()
-    emit('sales-changed')
+    await loadSalesAnalytics()
   } catch (error) {
     if (isUnauthorizedError(error)) {
       closeAddPaymentDialog()
@@ -608,6 +708,7 @@ async function handleAddPayment(paymentPayload) {
       clearSelectedSale()
       closeAddPaymentDialog()
       selectedSaleErrorMessage.value = t('minishop.sales.saleUnavailable')
+      await loadSalesAnalytics()
       return
     }
 
@@ -642,7 +743,7 @@ async function handleDeletePayment(payment) {
     selectedSale.value = data.sale
     selectedSalePayments.value = Array.isArray(data.payments) ? data.payments : []
     patchSaleInList(data.sale)
-    emit('sales-changed')
+    await loadSalesAnalytics()
   } catch (error) {
     if (isUnauthorizedError(error)) {
       await router.replace({ name: 'login' })
@@ -658,6 +759,7 @@ async function handleDeletePayment(payment) {
         clearSelectedSale()
       }
 
+      await loadSalesAnalytics()
       return
     }
 
@@ -697,6 +799,10 @@ function isLatestSalesRequest(requestId) {
   return requestId === latestSalesRequestId
 }
 
+function isLatestSalesAnalyticsRequest(requestId) {
+  return requestId === latestSalesAnalyticsRequestId
+}
+
 function formatMoney(value) {
   const amount = Number.parseFloat(String(value ?? 0))
 
@@ -727,12 +833,6 @@ function formatDateTime(value) {
   return parsedDate.toLocaleString()
 }
 
-function sumSaleAmounts(fieldName) {
-  return sales.value.reduce((total, sale) => {
-    return total + (Number(sale?.[fieldName]) || 0)
-  }, 0)
-}
-
 function makeLocalDateTimeString(date = new Date()) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -742,5 +842,23 @@ function makeLocalDateTimeString(date = new Date()) {
   const seconds = String(date.getSeconds()).padStart(2, '0')
 
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+function makeEmptySalesAnalyticsSummary() {
+  return {
+    sale_count: 0,
+    total_amount: '0.00',
+    paid_amount: '0.00',
+    due_amount: '0.00',
+  }
+}
+
+function normalizeSalesAnalyticsSummary(summary) {
+  return {
+    sale_count: Number(summary?.sale_count) || 0,
+    total_amount: String(summary?.total_amount ?? '0.00'),
+    paid_amount: String(summary?.paid_amount ?? '0.00'),
+    due_amount: String(summary?.due_amount ?? '0.00'),
+  }
 }
 </script>

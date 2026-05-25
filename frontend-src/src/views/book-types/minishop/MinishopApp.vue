@@ -65,7 +65,7 @@
       @update:selected-customer-id="selectedCustomerId = $event"
     />
 
-    <SalesTab v-else-if="activePageKey === 'sales'" :book="book" @sales-changed="handleSalesChanged" />
+    <SalesTab v-else-if="activePageKey === 'sales'" :book="book" />
 
     <CustomersTab
       v-else-if="activePageKey === 'customers'"
@@ -699,10 +699,6 @@ function handleReceiptDialogClose() {
   receiptState.value = null
 }
 
-async function handleSalesChanged() {
-  await refreshCustomerData()
-}
-
 async function saveSale() {
   if (normalizedSaleItemsPayload.value.length === 0 || isSavingSale.value) {
     return
@@ -746,7 +742,6 @@ async function saveSale() {
     resetCheckoutState()
     closeCheckoutPaymentDialog()
     await loadProducts()
-    await refreshCustomerData()
     openReceiptDialog()
   } catch (error) {
     if (isUnauthorizedError(error)) {
@@ -1046,7 +1041,6 @@ async function handleCreateCustomer() {
 
     upsertCustomer(data.customer)
     selectedCustomerId.value = data.customer.id
-    await loadCustomerOptions()
     closeCreateCustomerDialog()
   } catch (error) {
     if (isUnauthorizedError(error)) {
@@ -1200,12 +1194,8 @@ function sortCustomers(items) {
   })
 }
 
-async function refreshCustomerData() {
-  return loadCustomerOptions()
-}
-
 async function handleCustomersChanged() {
-  await refreshCustomerData()
+  await loadCustomerOptions()
 }
 
 function findCartItem(productId) {

@@ -21,21 +21,21 @@
       </div>
 
       <div class="mb-3">
-        <table class="table table-sm mb-0">
+        <table class="table table-bordered mb-0">
           <thead>
             <tr>
               <th>{{ $t('common.fields.item') }}</th>
               <th>{{ $t('minishop.main.quantityShort') }}</th>
-              <th>{{ $t('common.fields.price') }}</th>
-              <th>{{ $t('common.fields.total') }}</th>
+              <th class="text-right">{{ $t('common.fields.price') }}</th>
+              <th class="text-right">{{ $t('common.fields.total') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="item in receiptState.items" :key="item.id">
               <td>{{ item.product_name }}</td>
               <td>{{ item.quantity }}</td>
-              <td>{{ item.unit_price }}</td>
-              <td>{{ item.line_total }}</td>
+              <td class="text-right">{{ item.unit_price }}</td>
+              <td class="text-right">{{ item.line_total }}</td>
             </tr>
           </tbody>
         </table>

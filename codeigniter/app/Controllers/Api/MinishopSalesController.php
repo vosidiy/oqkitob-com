@@ -20,6 +20,7 @@ use RuntimeException;
  *
  * Route:
  * GET /api/books/{bookId}/minishop/sales
+ * GET /api/books/{bookId}/minishop/sales/analytics
  * GET /api/books/{bookId}/minishop/sales/{saleId}
  * POST /api/books/{bookId}/minishop/sales
  * POST /api/books/{bookId}/minishop/sales/{saleId}/payments
@@ -69,6 +70,25 @@ class MinishopSalesController extends AuthenticatedApiController
 
         return $this->respond([
             'sales' => $this->sales->findByBook($bookId, $range['sold_from'], $range['sold_to'], $search),
+        ]);
+    }
+
+    public function analytics(string $bookId)
+    {
+        $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'minishop');
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
+        $filter = $this->normalizeFilterTime((string) $this->request->getGet('filter_time'));
+        $localNow = $this->parseLocalDateTime((string) $this->request->getGet('local_now')) ?? new DateTimeImmutable();
+        $range = $this->makeSalesDateRange($filter, $localNow);
+
+        return $this->respond([
+            'summary' => $this->sales->findAnalyticsSummaryByBook($bookId, $range['sold_from'], $range['sold_to']),
+            'products' => $this->saleItems->findProductAnalyticsByBook($bookId, $range['sold_from'], $range['sold_to']),
         ]);
     }
 
