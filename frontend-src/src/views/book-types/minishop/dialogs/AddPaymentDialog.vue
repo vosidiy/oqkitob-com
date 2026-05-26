@@ -14,28 +14,31 @@
 
         <div class="d-flex justify-content-between mb-3">
           <span>{{ $t('common.fields.subtotal') }}</span>
-          <div class="text-right">{{ formatMoney(paymentSummarySubtotal) }}</div>
+          <div class="text-right">{{ formatMoney(paymentSummarySubtotal) }} <small class="currency-code">{{ props.sale?.currency_code }}</small></div>
         </div>
 
         <div class="row justify-content-between mb-3">
           <label class="col-6 form-label" :for="discountInputId">{{ $t('common.fields.discount') }}</label>
           <div class="col-6 text-right font-semibold">
-            <input
-              :id="discountInputId"
-              v-model.trim="discountInput"
-              type="number"
-              class="form-control text-right min-h-5 h-8"
-              min="0"
-              step="0.1"
-              :disabled="isSaving"
-              @blur="normalizeDiscountInput"
-            >
+            <div class="relative">
+              <input
+                :id="discountInputId"
+                v-model.trim="discountInput"
+                type="number"
+                class="form-control min-h-5 h-8"
+                min="0"
+                step="0.1"
+                :disabled="isSaving"
+                @blur="normalizeDiscountInput"
+              >
+              <small class="text-secondary p-1 absolute right-1 bg-neutral-50 top-1"> {{ props.sale?.currency_code }}  </small>
+            </div>
           </div>
         </div>
 
         <div v-if="paymentSummaryDiscountAmount > 0" class="row justify-content-between mb-3">
           <span class="col-6">{{ $t('common.fields.total') }}</span>
-          <div class="col-6 text-right">{{ formatMoney(paymentSummaryTotal) }}</div>
+          <div class="col-6 text-right">{{ formatMoney(paymentSummaryTotal) }} <small class="currency-code">{{ props.sale?.currency_code }}</small></div>
         </div>
 
         <hr>
@@ -63,7 +66,7 @@
             </label>
         </nav>
 
-        <div class="mb-1">
+        <div class="mb-1 relative">
             <input
               :id="paidInputId"
               v-model.trim="paidInput"
@@ -74,16 +77,17 @@
               :disabled="isSaving"
               @blur="normalizePaidInput"
             >
+            <small class="text-secondary p-1 text-lg absolute right-1 bg-neutral-50 top-1"> {{ props.sale?.currency_code }}  </small>
         </div>
 
         <div class="mb-2">
           <div v-if="paymentSummaryChangeAmount > 0" class="text-green">
             <span>{{ $t('minishop.sales.returnChange') }}</span>
-            <strong class="text-sm">{{ formatMoney(paymentSummaryChangeAmount) }}</strong>
+            <strong class="text-sm">{{ formatMoney(paymentSummaryChangeAmount) }} <small class="currency-code">{{ props.sale?.currency_code }}</small></strong>
           </div>
           <div v-else-if="paymentSummaryRemainingAmount > 0" class="text-orange">
             <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-            <strong class="text-sm">{{ formatMoney(paymentSummaryRemainingAmount) }}</strong>
+            <strong class="text-sm">{{ formatMoney(paymentSummaryRemainingAmount) }} <small class="currency-code">{{ props.sale?.currency_code }}</small></strong>
           </div>
           <div v-else class="text-green">
             <strong class="text-sm">{{ $t('common.states.paidInFull') }}</strong>

@@ -21,6 +21,11 @@ export function createBookRequest(payload) {
   return apiClient.post('/books', payload)
 }
 
+export function updateBookRequest(bookId, payload) {
+  // Settings dialog updates mutable book metadata only.
+  return apiClient.put(`/books/${bookId}`, payload)
+}
+
 export function archiveBookRequest(bookId) {
   return apiClient.post(`/books/${bookId}/archive`)
 }

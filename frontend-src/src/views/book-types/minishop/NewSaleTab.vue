@@ -76,7 +76,7 @@
                   </span>
                 </h6>
                 <p>
-                  {{ formatPrice(product.price) }} | {{ $t('minishop.main.quantityShort') }}: {{ formatQuantity(product.quantity) }}
+                  {{ formatPrice(product.price) }} <small class="currency-code">{{ props.book.currency_code }}</small> | {{ $t('minishop.main.quantityShort') }}: {{ formatQuantity(product.quantity) }}
                   <span v-if="isLowStock(product)" class="text-red pl-1">
                     ⚠️ {{ $t('minishop.main.low') }}
                   </span>
@@ -181,7 +181,7 @@
               </div>
               <div class="col-auto flex-1">
                 <p class="text-right p-2">
-                  = {{ formatPrice(cartLineTotalByProductId[item.productId] ?? 0) }}
+                  = {{ formatPrice(cartLineTotalByProductId[item.productId] ?? 0) }} <small class="currency-code">{{ props.book.currency_code }}</small>
                 </p>
               </div>
             </div>
@@ -249,7 +249,7 @@
       <section class="px-4 py-3 border-top bg-neutral-200">
         <div class="d-flex mb-3 justify-content-end gap-3 align-items-center">
           <span class="text-lg">{{ $t('minishop.main.total') }}:</span>
-          <strong class="text-lg">{{ formatPrice(subtotal) }}</strong>
+          <strong class="text-lg">{{ formatPrice(subtotal) }} <small class="currency-code">{{ props.book.currency_code }}</small></strong>
         </div>
 
         <button
@@ -271,6 +271,10 @@ import { computed } from 'vue'
 import vSelect from 'vue-select'
 
 const props = defineProps({
+  book: {
+    type: Object,
+    required: true,
+  },
   cartItems: {
     type: Array,
     required: true,

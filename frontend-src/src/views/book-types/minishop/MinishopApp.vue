@@ -28,6 +28,7 @@
 
     <NewSaleTab
       v-if="activePageKey === 'main'"
+      :book="book"
       :cart-items="cartItems"
       :cart-line-total-by-product-id="cartLineTotalByProductId"
       :cart-quantity-by-product-id="cartQuantityByProductId"
@@ -92,6 +93,7 @@
 
     <CreateProductDialog
       ref="createProductDialog"
+      :book="book"
       :categories="categories"
       :create-category-option-value="CREATE_CATEGORY_OPTION_VALUE"
       :error-message="createProductErrorMessage"
@@ -107,6 +109,7 @@
 
     <EditProductDialog
       ref="editProductDialog"
+      :book="book"
       :can-deactivate="editingProductId !== ''"
       :categories="categories"
       :create-category-option-value="CREATE_CATEGORY_OPTION_VALUE"
@@ -125,6 +128,7 @@
 
     <CheckoutPaymentDialog
       ref="checkoutPaymentDialog"
+      :book="book"
       :cart-items-length="cartItems.length"
       :change-amount="changeAmount"
       :discount-amount="discountAmount"
@@ -711,7 +715,6 @@ async function saveSale() {
 
   try {
     const { data } = await createMinishopSale(props.book.id, {
-      currency_code: 'UZS',
       customer_id: selectedCustomerId.value,
       discount_amount: discountAmount.value,
       note: normalizeOptionalInput(saleNoteInput.value),

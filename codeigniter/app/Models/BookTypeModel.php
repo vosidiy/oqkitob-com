@@ -14,6 +14,7 @@ class BookTypeModel extends Model
         'type_key',
         'name',
         'description',
+        'requires_currency',
         'is_active',
         'created_at',
         'updated_at',
@@ -29,6 +30,7 @@ class BookTypeModel extends Model
             'type_key',
             'name',
             'description',
+            'requires_currency',
         ])->where('is_active', 1)
             ->orderBy('name', 'ASC')
             ->orderBy('type_key', 'ASC')
@@ -36,17 +38,27 @@ class BookTypeModel extends Model
     }
 
     /**
-     * Create requests only allow currently active book types.
+     * Returns one active book type row for create-flow capability checks.
+     *
+     * BooksController::create() uses this so validation is based on the same
+     * active type metadata the frontend create dialog renders.
      */
-    public function isActiveTypeKey(string $typeKey): bool
+    public function findActiveByTypeKey(string $typeKey): ?array
     {
         if ($typeKey === '') {
-            return false;
+            return null;
         }
 
-        return $this->select('type_key')
+        $bookType = $this->select([
+            'type_key',
+            'name',
+            'description',
+            'requires_currency',
+        ])
             ->where('type_key', $typeKey)
             ->where('is_active', 1)
-            ->first() !== null;
+            ->first();
+
+        return $bookType ?: null;
     }
 }

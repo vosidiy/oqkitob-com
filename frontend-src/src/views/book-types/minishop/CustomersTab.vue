@@ -66,7 +66,7 @@
                     🧾 {{ $t('minishop.customers.receiptCount', { count: formatInteger(customer.receipt_count) }) }}
                   </p>
                   <p class="mt-1 text-secondary" :class="{ 'text-red': Number(customer.outstanding_balance) > 0 }">
-                  {{ $t('minishop.customers.outstandingDebt') }}:  {{ formatMoney(customer.outstanding_balance) }}
+                  {{ $t('minishop.customers.outstandingDebt') }}:  {{ formatMoney(customer.outstanding_balance) }} <small class="currency-code">{{ props.book.currency_code }}</small>
                   </p>
                   
                 </div>
@@ -135,20 +135,20 @@
                   <p class="text-secondary mb-1">{{ $t('minishop.customers.outstandingDebt') }}</p>
                   <strong class="text-lg"  :class="{ 'text-red': Number(selectedCustomer.outstanding_balance) > 0 }"
                   >
-                    {{ formatMoney(selectedCustomer.outstanding_balance) }}
+                    {{ formatMoney(selectedCustomer.outstanding_balance) }} <small class="currency-code">{{ props.book.currency_code }}</small>
                   </strong>
                 </div>
               </div>
               <div>
                 <div class="border rounded bg-lower p-2">
                   <p class="text-secondary mb-1">{{ $t('minishop.customers.totalSales') }}</p>
-                  <strong class="text-lg">{{ formatMoney(selectedCustomer.total_sales_amount) }}</strong>
+                  <strong class="text-lg">{{ formatMoney(selectedCustomer.total_sales_amount) }} <small class="currency-code">{{ props.book.currency_code }}</small></strong>
                 </div>
               </div>
               <div>
                 <div class="border rounded bg-lower p-2">
                   <p class="text-secondary mb-1">{{ $t('minishop.customers.totalPaid') }}</p>
-                  <strong class="text-lg">{{ formatMoney(selectedCustomer.total_paid_amount) }}</strong>
+                  <strong class="text-lg">{{ formatMoney(selectedCustomer.total_paid_amount) }} <small class="currency-code">{{ props.book.currency_code }}</small></strong>
                 </div>
               </div>
             </article>
@@ -189,9 +189,9 @@
                     <div>
                       <h6 class="mb-1"> {{ $t('common.fields.soldAt') }}:  {{ formatDateTime(receipt.sold_at) }}</h6>
                       <div class="d-flex gap-2">
-                        <p> {{ $t('minishop.main.total') }}: {{ formatMoney(receipt.total_amount) }}</p> • 
+                        <p> {{ $t('minishop.main.total') }}: {{ formatMoney(receipt.total_amount) }} <small class="currency-code">{{ receipt.currency_code }}</small></p> • 
                         <p> 💵 {{ $t('minishop.paymentLabels.' + receipt.payment_status) }}</p> • 
-                        <p v-if="Number(receipt.due_amount) > 0" class="text-red"> {{ $t('minishop.sales.due') }}: {{ formatMoney(receipt.due_amount) }} </p> 
+                        <p v-if="Number(receipt.due_amount) > 0" class="text-red"> {{ $t('minishop.sales.due') }}: {{ formatMoney(receipt.due_amount) }} <small class="currency-code">{{ receipt.currency_code }}</small></p> 
                       </div>
                       <p v-if="receipt.note" class="text-secondary">{{ receipt.note }}</p>
                     </div>

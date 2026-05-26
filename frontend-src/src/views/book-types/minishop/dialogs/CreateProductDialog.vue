@@ -77,6 +77,9 @@
               :disabled="isCreatingProduct"
               required
             >
+            <p class="small text-secondary mt-1">
+              <small class="currency-code">{{ props.book.currency_code }}</small>
+            </p>
           </div>
           <div class="col-3 mb-4">
             <label class="form-label" for="create-product-quantity">{{ $t('common.fields.quantity') }}</label>
@@ -124,7 +127,11 @@
 <script setup>
 import { ref } from 'vue'
 
-defineProps({
+const props = defineProps({
+  book: {
+    type: Object,
+    required: true,
+  },
   categories: {
     type: Array,
     default: () => [],

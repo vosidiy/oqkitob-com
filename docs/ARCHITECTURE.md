@@ -286,10 +286,11 @@ Current routes:
 /api/auth/login
 /api/auth/logout
 /api/auth/me
-/api/books
+/api/books      (GET list)
 /api/books      (POST create)
-/api/books/types
-/api/books/{bookId}
+/api/books/types (GET active types)
+/api/books/{bookId} (GET metadata fallback)
+/api/books/{bookId} (PUT update title/description)
 /api/books/{bookId}/notes
 /api/books/{bookId}/todos
 /api/books/{bookId}/finance
@@ -340,6 +341,8 @@ Rules:
 
 - a user owns books
 - a book has exactly one `type_key`
+- a book may also have one immutable `currency_code`
+- book creation may require `currency_code` for money-focused types, but the format is not limited to a fixed ISO allowlist
 - type-specific records belong to one `book_id`
 - type-specific data stays isolated in dedicated tables
 - UUID strings are used for core entities

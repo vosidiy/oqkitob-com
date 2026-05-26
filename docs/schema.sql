@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS book_types (
     type_key VARCHAR(50) NOT NULL,
     name VARCHAR(100) NOT NULL,
     description VARCHAR(255) DEFAULT NULL,
+    requires_currency TINYINT(1) NOT NULL DEFAULT 0,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -89,6 +90,7 @@ CREATE TABLE IF NOT EXISTS books (
     id CHAR(36) NOT NULL,
     user_id CHAR(36) NOT NULL,
     type_key VARCHAR(50) NOT NULL,
+    currency_code CHAR(3) DEFAULT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT DEFAULT NULL,
     icon VARCHAR(50) DEFAULT NULL,
@@ -103,6 +105,7 @@ CREATE TABLE IF NOT EXISTS books (
     PRIMARY KEY (id),
     KEY idx_books_user_id (user_id),
     KEY idx_books_type_key (type_key),
+    KEY idx_books_currency_code (currency_code),
     KEY idx_books_user_archived (user_id, is_archived),
     CONSTRAINT fk_books_user
         FOREIGN KEY (user_id) REFERENCES users(id)
@@ -388,15 +391,16 @@ ALTER TABLE users
     FOREIGN KEY (default_book_id) REFERENCES books(id)
     ON DELETE SET NULL;
 
-INSERT INTO book_types (type_key, name, description, is_active, created_at, updated_at)
+INSERT INTO book_types (type_key, name, description, requires_currency, is_active, created_at, updated_at)
 VALUES
-    ('notes', 'Notes', 'Book type for note taking', 1, NOW(), NOW()),
-    ('todo', 'Todo', 'Book type for task management', 1, NOW(), NOW()),
-    ('finance', 'Finance', 'Book type for income and expense tracking', 1, NOW(), NOW()),
-    ('minishop', 'Minishop', 'Book type for small shop sales and inventory tracking', 1, NOW(), NOW())
+    ('notes', 'Notes', 'Book type for note taking', 0, 1, NOW(), NOW()),
+    ('todo', 'Todo', 'Book type for task management', 0, 1, NOW(), NOW()),
+    ('finance', 'Finance', 'Book type for income and expense tracking', 1, 1, NOW(), NOW()),
+    ('minishop', 'Minishop', 'Book type for small shop sales and inventory tracking', 1, 1, NOW(), NOW())
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     description = VALUES(description),
+    requires_currency = VALUES(requires_currency),
     is_active = VALUES(is_active),
     updated_at = VALUES(updated_at);
 

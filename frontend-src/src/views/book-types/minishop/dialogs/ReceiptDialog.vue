@@ -34,8 +34,8 @@
             <tr v-for="item in receiptState.items" :key="item.id">
               <td>{{ item.product_name }}</td>
               <td>{{ item.quantity }}</td>
-              <td class="text-right">{{ item.unit_price }}</td>
-              <td class="text-right">{{ item.line_total }}</td>
+              <td class="text-right">{{ item.unit_price }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></td>
+              <td class="text-right">{{ item.line_total }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></td>
             </tr>
           </tbody>
         </table>
@@ -44,27 +44,27 @@
       <div class="d-flex flex-col mb-4 align-items-end">
         <div class="d-flex justify-content-between">
           <span>{{ $t('common.fields.subtotal') }}</span>
-          <strong class="min-w-40 text-right">{{ receiptState.sale.subtotal_amount }}</strong>
+          <strong class="min-w-40 text-right">{{ receiptState.sale.subtotal_amount }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></strong>
         </div>
         <div class="d-flex justify-content-between">
           <span>{{ $t('common.fields.discount') }}</span>
-          <strong class="min-w-40 text-right">- {{ receiptState.sale.discount_amount }}</strong>
+          <strong class="min-w-40 text-right">- {{ receiptState.sale.discount_amount }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></strong>
         </div>
         <div class="d-flex justify-content-between">
           <span>{{ $t('common.fields.total') }}</span>
-          <strong class="min-w-40 text-right">{{ receiptState.sale.total_amount }}</strong>
+          <strong class="min-w-40 text-right">{{ receiptState.sale.total_amount }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></strong>
         </div>
         <div class="d-flex justify-content-between">
           <span>{{ $t('common.fields.paid') }}</span>
-          <strong class="min-w-40 text-right">{{ formatMoneyValue(receiptState.tenderedAmount) }}</strong>
+          <strong class="min-w-40 text-right">{{ formatMoneyValue(receiptState.tenderedAmount) }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></strong>
         </div>
         <div v-if="receiptState.changeAmount > 0" class="d-flex justify-content-between text-green">
           <span>{{ $t('minishop.sales.returnChange') }}</span>
-          <strong class="min-w-40 text-right">{{ formatMoneyValue(receiptState.changeAmount) }}</strong>
+          <strong class="min-w-40 text-right">{{ formatMoneyValue(receiptState.changeAmount) }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></strong>
         </div>
         <div v-else-if="Number(receiptState.sale.due_amount) > 0" class="d-flex justify-content-between text-orange">
           <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-          <strong class="min-w-40 text-right">{{ receiptState.sale.due_amount }}</strong>
+          <strong class="min-w-40 text-right">{{ receiptState.sale.due_amount }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></strong>
         </div>
         <div v-else class="d-flex justify-content-between text-green">
           <span>{{ $t('common.fields.status') }}</span>

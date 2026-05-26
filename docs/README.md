@@ -8,6 +8,7 @@ The product is organized around user-owned books. Each book has a `type_key` suc
 A single-page web app where users register, sign in, and create "books".
 A book is a mini application workspace. Each book has a type, and each type
 maps to dedicated database tables and dedicated frontend/backend behavior.
+Money-focused books can also carry a fixed book-level `currency_code`.
 
 ## Tech Stack
 
@@ -172,6 +173,7 @@ Frontend API helpers live under `frontend-src/src/api/`.
   - `fetchBookTypes()`
   - `fetchBookById(bookId)`
   - `createBookRequest(payload)`
+  - `updateBookRequest(bookId, payload)`
 - `minishop.js`
   - minishop products, customers, sales, and payment summary helpers
 - `notes.js`
@@ -203,16 +205,30 @@ The sidebar also owns book creation:
 
 1. open the native create-book dialog from `AppLayout.vue`
 2. load active book types from `GET /api/books/types`
-3. submit the new book to `POST /api/books`
-4. validate the returned `book.id`
-5. do a full page navigation to `/home/books/{bookId}`
-
+3. show only book types first; reveal the rest of the form after a type is chosen
+4. if the selected type has `requires_currency = 1`, require a currency choice
+5. submit the new book to `POST /api/books`
+6. book settings edits use `PUT /api/books/{bookId}` for `title` and `description` only
+7. keep `type_key` and `currency_code` immutable after creation
+8. validate the returned `book.id`
+9. do a full page navigation to `/home/books/{bookId}`
 
 Books list responses are used as the primary frontend metadata source for:
 
 - `title`
 - `type_key`
+- `currency_code`
 - `description`
+
+Book type responses from `GET /api/books/types` now also include:
+
+- `requires_currency`
+
+Currency notes:
+
+- money book types still require a currency during create
+- backend accepts custom short codes up to 5 characters
+- non-money book types ignore extra submitted currency values
 
 ## Session/Auth Notes
 

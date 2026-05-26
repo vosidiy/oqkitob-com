@@ -51,6 +51,7 @@ CREATE TABLE db_books (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     type_key TEXT NOT NULL,
+    currency_code TEXT NULL,
     title TEXT NOT NULL,
     description TEXT NULL,
     icon TEXT NULL,
@@ -223,6 +224,55 @@ SQL);
         }
     }
 
+    public function testCreateSaleUsesBooksCurrencyCodeInsteadOfClientPayload(): void
+    {
+        $this->seedProduct('4.000');
+
+        $response = $this->postSale([
+            [
+                'product_id' => self::PRODUCT_ID,
+                'quantity' => 1,
+                'unit_price' => 12000,
+            ],
+        ], [
+            'paid_amount' => 12000,
+        ]);
+
+        $response->assertStatus(201);
+
+        $payload = $this->decodeJsonResponse($response->getJSON());
+
+        self::assertSame('UZS', $payload['sale']['currency_code']);
+        self::assertSame('UZS', $payload['payments'][0]['currency_code']);
+    }
+
+    public function testCreateSaleAllowsEmptyBooksCurrencyCode(): void
+    {
+        $this->seedProduct('4.000');
+        db_connect('tests')->table('books')
+            ->where('id', self::BOOK_ID)
+            ->update([
+                'currency_code' => null,
+            ]);
+
+        $response = $this->postSale([
+            [
+                'product_id' => self::PRODUCT_ID,
+                'quantity' => 1,
+                'unit_price' => 12000,
+            ],
+        ], [
+            'paid_amount' => 12000,
+        ]);
+
+        $response->assertStatus(201);
+
+        $payload = $this->decodeJsonResponse($response->getJSON());
+
+        self::assertSame('', $payload['sale']['currency_code']);
+        self::assertSame('', $payload['payments'][0]['currency_code']);
+    }
+
     private function seedBookFixture(): void
     {
         $db = db_connect('tests');
@@ -240,6 +290,7 @@ SQL);
             'id' => self::BOOK_ID,
             'user_id' => self::USER_ID,
             'type_key' => 'minishop',
+            'currency_code' => 'UZS',
             'title' => 'Shop Book',
             'description' => null,
             'icon' => null,
@@ -280,20 +331,21 @@ SQL);
         ]);
     }
 
-    private function postSale(array $items)
+    private function postSale(array $items, array $overrides = [])
     {
+        $payload = array_merge([
+            'discount_amount' => 0,
+            'paid_amount' => 0,
+            'payment_method' => 'cash',
+            'sold_at' => '2026-05-23 10:15:00',
+            'paid_at' => '2026-05-23 10:15:00',
+            'items' => $items,
+        ], $overrides);
+
         return $this->withSession([
             'user_id' => self::USER_ID,
         ])->withBodyFormat('json')
-            ->post('books/' . self::BOOK_ID . '/minishop/sales', [
-                'currency_code' => 'UZS',
-                'discount_amount' => 0,
-                'paid_amount' => 0,
-                'payment_method' => 'cash',
-                'sold_at' => '2026-05-23 10:15:00',
-                'paid_at' => '2026-05-23 10:15:00',
-                'items' => $items,
-            ]);
+            ->post('books/' . self::BOOK_ID . '/minishop/sales', $payload);
     }
 
     private function findProduct(): array

@@ -45,8 +45,8 @@
               <tr v-for="item in items" :key="item.id">
                 <td>{{ item.product_name }}</td>
                 <td>{{ formatQuantity(item.quantity) }}</td>
-                <td class="text-right">{{ formatMoney(item.unit_price) }}</td>
-                <td class="text-right">{{ formatMoney(item.line_total) }}</td>
+                <td class="text-right">{{ formatMoney(item.unit_price) }} <small class="currency-code">{{ sale.currency_code }}</small></td>
+                <td class="text-right">{{ formatMoney(item.line_total) }} <small class="currency-code">{{ sale.currency_code }}</small></td>
               </tr>
             </tbody>
           </table>
@@ -55,23 +55,23 @@
         <div class="d-flex flex-col align-items-end pr-2">
           <div class="d-flex col-6 justify-content-between gap-3">
             <span>{{ $t('common.fields.subtotal') }}</span>
-            <strong>{{ formatMoney(sale.subtotal_amount) }}</strong>
+            <strong>{{ formatMoney(sale.subtotal_amount) }} <small class="currency-code">{{ sale.currency_code }}</small></strong>
           </div>
           <div class="d-flex col-6 justify-content-between gap-3">
             <span>{{ $t('common.fields.discount') }}</span>
-            <strong>- {{ formatMoney(sale.discount_amount) }}</strong>
+            <strong>- {{ formatMoney(sale.discount_amount) }} <small class="currency-code">{{ sale.currency_code }}</small></strong>
           </div>
           <div class="d-flex col-6 justify-content-between gap-3">
             <span>{{ $t('minishop.main.totalForPay') }}</span>
-            <strong>{{ formatMoney(sale.total_amount) }}</strong>
+            <strong>{{ formatMoney(sale.total_amount) }} <small class="currency-code">{{ sale.currency_code }}</small></strong>
           </div>
           <div class="d-flex col-6 justify-content-between gap-3">
             <span class="text-green">{{ $t('common.fields.paid') }}</span>
-            <strong class="text-green">{{ formatMoney(sale.paid_amount) }}</strong>
+            <strong class="text-green">{{ formatMoney(sale.paid_amount) }} <small class="currency-code">{{ sale.currency_code }}</small></strong>
           </div>
           <div v-if="Number(sale.due_amount) > 0" class="d-flex col-6 justify-content-between gap-3 text-orange">
             <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-            <strong>{{ formatMoney(sale.due_amount) }}</strong>
+            <strong>{{ formatMoney(sale.due_amount) }} <small class="currency-code">{{ sale.currency_code }}</small></strong>
           </div>
           <div v-else class="d-flex col-6 justify-content-between gap-3 text-green">
             <span>{{ $t('common.fields.status') }}</span>
@@ -103,7 +103,7 @@
                   </a>
                 </div>
                 <div class="text-right">
-                  <p><strong class="text-green"> {{ formatMoney(payment.amount) }}</strong></p>
+                  <p><strong class="text-green"> {{ formatMoney(payment.amount) }} <small class="currency-code">{{ payment.currency_code }}</small></strong></p>
                   <p> {{ $t('common.fields.method') }}: {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
                 </div>
               </div>

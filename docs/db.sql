@@ -31,6 +31,7 @@ CREATE TABLE `books` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `type_key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `currency_code` char(3) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text COLLATE utf8mb4_unicode_ci,
   `icon` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -48,20 +49,20 @@ CREATE TABLE `books` (
 -- Dumping data for table `books`
 --
 
-INSERT INTO `books` (`id`, `user_id`, `type_key`, `title`, `description`, `icon`, `color`, `settings_json`, `is_archived`, `sort_order`, `last_opened_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
-('096ca5af-d877-4323-8cac-a908efdf145c', '11111111-1111-1111-1111-111111111111', 'todo', 'asdasd', 'asdasd', NULL, NULL, NULL, 0, 5, NULL, '2026-05-13 18:29:34', '2026-05-17 15:50:03', '2026-05-17 10:50:03'),
-('123', '11111111-1111-1111-1111-111111111111', 'finance', 'Birinchi kitob', 'Yaxshi kitobvha haqida', NULL, NULL, NULL, 1, 3, NULL, '2026-05-13 12:41:35', '2026-05-17 15:49:29', NULL),
-('34c416bd-5631-4394-84bc-2e05e436351d', '11111111-1111-1111-1111-111111111111', 'minishop', 'Dukon', NULL, NULL, NULL, NULL, 0, 8, NULL, '2026-05-15 20:21:34', '2026-05-15 20:21:34', NULL),
-('aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1', '11111111-1111-1111-1111-111111111111', 'notes', 'Daily Notes', 'Personal notes book for Ali', NULL, NULL, NULL, 0, 1, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
-('aaaaaaa2-aaaa-aaaa-aaaa-aaaaaaaaaaa2', '11111111-1111-1111-1111-111111111111', 'todo', 'Personal Tasks', 'Task management book for Ali', NULL, NULL, NULL, 0, 2, NULL, '2026-05-11 20:52:13', '2026-05-18 15:39:52', '2026-05-18 10:39:52'),
-('b00eb1d2-4403-446d-88bb-b00f9e6ad8d6', '11111111-1111-1111-1111-111111111111', 'minishop', 'Do\'kon', 'sotuvlarim', NULL, NULL, NULL, 0, 7, NULL, '2026-05-15 16:30:28', '2026-05-15 16:30:28', NULL),
-('bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1', '22222222-2222-2222-2222-222222222222', 'notes', 'Work Notes', 'Work-related notes for Malika', NULL, NULL, NULL, 0, 1, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
-('bbbbbbb2-bbbb-bbbb-bbbb-bbbbbbbbbbb2', '22222222-2222-2222-2222-222222222222', 'finance', 'Home Finance', 'Home finance tracking for Malika', NULL, NULL, NULL, 0, 2, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
-('bcc06a2a-f691-460a-9a35-5ef871a8c56b', '11111111-1111-1111-1111-111111111111', 'notes', 'Salom', 'asdas', NULL, NULL, NULL, 1, 6, NULL, '2026-05-13 19:01:30', '2026-05-18 15:39:58', NULL),
-('c95e3e81-f172-4a9d-b854-962d4b12031f', '11111111-1111-1111-1111-111111111111', 'finance', 'Salom kitob', 'Asasdashdbas', NULL, NULL, NULL, 0, 4, NULL, '2026-05-13 18:29:07', '2026-05-18 15:39:48', '2026-05-18 10:39:48'),
-('ccccccc1-cccc-cccc-cccc-ccccccccccc1', '33333333-3333-3333-3333-333333333333', 'todo', 'Project Tasks', 'Project task book for Jasur', NULL, NULL, NULL, 0, 1, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
-('ccccccc2-cccc-cccc-cccc-ccccccccccc2', '33333333-3333-3333-3333-333333333333', 'finance', 'Business Finance', 'Business finance tracking for Jasur', NULL, NULL, NULL, 0, 2, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
-('f4c58109-cce8-4092-9c78-c27f2ec2858f', '11111111-1111-1111-1111-111111111111', 'minishop', 'Supermarket', NULL, NULL, NULL, NULL, 0, 9, NULL, '2026-05-15 20:28:45', '2026-05-15 20:28:45', NULL);
+INSERT INTO `books` (`id`, `user_id`, `type_key`, `currency_code`, `title`, `description`, `icon`, `color`, `settings_json`, `is_archived`, `sort_order`, `last_opened_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
+('096ca5af-d877-4323-8cac-a908efdf145c', '11111111-1111-1111-1111-111111111111', 'todo', NULL, 'asdasd', 'asdasd', NULL, NULL, NULL, 0, 5, NULL, '2026-05-13 18:29:34', '2026-05-17 15:50:03', '2026-05-17 10:50:03'),
+('123', '11111111-1111-1111-1111-111111111111', 'finance', 'UZS', 'Birinchi kitob', 'Yaxshi kitobvha haqida', NULL, NULL, NULL, 1, 3, NULL, '2026-05-13 12:41:35', '2026-05-17 15:49:29', NULL),
+('34c416bd-5631-4394-84bc-2e05e436351d', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'Dukon', NULL, NULL, NULL, NULL, 0, 8, NULL, '2026-05-15 20:21:34', '2026-05-15 20:21:34', NULL),
+('aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1', '11111111-1111-1111-1111-111111111111', 'notes', NULL, 'Daily Notes', 'Personal notes book for Ali', NULL, NULL, NULL, 0, 1, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
+('aaaaaaa2-aaaa-aaaa-aaaa-aaaaaaaaaaa2', '11111111-1111-1111-1111-111111111111', 'todo', NULL, 'Personal Tasks', 'Task management book for Ali', NULL, NULL, NULL, 0, 2, NULL, '2026-05-11 20:52:13', '2026-05-18 15:39:52', '2026-05-18 10:39:52'),
+('b00eb1d2-4403-446d-88bb-b00f9e6ad8d6', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'Do\'kon', 'sotuvlarim', NULL, NULL, NULL, 0, 7, NULL, '2026-05-15 16:30:28', '2026-05-15 16:30:28', NULL),
+('bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1', '22222222-2222-2222-2222-222222222222', 'notes', NULL, 'Work Notes', 'Work-related notes for Malika', NULL, NULL, NULL, 0, 1, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
+('bbbbbbb2-bbbb-bbbb-bbbb-bbbbbbbbbbb2', '22222222-2222-2222-2222-222222222222', 'finance', 'UZS', 'Home Finance', 'Home finance tracking for Malika', NULL, NULL, NULL, 0, 2, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
+('bcc06a2a-f691-460a-9a35-5ef871a8c56b', '11111111-1111-1111-1111-111111111111', 'notes', NULL, 'Salom', 'asdas', NULL, NULL, NULL, 1, 6, NULL, '2026-05-13 19:01:30', '2026-05-18 15:39:58', NULL),
+('c95e3e81-f172-4a9d-b854-962d4b12031f', '11111111-1111-1111-1111-111111111111', 'finance', 'UZS', 'Salom kitob', 'Asasdashdbas', NULL, NULL, NULL, 0, 4, NULL, '2026-05-13 18:29:07', '2026-05-18 15:39:48', '2026-05-18 10:39:48'),
+('ccccccc1-cccc-cccc-cccc-ccccccccccc1', '33333333-3333-3333-3333-333333333333', 'todo', NULL, 'Project Tasks', 'Project task book for Jasur', NULL, NULL, NULL, 0, 1, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
+('ccccccc2-cccc-cccc-cccc-ccccccccccc2', '33333333-3333-3333-3333-333333333333', 'finance', 'UZS', 'Business Finance', 'Business finance tracking for Jasur', NULL, NULL, NULL, 0, 2, NULL, '2026-05-11 20:52:13', '2026-05-11 20:52:13', NULL),
+('f4c58109-cce8-4092-9c78-c27f2ec2858f', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'Supermarket', NULL, NULL, NULL, NULL, 0, 9, NULL, '2026-05-15 20:28:45', '2026-05-15 20:28:45', NULL);
 
 -- --------------------------------------------------------
 
@@ -73,6 +74,7 @@ CREATE TABLE `book_types` (
   `type_key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `requires_currency` tinyint(1) NOT NULL DEFAULT '0',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -82,11 +84,11 @@ CREATE TABLE `book_types` (
 -- Dumping data for table `book_types`
 --
 
-INSERT INTO `book_types` (`type_key`, `name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-('finance', 'Finance', 'Book type for income and expense tracking', 0, '2026-05-11 20:01:14', '2026-05-18 15:39:18'),
-('minishop', 'Min-store', 'Book type for small shop sales and inventory tracking', 1, '2026-05-15 14:01:14', '2026-05-22 20:34:15'),
-('notes', 'Notes', 'Book type for note taking', 1, '2026-05-11 20:01:14', '2026-05-11 20:01:14'),
-('todo', 'Todo', 'Book type for task management', 0, '2026-05-11 20:01:14', '2026-05-18 15:39:04');
+INSERT INTO `book_types` (`type_key`, `name`, `description`, `requires_currency`, `is_active`, `created_at`, `updated_at`) VALUES
+('finance', 'Finance', 'Book type for income and expense tracking', 1, 0, '2026-05-11 20:01:14', '2026-05-18 15:39:18'),
+('minishop', 'Min-store', 'Book type for small shop sales and inventory tracking', 1, 1, '2026-05-15 14:01:14', '2026-05-22 20:34:15'),
+('notes', 'Notes', 'Book type for note taking', 0, 1, '2026-05-11 20:01:14', '2026-05-11 20:01:14'),
+('todo', 'Todo', 'Book type for task management', 0, 0, '2026-05-11 20:01:14', '2026-05-18 15:39:04');
 
 -- --------------------------------------------------------
 
@@ -656,6 +658,7 @@ ALTER TABLE `books`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_books_user_id` (`user_id`),
   ADD KEY `idx_books_type_key` (`type_key`),
+  ADD KEY `idx_books_currency_code` (`currency_code`),
   ADD KEY `idx_books_user_archived` (`user_id`,`is_archived`);
 
 --

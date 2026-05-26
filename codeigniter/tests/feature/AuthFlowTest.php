@@ -57,6 +57,7 @@ CREATE TABLE db_books (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     type_key TEXT NOT NULL,
+    currency_code TEXT NULL,
     title TEXT NOT NULL,
     description TEXT NULL,
     icon TEXT NULL,
@@ -74,6 +75,7 @@ CREATE TABLE db_book_types (
     type_key TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT NULL,
+    requires_currency INTEGER NOT NULL DEFAULT 0,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NULL,
     updated_at TEXT NULL
@@ -486,8 +488,26 @@ SQL);
 
         self::assertCount(3, $books);
         self::assertSame('Daily Notes', $books[0]['title']);
+        self::assertNull($books[0]['currency_code']);
         self::assertSame('Personal Tasks', $books[1]['title']);
+        self::assertNull($books[1]['currency_code']);
         self::assertSame('Personal Finance', $books[2]['title']);
+        self::assertSame('USD', $books[2]['currency_code']);
+    }
+
+    public function testBookShowReturnsCurrencyCodeForAccessibleBook(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->get('books/aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4');
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Personal Finance', $payload['book']['title']);
+        self::assertSame('finance', $payload['book']['type_key']);
+        self::assertSame('USD', $payload['book']['currency_code']);
     }
 
     public function testBookTypesRequireAuthentication(): void
@@ -510,8 +530,11 @@ SQL);
 
         self::assertCount(3, $bookTypes);
         self::assertSame('Finance', $bookTypes[0]['name']);
+        self::assertSame(1, $bookTypes[0]['requires_currency']);
         self::assertSame('Notes', $bookTypes[1]['name']);
+        self::assertSame(0, $bookTypes[1]['requires_currency']);
         self::assertSame('Todo', $bookTypes[2]['name']);
+        self::assertSame(0, $bookTypes[2]['requires_currency']);
     }
 
     public function testCreateBookRequiresAuthentication(): void
@@ -553,17 +576,102 @@ SQL);
         );
         self::assertSame('Travel Plans', $book['title']);
         self::assertSame('notes', $book['type_key']);
+        self::assertNull($book['currency_code']);
         self::assertSame('Summer trip ideas', $book['description']);
         self::assertArrayNotHasKey('user_id', $book);
 
         self::assertNotNull($row);
         self::assertSame('11111111-1111-1111-1111-111111111111', $row['user_id']);
         self::assertSame('notes', $row['type_key']);
+        self::assertNull($row['currency_code']);
         self::assertSame('Travel Plans', $row['title']);
         self::assertSame('Summer trip ideas', $row['description']);
         self::assertSame(5, (int) $row['sort_order']);
         self::assertNotEmpty($row['created_at']);
         self::assertSame($row['created_at'], $row['updated_at']);
+    }
+
+    public function testCreateFinanceBookRequiresAllowedCurrencyCode(): void
+    {
+        $missingCurrencyResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books', [
+                'title' => 'House Budget',
+                'description' => 'Monthly finance tracking',
+                'type_key' => 'finance',
+            ]);
+
+        $missingCurrencyResponse->assertStatus(422);
+
+        $missingCurrencyPayload = json_decode((string) $missingCurrencyResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Please choose a currency for this book.', $missingCurrencyPayload['message']);
+
+        $tooLongCurrencyResponse = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books', [
+                'title' => 'House Budget',
+                'description' => 'Monthly finance tracking',
+                'type_key' => 'finance',
+                'currency_code' => 'LONGER',
+            ]);
+
+        $tooLongCurrencyResponse->assertStatus(422);
+
+        $tooLongCurrencyPayload = json_decode((string) $tooLongCurrencyResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Currency code must be 5 characters or fewer.', $tooLongCurrencyPayload['message']);
+    }
+
+    public function testCreateFinanceBookStoresCurrencyCode(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books', [
+                'title' => 'Business Budget',
+                'description' => 'Quarterly plan',
+                'type_key' => 'finance',
+                'currency_code' => 'usd',
+            ]);
+
+        $response->assertStatus(201);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $book = $payload['book'];
+        $row = db_connect('tests')->table('books')
+            ->where('id', $book['id'])
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('USD', $book['currency_code']);
+        self::assertSame('USD', $row['currency_code']);
+    }
+
+    public function testCreateNonCurrencyBookIgnoresCurrencyCode(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->post('books', [
+                'title' => 'Travel Plans',
+                'description' => 'Summer trip ideas',
+                'type_key' => 'notes',
+                'currency_code' => 'USD',
+            ]);
+
+        $response->assertStatus(201);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('books')
+            ->where('id', $payload['book']['id'])
+            ->get()
+            ->getRowArray();
+
+        self::assertNull($payload['book']['currency_code']);
+        self::assertNull($row['currency_code']);
     }
 
     public function testCreateBookRejectsBlankTitle(): void
@@ -646,7 +754,63 @@ SQL);
         self::assertCount(4, $books);
         self::assertSame('Trip Checklist', $lastBook['title']);
         self::assertSame('todo', $lastBook['type_key']);
+        self::assertNull($lastBook['currency_code']);
         self::assertNull($lastBook['description']);
+    }
+
+    public function testBookUpdateCanChangeTitleAndDescription(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('books/aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4', [
+                'title' => 'Updated Finance',
+                'description' => 'Updated finance notes',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('books')
+            ->where('id', 'aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Book updated successfully.', $payload['message']);
+        self::assertSame('Updated Finance', $payload['book']['title']);
+        self::assertSame('Updated finance notes', $payload['book']['description']);
+        self::assertSame('USD', $payload['book']['currency_code']);
+        self::assertSame('finance', $payload['book']['type_key']);
+        self::assertSame('Updated Finance', $row['title']);
+        self::assertSame('Updated finance notes', $row['description']);
+        self::assertSame('USD', $row['currency_code']);
+        self::assertSame('finance', $row['type_key']);
+    }
+
+    public function testBookUpdateRejectsImmutableTypeAndCurrencyFields(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('books/aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4', [
+                'title' => 'Updated Finance',
+                'description' => 'Updated finance notes',
+                'type_key' => 'notes',
+                'currency_code' => 'EUR',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('books')
+            ->where('id', 'aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Book type and currency cannot be changed after creation.', $payload['message']);
+        self::assertSame('finance', $row['type_key']);
+        self::assertSame('USD', $row['currency_code']);
+        self::assertSame('Personal Finance', $row['title']);
     }
 
     public function testNotesEndpointRequiresAuthentication(): void
@@ -1057,6 +1221,7 @@ SQL);
                 'type_key' => 'finance',
                 'name' => 'Finance',
                 'description' => 'Book type for income and expense tracking',
+                'requires_currency' => 1,
                 'is_active' => 1,
                 'created_at' => '2026-05-11 20:01:14',
                 'updated_at' => '2026-05-11 20:01:14',
@@ -1065,6 +1230,7 @@ SQL);
                 'type_key' => 'notes',
                 'name' => 'Notes',
                 'description' => 'Book type for note taking',
+                'requires_currency' => 0,
                 'is_active' => 1,
                 'created_at' => '2026-05-11 20:01:14',
                 'updated_at' => '2026-05-11 20:01:14',
@@ -1073,6 +1239,7 @@ SQL);
                 'type_key' => 'todo',
                 'name' => 'Todo',
                 'description' => 'Book type for task management',
+                'requires_currency' => 0,
                 'is_active' => 1,
                 'created_at' => '2026-05-11 20:01:14',
                 'updated_at' => '2026-05-11 20:01:14',
@@ -1081,6 +1248,7 @@ SQL);
                 'type_key' => 'legacy',
                 'name' => 'Legacy',
                 'description' => 'Inactive book type for validation tests',
+                'requires_currency' => 0,
                 'is_active' => 0,
                 'created_at' => '2026-05-11 20:01:14',
                 'updated_at' => '2026-05-11 20:01:14',
@@ -1095,6 +1263,7 @@ SQL);
                 'id' => 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
                 'user_id' => '11111111-1111-1111-1111-111111111111',
                 'type_key' => 'notes',
+                'currency_code' => null,
                 'title' => 'Daily Notes',
                 'description' => 'Personal notes book for Ali',
                 'icon' => null,
@@ -1109,6 +1278,7 @@ SQL);
                 'id' => 'aaaaaaa2-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
                 'user_id' => '11111111-1111-1111-1111-111111111111',
                 'type_key' => 'todo',
+                'currency_code' => null,
                 'title' => 'Personal Tasks',
                 'description' => 'Task management book for Ali',
                 'icon' => null,
@@ -1123,6 +1293,7 @@ SQL);
                 'id' => 'aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4',
                 'user_id' => '11111111-1111-1111-1111-111111111111',
                 'type_key' => 'finance',
+                'currency_code' => 'USD',
                 'title' => 'Personal Finance',
                 'description' => 'Finance tracking book for Ali',
                 'icon' => null,
@@ -1137,6 +1308,7 @@ SQL);
                 'id' => 'aaaaaaa3-aaaa-aaaa-aaaa-aaaaaaaaaaa3',
                 'user_id' => '11111111-1111-1111-1111-111111111111',
                 'type_key' => 'notes',
+                'currency_code' => null,
                 'title' => 'Archived Notes',
                 'description' => 'Archived book should be hidden',
                 'icon' => null,
@@ -1151,6 +1323,7 @@ SQL);
                 'id' => 'bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
                 'user_id' => '22222222-2222-2222-2222-222222222222',
                 'type_key' => 'notes',
+                'currency_code' => null,
                 'title' => 'Someone Else Book',
                 'description' => 'Should never be visible',
                 'icon' => null,

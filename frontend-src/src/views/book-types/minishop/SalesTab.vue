@@ -78,9 +78,9 @@
                   </p>
                 </div>
                 <div class="ml-auto text-right">
-                  <p class="font-semibold">{{ formatMoney(sale.total_amount) }}</p>
+                  <p class="font-semibold">{{ formatMoney(sale.total_amount) }} <small class="currency-code">{{ sale.currency_code }}</small></p>
                   <p v-if="Number(sale.due_amount) > 0" class="text-red">
-                    {{ $t('minishop.sales.due') }}: {{ formatMoney(sale.due_amount) }}
+                    {{ $t('minishop.sales.due') }}: {{ formatMoney(sale.due_amount) }} <small class="currency-code">{{ sale.currency_code }}</small>
                   </p>
                   <span class="text-secondary text-sm"> Status: {{ $t('minishop.paymentLabels.' + sale.payment_status) }}</span>
                 </div>
@@ -198,8 +198,8 @@
                   <tr v-for="item in selectedSaleItems" :key="item.id">
                     <td>{{ item.product_name }}</td>
                     <td>{{ formatQuantity(item.quantity) }}</td>
-                    <td class="text-right">{{ formatMoney(item.unit_price) }}</td>
-                    <td class="text-right">{{ formatMoney(item.line_total) }}</td>
+                    <td class="text-right">{{ formatMoney(item.unit_price) }} <small class="currency-code">{{ selectedSale.currency_code }}</small></td>
+                    <td class="text-right">{{ formatMoney(item.line_total) }} <small class="currency-code">{{ selectedSale.currency_code }}</small></td>
                   </tr>
                 </tbody>
               </table>
@@ -208,23 +208,23 @@
             <div class="d-flex flex-col align-items-end pr-2"> 
               <div class="d-flex col-6 justify-content-between gap-3">
                 <span>{{ $t('common.fields.subtotal') }}</span>
-                <strong>{{ formatMoney(selectedSale.subtotal_amount) }}</strong>
+                <strong>{{ formatMoney(selectedSale.subtotal_amount) }} <small class="currency-code">{{ selectedSale.currency_code }}</small></strong>
               </div>
               <div class="d-flex col-6  justify-content-between gap-3">
                 <span>{{ $t('common.fields.discount') }}</span>
-                <strong>- {{ formatMoney(selectedSale.discount_amount) }}</strong>
+                <strong>- {{ formatMoney(selectedSale.discount_amount) }} <small class="currency-code">{{ selectedSale.currency_code }}</small></strong>
               </div>
               <div class="d-flex col-6  justify-content-between gap-3">
                 <span>{{ $t('minishop.main.totalForPay') }}</span>
-                <strong>{{ formatMoney(selectedSale.total_amount) }}</strong>
+                <strong>{{ formatMoney(selectedSale.total_amount) }} <small class="currency-code">{{ selectedSale.currency_code }}</small></strong>
               </div>
               <div class="d-flex col-6  justify-content-between gap-3">
                 <span class="text-green">{{ $t('common.fields.paid') }}</span>
-                <strong class="text-green">{{ formatMoney(selectedSale.paid_amount) }}</strong>
+                <strong class="text-green">{{ formatMoney(selectedSale.paid_amount) }} <small class="currency-code">{{ selectedSale.currency_code }}</small></strong>
               </div>
               <div v-if="Number(selectedSale.due_amount) > 0" class="d-flex col-6  justify-content-between gap-3 text-orange">
                 <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-                <strong>{{ formatMoney(selectedSale.due_amount) }}</strong>
+                <strong>{{ formatMoney(selectedSale.due_amount) }} <small class="currency-code">{{ selectedSale.currency_code }}</small></strong>
               </div>
               <div v-else class="d-flex col-6 justify-content-between gap-3">
                 <span class="text-secondary">{{ $t('common.fields.status') }}</span>
@@ -258,7 +258,7 @@
                       </a>
                     </div>
                     <div class="text-right">
-                      <p><strong class="text-green text-lg">{{ formatMoney(payment.amount) }}</strong></p>
+                      <p><strong class="text-green text-lg">{{ formatMoney(payment.amount) }} <small class="currency-code">{{ payment.currency_code }}</small></strong></p>
                       <p> {{ $t('common.fields.method') }}:  {{ $t('minishop.paymentMethods.' + payment.payment_method) }}</p>
                     </div>
                   </div>
@@ -317,15 +317,15 @@
               </li>
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryTotalAmount') }}: </p>
-                <strong class="text-xl">{{ formatMoney(salesAnalyticsSummary.total_amount) }}</strong>
+                <strong class="text-xl">{{ formatMoney(salesAnalyticsSummary.total_amount) }} <small class="currency-code">{{ props.book.currency_code }}</small></strong>
               </li>
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryPaidAmount') }}: </p>
-                <strong class="text-xl text-green">{{ formatMoney(salesAnalyticsSummary.paid_amount) }}</strong>
+                <strong class="text-xl text-green">{{ formatMoney(salesAnalyticsSummary.paid_amount) }} <small class="currency-code">{{ props.book.currency_code }}</small></strong>
               </li>
               <li class="card p-2 bg-neutral-100">
                 <p class="mb-2">{{ $t('minishop.sales.summaryDueAmount') }}: </p>
-                <strong class="text-xl text-orange">{{ formatMoney(salesAnalyticsSummary.due_amount) }} </strong>
+                <strong class="text-xl text-orange">{{ formatMoney(salesAnalyticsSummary.due_amount) }} <small class="currency-code">{{ props.book.currency_code }}</small></strong>
               </li>
             </ul>
           </div>
@@ -365,7 +365,7 @@
                       </small>
                     </td>
                     <td class="text-right">{{ formatQuantity(product.units_sold) }}</td>
-                    <td class="text-right">{{ formatMoney(product.total_amount) }}</td>
+                    <td class="text-right">{{ formatMoney(product.total_amount) }} <small class="currency-code">{{ props.book.currency_code }}</small></td>
                   </tr>
                 </tbody>
                 <tfoot>
@@ -379,11 +379,11 @@
                     <th class="text-right">{{ formatQuantity(salesAnalyticsProductsTotalUnits) }}</th>
                     <th class="text-right">
                       <strong class="text-lg">
-                        {{ formatMoney(salesAnalyticsProductsTotalAmount) }} 
+                        {{ formatMoney(salesAnalyticsProductsTotalAmount) }} <small class="currency-code">{{ props.book.currency_code }}</small>
                       </strong>
                       <p>
                         <span class="text-secondary">{{ $t('minishop.sales.summaryDiscountAmount') }}: </span>
-                        <strong>- {{ formatMoney(salesAnalyticsSummary.total_discount_amount) }}</strong>
+                        <strong>- {{ formatMoney(salesAnalyticsSummary.total_discount_amount) }} <small class="currency-code">{{ props.book.currency_code }}</small></strong>
                       </p>
                     </th>
                   </tr>

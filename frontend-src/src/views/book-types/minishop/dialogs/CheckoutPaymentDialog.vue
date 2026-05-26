@@ -14,29 +14,32 @@
 
         <div class="d-flex justify-content-between mb-3">
           <span>{{ $t('common.fields.subtotal') }}</span>
-          <div class="text-right">{{ formatMoneyValue(subtotal) }}</div>
+          <div class="text-right">{{ formatMoneyValue(subtotal) }} <small class="currency-code">{{ props.book.currency_code }}</small></div>
         </div>
 
         <div class="row justify-content-between mb-3">
           <label class="col-6 form-label" for="checkout-payment-discount">{{ $t('common.fields.discount') }}</label>
           <div class="col-6 text-right font-semibold">
-            <input
-              id="checkout-payment-discount"
-              :value="discountInput"
-              type="number"
-              class="form-control text-right min-h-5 h-8"
-              min="0"
-              step="0.1"
-              :disabled="isSavingSale"
-              @input="emit('update:discountInput', $event.target.value)"
-              @blur="emit('normalize-discount')"
-            >
+            <div class="relative">
+              <input
+                id="checkout-payment-discount"
+                :value="discountInput"
+                type="number"
+                class="form-control min-h-5 h-8"
+                min="0"
+                step="0.1"
+                :disabled="isSavingSale"
+                @input="emit('update:discountInput', $event.target.value)"
+                @blur="emit('normalize-discount')"
+              >
+              <small class="text-secondary p-1 absolute right-1 bg-neutral-50 top-1"> {{ props.book.currency_code }}  </small>
+            </div>
           </div>
         </div>
 
         <div v-if="discountAmount > 0" class="row justify-content-between mb-3">
           <span class="col-6">{{ $t('common.fields.total') }}</span>
-          <div class="col-6 text-right">{{ formatMoneyValue(total) }}</div>
+          <div class="col-6 text-right">{{ formatMoneyValue(total) }} <small class="currency-code">{{ props.book.currency_code }}</small></div>
         </div>
 
         <hr>
@@ -66,7 +69,7 @@
           </label>
         </nav>
 
-        <div class="mb-1">
+        <div class="mb-1 relative">
             <input
               id="checkout-payment-paid"
               :value="paidInput"
@@ -78,16 +81,17 @@
               @input="handlePaidInput"
               @blur="emit('normalize-paid')"
             >
+            <small class="text-secondary p-1 text-lg absolute right-1 bg-neutral-50 top-1"> {{  props.book.currency_code }}  </small>
         </div>
 
         <div class="mb-2">
           <div v-if="changeAmount > 0" class="text-green">
             <span>{{ $t('minishop.sales.returnChange') }}: </span>
-            <strong class="text-sm">{{ formatMoneyValue(changeAmount) }}</strong>
+            <strong class="text-sm">{{ formatMoneyValue(changeAmount) }} <small class="currency-code">{{ props.book.currency_code }}</small></strong>
           </div>
           <div v-else-if="remainingAmount > 0" class="text-orange">
             <span>{{ $t('minishop.sales.remainingDebt') }}: </span>
-            <strong class="text-sm">{{ formatMoneyValue(remainingAmount) }}</strong>
+            <strong class="text-sm">{{ formatMoneyValue(remainingAmount) }} <small class="currency-code">{{ props.book.currency_code }}</small></strong>
           </div>
           <div v-else class="text-green">
             <strong class="text-sm">{{ $t('common.states.paidInFull') }}</strong>
@@ -114,7 +118,11 @@
 <script setup>
 import { ref } from 'vue'
 
-defineProps({
+const props = defineProps({
+  book: {
+    type: Object,
+    required: true,
+  },
   cartItemsLength: {
     type: Number,
     default: 0,

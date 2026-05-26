@@ -2,6 +2,7 @@
 
 namespace App\Controllers\Api;
 
+use App\Models\BookModel;
 use App\Models\MinishopCustomerModel;
 use App\Models\MinishopProductModel;
 use App\Models\MinishopSaleItemModel;
@@ -47,6 +48,7 @@ class MinishopSalesController extends AuthenticatedApiController
 
     public function __construct(
         private readonly BookAccessService $bookAccess = new BookAccessService(),
+        private readonly BookModel $books = new BookModel(),
         private readonly MinishopCustomerModel $customers = new MinishopCustomerModel(),
         private readonly MinishopProductModel $products = new MinishopProductModel(),
         private readonly MinishopSaleModel $sales = new MinishopSaleModel(),
@@ -269,7 +271,6 @@ class MinishopSalesController extends AuthenticatedApiController
 
     private function createSale(string $userId, string $bookId, array $payload): array
     {
-        $currencyCode = strtoupper(trim((string) ($payload['currency_code'] ?? '')));
         $discountAmount = $this->normalizeMoney($payload['discount_amount'] ?? 0);
         $tenderedAmount = $this->normalizeMoney($payload['paid_amount'] ?? 0);
         $paymentMethod = $this->normalizePaymentMethod($payload['payment_method'] ?? 'cash');
@@ -279,10 +280,8 @@ class MinishopSalesController extends AuthenticatedApiController
         $timestamp = $this->utcNow();
         $soldAt = trim((string) ($payload['sold_at'] ?? ''));
         $paidAt = trim((string) ($payload['paid_at'] ?? ''));
-
-        if ($currencyCode === '' || strlen($currencyCode) !== 3) {
-            throw new InvalidArgumentException('Currency code must be a 3-letter code.');
-        }
+        $book = $this->books->findActiveBookById($bookId, 'minishop');
+        $currencyCode = strtoupper(trim((string) ($book['currency_code'] ?? '')));
 
         if (! is_array($items) || $items === []) {
             throw new InvalidArgumentException('At least one sale item is required.');
@@ -726,9 +725,18 @@ class MinishopSalesController extends AuthenticatedApiController
                 'sold_from' => $localNow->modify('-1 day')->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
                 'sold_to' => $localNow->modify('-1 day')->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
             ],
-            'last_10_days' => $this->makeRollingRange($localNow, 'P10D'),
-            'last_20_days' => $this->makeRollingRange($localNow, 'P20D'),
-            'last_30_days' => $this->makeRollingRange($localNow, 'P30D'),
+            'last_10_days' => [
+                'sold_from' => $localNow->sub(new DateInterval('P10D'))->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'sold_to' => $localNow->format('Y-m-d H:i:s'),
+            ],
+            'last_20_days' => [
+                'sold_from' => $localNow->sub(new DateInterval('P20D'))->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'sold_to' => $localNow->format('Y-m-d H:i:s'),
+            ],
+            'last_30_days' => [
+                'sold_from' => $localNow->sub(new DateInterval('P30D'))->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'sold_to' => $localNow->format('Y-m-d H:i:s'),
+            ],
             'previous_month' => [
                 'sold_from' => $localNow->modify('first day of last month')->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
                 'sold_to' => $localNow->modify('last day of last month')->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
@@ -742,14 +750,6 @@ class MinishopSalesController extends AuthenticatedApiController
                 'sold_to' => $localNow->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
             ],
         };
-    }
-
-    private function makeRollingRange(DateTimeImmutable $localNow, string $intervalSpec): array
-    {
-        return [
-            'sold_from' => $localNow->sub(new DateInterval($intervalSpec))->format('Y-m-d H:i:s'),
-            'sold_to' => $localNow->format('Y-m-d H:i:s'),
-        ];
     }
 
     private function normalizeSoldAt(string $soldAt): ?string

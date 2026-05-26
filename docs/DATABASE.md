@@ -79,6 +79,10 @@ Future values can be added later:
 - `sales`
 - others
 
+Current capability flag:
+
+- `requires_currency` tells the create flow whether books of that type must store a book-level currency
+
 ### `books`
 
 Central table that connects a user to a book type.
@@ -87,10 +91,16 @@ Each book row includes:
 
 - owner user
 - `type_key`
+- optional `currency_code`
 - title
 - optional description
 - optional JSON settings
 - archive state
+
+Rule:
+
+- `currency_code` is immutable after book creation and is only required for book types where `book_types.requires_currency = 1`
+- the code format is intentionally relaxed for now; application validation only limits it to a short value
 
 Core rule:
 

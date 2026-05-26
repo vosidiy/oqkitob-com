@@ -300,31 +300,6 @@
             {{ createBookErrorMessage }}
           </div>
 
-          <div class="mb-3">
-            <label class="form-label" for="create-book-title">{{ $t('common.fields.name') }}</label>
-            <input
-              id="create-book-title"
-              v-model.trim="createBookForm.title"
-              type="text"
-              class="form-control"
-              :placeholder="$t('appLayout.enterBookName')"
-              :disabled="isCreatingBook"
-              required
-            >
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="create-book-description">{{ $t('common.fields.description') }}</label>
-            <textarea
-              id="create-book-description"
-              v-model.trim="createBookForm.description"
-              class="form-control"
-              rows="3"
-              :placeholder="$t('appLayout.addBookDescription')"
-              :disabled="isCreatingBook"
-            ></textarea>
-          </div>
-
           <fieldset class="mb-0">
             <legend class="form-label mb-2">{{ $t('appLayout.chooseBookType') }}</legend>
 
@@ -348,6 +323,7 @@
                   name="book-type"
                   :value="bookType.type_key"
                   :disabled="isCreatingBook"
+                  @change="handleCreateBookTypeChange(bookType)"
                 >
                 <label class="form-check-label w-100" :for="`book-type-${bookType.type_key}`">
                   <div class="fw-semibold">{{ $t('bookTypes.' + bookType.type_key) }}</div>
@@ -358,6 +334,53 @@
               </div>
             </div>
           </fieldset>
+
+          <div v-if="showCreateBookFields" class="mt-3">
+            <div class="mb-3">
+              <label class="form-label" for="create-book-title">{{ $t('common.fields.name') }}</label>
+              <input
+                id="create-book-title"
+                v-model.trim="createBookForm.title"
+                type="text"
+                class="form-control"
+                :placeholder="$t('appLayout.enterBookName')"
+                :disabled="isCreatingBook"
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="create-book-description">{{ $t('common.fields.description') }}</label>
+              <textarea
+                id="create-book-description"
+                v-model.trim="createBookForm.description"
+                class="form-control"
+                rows="3"
+                :placeholder="$t('appLayout.addBookDescription')"
+                :disabled="isCreatingBook"
+              ></textarea>
+            </div>
+
+            <div v-if="showCreateBookCurrencyField">
+              <label class="form-label" for="create-book-currency">{{ $t('common.fields.currency') }}</label>
+              <select
+                id="create-book-currency"
+                v-model="createBookForm.currency_code"
+                class="form-select"
+                :disabled="isCreatingBook"
+              >
+                <option value="" disabled>{{ $t('appLayout.selectCurrency') }}</option>
+                <option
+                  v-for="currencyOption in BOOK_CURRENCY_OPTIONS"
+                  :key="currencyOption.code"
+                  :value="currencyOption.code"
+                >
+                  {{ currencyOption.label }}
+                </option>
+              </select>
+              <div class="small text-secondary mt-1">{{ $t('appLayout.bookCurrencyLockedHint') }}</div>
+            </div>
+          </div>
         </div>
 
         <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
@@ -381,7 +404,7 @@
     <div class="border-bottom px-4 py-3">
       <h2 class="h5 mb-1">{{ $t('appLayout.bookSettingsTitle') }}</h2>
       <p class="text-secondary mb-0">
-        {{ $t('appLayout.bookSettingsPlaceholder', { title: activeBookForSettings?.title || $t('appLayout.thisBook') }) }}
+        {{ $t('appLayout.bookSettingsDescription', { title: bookForSettings?.title || $t('appLayout.thisBook') }) }}
       </p>
     </div>
 
@@ -390,13 +413,53 @@
         {{ bookSettingsErrorMessage }}
       </div>
 
+      <div class="mb-3">
+        <label class="form-label" for="book-settings-title">{{ $t('common.fields.name') }}</label>
+        <input
+          id="book-settings-title"
+          v-model.trim="bookSettingsForm.title"
+          type="text"
+          class="form-control"
+          :placeholder="$t('appLayout.enterBookName')"
+          :disabled="isBookSettingsActionPending"
+        >
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="book-settings-description">{{ $t('common.fields.description') }}</label>
+        <textarea
+          id="book-settings-description"
+          v-model.trim="bookSettingsForm.description"
+          class="form-control"
+          rows="3"
+          :placeholder="$t('appLayout.addBookDescription')"
+          :disabled="isBookSettingsActionPending"
+        ></textarea>
+      </div>
+
+      <div class="d-flex gap-3 mobile:flex-col">
+        <div class="flex-grow">
+          <label class="form-label">{{ $t('common.fields.type') }}</label>
+          <p class="mb-0">
+            {{ bookForSettings?.type_key ? $t('bookTypes.' + bookForSettings.type_key) : '-' }}
+          </p>
+        </div>
+
+        <div v-if="bookForSettings?.currency_code" class="flex-grow">
+          <label class="form-label">{{ $t('common.fields.currency') }}</label>
+          <p class="mb-0">{{ formatCurrencyDisplay(bookForSettings?.currency_code) }}</p>
+        </div>
+      </div>
+
+      <p class="small text-secondary mt-2 mb-4">{{ $t('appLayout.bookCurrencyLockedHint') }}</p>
+
       <p class="text-secondary mb-3">{{ $t('appLayout.bookActionPrompt') }}</p>
 
       <div class="d-flex gap-2 flex-wrap">
         <button
           type="button"
           class="btn btn-outline"
-          :disabled="!hasActiveBookForSettings || isBookSettingsActionPending"
+          :disabled="!bookForSettings?.id || isBookSettingsActionPending"
           @click="handleArchiveBook"
         >
           <span v-if="activeBookSettingsAction === 'archive'">{{ $t('common.states.archiving') }}</span>
@@ -406,7 +469,7 @@
         <button
           type="button"
           class="btn btn-outline text-red"
-          :disabled="!hasActiveBookForSettings || isBookSettingsActionPending"
+          :disabled="!bookForSettings?.id || isBookSettingsActionPending"
           @click="handleDeleteBook"
         >
           <span v-if="activeBookSettingsAction === 'delete'">{{ $t('common.states.deleting') }}</span>
@@ -415,7 +478,7 @@
       </div>
     </div>
 
-    <div class="border-top px-4 py-3 d-flex justify-content-end">
+    <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
       <button
         type="button"
         class="btn btn-outline"
@@ -424,27 +487,43 @@
       >
         {{ $t('common.actions.close') }}
       </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        :disabled="!bookForSettings?.id || isBookSettingsActionPending || bookSettingsForm.title.trim() === ''"
+        @click="handleUpdateBookSettings"
+      >
+        <span v-if="isSavingBookSettings">{{ $t('common.states.saving') }}</span>
+        <span v-else>{{ $t('common.actions.saveChanges') }}</span>
+      </button>
     </div>
   </dialog>
 
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, provide, reactive, ref } from 'vue'
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
 import {
   archiveBookRequest,
   createBookRequest,
   deleteBookRequest,
   fetchBookTypes,
+  updateBookRequest,
 } from '@/api/books-api'
 import { updatePasswordRequest, updateProfileRequest } from '@/api/auth'
 import { getApiErrorMessage, isUnauthorizedError } from '@/api/errors'
 import { useI18n } from 'vue-i18n'
-import { useBookSettingsDialog } from '@/composables/book-settings-dialog'
 import { useLocale } from '@/composables/use-locale'
 import { authStore } from '@/stores/auth'
 import { useBooksStore } from '@/stores/books-store'
+
+const BOOK_CURRENCY_OPTIONS = [
+  { code: 'EUR', label: '🇪🇺 EUR (€) - Euro' },
+  { code: 'RUB', label: '🇷🇺 RUB (₽) - Russian ruble' },
+  { code: 'UZS', label: '🇺🇿 UZS - Uzbekistan som' },
+  { code: 'USD', label: '🇺🇸 USD ($) - US Dollar' },
+]
 
 const router = useRouter()
 const route = useRoute()
@@ -466,12 +545,9 @@ const bookSettingsErrorMessage = ref('')
 const activeBookSettingsAction = ref('')
 const activeProfileAction = ref('')
 const showPasswordUpdateForm = ref(false)
-const {
-  activeBook: activeBookForSettings,
-  isOpen: isBookSettingsDialogOpen,
-  closeBookSettingsDialog,
-  clearBookSettingsDialog,
-} = useBookSettingsDialog()
+const showCreateBookFields = ref(false)
+const showCreateBookCurrencyField = ref(false)
+const bookForSettings = ref(null)
 
 const profileForm = reactive({
   name: '',
@@ -486,6 +562,11 @@ const createBookForm = reactive({
   title: '',
   description: '',
   type_key: '',
+  currency_code: '',
+})
+const bookSettingsForm = reactive({
+  title: '',
+  description: '',
 })
 const profileErrorMessages = reactive({
   name: '',
@@ -497,10 +578,8 @@ const user = computed(() => authStore.state.user)
 const selectedBookId = computed(() => String(route.params.bookId ?? ''))
 const currentUserName = computed(() => String(user.value?.name ?? '').trim())
 const currentUserPhone = computed(() => String(user.value?.phone ?? '').trim())
-const hasActiveBookForSettings = computed(() => {
-  return typeof activeBookForSettings.value?.id === 'string' && activeBookForSettings.value.id.trim() !== ''
-})
 const isBookSettingsActionPending = computed(() => activeBookSettingsAction.value !== '')
+const isSavingBookSettings = computed(() => activeBookSettingsAction.value === 'save')
 const isProfileActionPending = computed(() => activeProfileAction.value !== '')
 const isSavingProfileName = computed(() => activeProfileAction.value === 'name')
 const isSavingProfilePhone = computed(() => activeProfileAction.value === 'phone')
@@ -528,8 +607,10 @@ const isCreateBookSubmitDisabled = computed(() => {
     isLoadingBookTypes.value ||
     isCreatingBook.value ||
     bookTypes.value.length === 0 ||
-    createBookForm.title === '' ||
-    createBookForm.type_key === ''
+    createBookForm.type_key === '' ||
+    !showCreateBookFields.value ||
+    createBookForm.title.trim() === '' ||
+    (showCreateBookCurrencyField.value && createBookForm.currency_code === '')
   )
 })
 const formattedProfileCreatedAt = computed(() => {
@@ -566,24 +647,53 @@ const routerViewKey = computed(() => {
   return String(route.name ?? route.path)
 })
 
-watch(isBookSettingsDialogOpen, (isOpen) => {
-  const dialog = bookSettingsDialog.value
+function bookTypeRequiresCurrency(bookType) {
+  // The backend sends `requires_currency`, so the UI can stay data-driven
+  // instead of hardcoding which book types are "money" books.
+  return Number(bookType?.requires_currency ?? 0) === 1
+}
 
-  if (!dialog) {
-    return
-  }
+function normalizeOptionalTextInput(value) {
+  // Keep optional text fields consistent before sending them to the API.
+  return String(value ?? '').trim()
+}
 
-  if (isOpen) {
-    if (!dialog.open) {
-      dialog.showModal()
-    }
-    return
-  }
+function findCurrencyOption(currencyCode) {
+  const normalizedCurrencyCode = String(currencyCode ?? '').trim().toUpperCase()
 
-  if (dialog.open) {
-    dialog.close()
+  return BOOK_CURRENCY_OPTIONS.find((option) => option.code === normalizedCurrencyCode) ?? null
+}
+
+function formatCurrencyDisplay(currencyCode) {
+  const option = findCurrencyOption(currencyCode)
+  const normalizedCurrencyCode = String(currencyCode ?? '').trim()
+
+  return option?.label ?? (normalizedCurrencyCode !== '' ? normalizedCurrencyCode : '-')
+}
+
+function hydrateBookSettingsForm() {
+  // Settings form only edits mutable metadata, so we copy just title/description.
+  bookSettingsForm.title = String(bookForSettings.value?.title ?? '')
+  bookSettingsForm.description = String(bookForSettings.value?.description ?? '')
+}
+
+function resetBookSettingsForm() {
+  bookSettingsForm.title = ''
+  bookSettingsForm.description = ''
+}
+
+function handleCreateBookTypeChange(bookType) {
+  // The create dialog is progressive: first choose a type, then reveal the
+  // rest of the form and only show currency when that type requires it.
+  showCreateBookFields.value = true
+  showCreateBookCurrencyField.value = bookTypeRequiresCurrency(bookType)
+
+  if (!showCreateBookCurrencyField.value) {
+    createBookForm.currency_code = ''
   }
-})
+}
+
+provide('openBookSettingsDialog', openBookSettingsDialog)
 
 onMounted(async () => {
   try {
@@ -779,6 +889,8 @@ async function openCreateBookDialog() {
     createBookDialog.value?.showModal()
   }
 
+  // Load active book types on demand so the dialog reflects backend rules and
+  // labels without shipping a hardcoded frontend list.
   if (!hasLoadedBookTypes.value && !isLoadingBookTypes.value) {
     await loadBookTypes()
   }
@@ -800,6 +912,31 @@ function handleCreateBookDialogCancel(event) {
   }
 }
 
+function openBookSettingsDialog(book) {
+  const dialog = bookSettingsDialog.value
+
+  if (!dialog) {
+    return
+  }
+
+  bookForSettings.value = book ?? null
+  bookSettingsErrorMessage.value = ''
+  activeBookSettingsAction.value = ''
+  hydrateBookSettingsForm()
+
+  if (!dialog.open) {
+    dialog.showModal()
+  }
+}
+
+function closeBookSettingsDialog() {
+  const dialog = bookSettingsDialog.value
+
+  if (dialog?.open) {
+    dialog.close()
+  }
+}
+
 function handleBookSettingsDialogCancel(event) {
   event.preventDefault()
 
@@ -812,16 +949,48 @@ function handleBookSettingsDialogCancel(event) {
 
 function handleBookSettingsDialogClose() {
   resetBookSettingsDialogState()
-  clearBookSettingsDialog()
+  bookForSettings.value = null
 }
 
 function resetBookSettingsDialogState() {
   bookSettingsErrorMessage.value = ''
   activeBookSettingsAction.value = ''
+  resetBookSettingsForm()
+}
+
+async function handleUpdateBookSettings() {
+  const bookId = String(bookForSettings.value?.id ?? '').trim()
+
+  if (bookId === '' || isBookSettingsActionPending.value || bookSettingsForm.title.trim() === '') {
+    return
+  }
+
+  bookSettingsErrorMessage.value = ''
+  activeBookSettingsAction.value = 'save'
+
+  try {
+    await updateBookRequest(bookId, {
+      title: bookSettingsForm.title.trim(),
+      description: normalizeOptionalTextInput(bookSettingsForm.description),
+    })
+
+    closeBookSettingsDialog()
+    window.location.reload()
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeBookSettingsDialog()
+      router.replace({ name: 'login' })
+      return
+    }
+
+    bookSettingsErrorMessage.value = getApiErrorMessage(error, t('appLayout.unableUpdateBook'))
+  } finally {
+    activeBookSettingsAction.value = ''
+  }
 }
 
 async function handleArchiveBook() {
-  const bookId = String(activeBookForSettings.value?.id ?? '').trim()
+  const bookId = String(bookForSettings.value?.id ?? '').trim()
 
   if (bookId === '' || isBookSettingsActionPending.value) {
     return
@@ -853,7 +1022,7 @@ async function handleArchiveBook() {
 }
 
 async function handleDeleteBook() {
-  const bookId = String(activeBookForSettings.value?.id ?? '').trim()
+  const bookId = String(bookForSettings.value?.id ?? '').trim()
 
   if (bookId === '' || isBookSettingsActionPending.value) {
     return
@@ -889,6 +1058,8 @@ async function loadBookTypes() {
   createBookErrorMessage.value = ''
 
   try {
+    // The backend decides which types are active and whether they require
+    // currency, so the dialog always uses server-provided capability data.
     const { data } = await fetchBookTypes()
     bookTypes.value = data.bookTypes ?? []
     hasLoadedBookTypes.value = true
@@ -915,10 +1086,15 @@ async function handleCreateBook() {
   let responseData = null
 
   try {
+    // Send currency only when the selected type actually shows that field in
+    // the UI. Non-currency books stay simple and omit it entirely.
     const { data } = await createBookRequest({
-      title: createBookForm.title,
-      description: createBookForm.description,
+      title: createBookForm.title.trim(),
+      description: normalizeOptionalTextInput(createBookForm.description),
       type_key: createBookForm.type_key,
+      ...(showCreateBookCurrencyField.value
+        ? { currency_code: createBookForm.currency_code }
+        : {}),
     })
     responseData = data
   } catch (error) {
@@ -960,6 +1136,9 @@ function resetCreateBookForm() {
   createBookForm.title = ''
   createBookForm.description = ''
   createBookForm.type_key = ''
+  createBookForm.currency_code = ''
+  showCreateBookFields.value = false
+  showCreateBookCurrencyField.value = false
   createBookErrorMessage.value = ''
   isCreatingBook.value = false
 }

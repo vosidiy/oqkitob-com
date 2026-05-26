@@ -10,6 +10,7 @@ class BookModel extends Model
         'id',
         'title',
         'type_key',
+        'currency_code',
         'description',
         'icon',
         'color',
@@ -25,6 +26,7 @@ class BookModel extends Model
         'id',
         'user_id',
         'type_key',
+        'currency_code',
         'title',
         'description',
         'icon',
@@ -36,6 +38,7 @@ class BookModel extends Model
         'deleted_at',
     ];
     protected $useTimestamps  = false;
+    protected $beforeUpdate   = ['stripImmutableBookFields'];
 
     /**
      * Sidebar-only projection for the authenticated shell.
@@ -102,6 +105,7 @@ class BookModel extends Model
             'id',
             'user_id',
             'type_key',
+            'currency_code',
             'title',
             'description',
             'is_archived',
@@ -137,6 +141,7 @@ class BookModel extends Model
             'id',
             'user_id',
             'type_key',
+            'currency_code',
             'title',
             'description',
             'is_archived',
@@ -173,5 +178,23 @@ class BookModel extends Model
         }
 
         return $query->first() !== null;
+    }
+
+    /**
+     * Book type and currency are fixed once a book exists.
+     *
+     * The controller also validates this rule, but the model strips these
+     * fields as a final safeguard so later callers cannot mutate them by
+     * accident through a generic update().
+     */
+    protected function stripImmutableBookFields(array $data): array
+    {
+        if (! isset($data['data']) || ! is_array($data['data'])) {
+            return $data;
+        }
+
+        unset($data['data']['type_key'], $data['data']['currency_code']);
+
+        return $data;
     }
 }

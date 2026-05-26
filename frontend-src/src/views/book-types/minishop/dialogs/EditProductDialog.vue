@@ -77,6 +77,9 @@
               :disabled="isBusy"
               required
             >
+            <p class="small text-secondary mt-1">
+              <small class="currency-code">{{ props.book.currency_code }}</small>
+            </p>
           </div>
           <div class="col-3 mb-4">
             <label class="form-label" for="edit-product-quantity">{{ $t('common.fields.quantity') }}</label>
@@ -136,6 +139,10 @@
 import { computed, ref } from 'vue'
 
 const props = defineProps({
+  book: {
+    type: Object,
+    required: true,
+  },
   canDeactivate: {
     type: Boolean,
     default: false,

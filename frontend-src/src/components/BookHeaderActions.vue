@@ -1,13 +1,13 @@
 <template>
   <div class="relative">
-    <button type="button" class="btn btn-default px-2 gap-1" @click="openDialog">
+    <button type="button" class="btn btn-default px-2 gap-1" @click="openBookSettingsDialog(props.book)">
       {{ $t('common.actions.settings') }}
     </button>
   </div>
 </template>
 
 <script setup>
-import { useBookSettingsDialog } from '@/composables/book-settings-dialog'
+import { inject } from 'vue'
 
 const props = defineProps({
   book: {
@@ -16,9 +16,5 @@ const props = defineProps({
   },
 })
 
-const { openBookSettingsDialog } = useBookSettingsDialog()
-
-function openDialog() {
-  openBookSettingsDialog(props.book)
-}
+const openBookSettingsDialog = inject('openBookSettingsDialog', () => {})
 </script>
