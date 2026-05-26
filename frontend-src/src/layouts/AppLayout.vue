@@ -49,15 +49,13 @@
                 <img src="/assets/img/book-finance.png" width="80" alt="Book" class="d-block group-hover:d-none mobile:h-12 mobile:w-10">
             </div>
             <div class="p-3 mobile:p-1" data-book-id="{{ book.id }}">
-                <h6 class="mb-1 mobile:mb-0 text-capitalize">  {{ book.title }}  </h6>
-                <p class="text-secondary">{{ $t('bookTypes.' + book.type_key) }}</p>
-                <div
-                  v-if="book.description"
-                  class="small mt-1"
-                  :class="selectedBookId === book.id ? 'text-white-50' : 'text-secondary'"
+                <h6 class="text-capitalize">  {{ book.title }}  </h6>
+                <div class="text-capitalize" v-if="book.description"
+                  :class="selectedBookId === book.id ? 'text-base' : 'text-secondary'"
                 >
                   {{ book.description }}
                 </div>
+                <p class="text-secondary mt-1">{{ $t('bookTypes.' + book.type_key) }}</p>
             </div>
             
           </RouterLink>
@@ -285,88 +283,88 @@
 
   <dialog
       ref="createBookDialog"
-      class="border rounded shadow p-0"
+      class="mt-10"
       @cancel="handleCreateBookDialogCancel"
       @close="handleCreateBookDialogClose"
     >
-      <form class="m-0" @submit.prevent="handleCreateBook">
-        <div class="border-bottom px-4 py-3">
-          <h2 class="h5 mb-1">{{ $t('appLayout.createBookDialogTitle') }}</h2>
-          <p class="text-secondary mb-0">{{ $t('appLayout.createBookDialogDescription') }}</p>
+      
+      <div class="dialog-body">
+        <button class="btn-close-dialog">
+          <svg viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none">
+            <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
+          </svg> 
+        </button>
+
+        <header>
+          <h4 class="mb-1">{{ $t('appLayout.createBookDialogTitle') }}</h4>
+        </header>
+
+        <hr>
+
+        <div v-if="createBookErrorMessage" class="alert alert-danger" role="alert">
+            {{ createBookErrorMessage }}
         </div>
 
-        <div class="px-4 py-3">
-          <div v-if="createBookErrorMessage" class="alert alert-danger" role="alert">
-            {{ createBookErrorMessage }}
-          </div>
+        <form @submit.prevent="handleCreateBook">
 
-          <fieldset class="mb-0">
+          <fieldset class="mb-4">
             <legend class="form-label mb-2">{{ $t('appLayout.chooseBookType') }}</legend>
-
             <div v-if="isLoadingBookTypes" class="text-secondary">{{ $t('appLayout.loadingBookTypes') }}</div>
-
             <div v-else-if="bookTypes.length === 0" class="text-secondary">
               {{ $t('appLayout.noBookTypes') }}
             </div>
 
-            <div v-else class="vstack gap-2">
-              <div
-                v-for="bookType in bookTypes"
-                :key="bookType.type_key"
-                class="form-check border rounded p-3"
-              >
-                <input
-                  :id="`book-type-${bookType.type_key}`"
-                  v-model="createBookForm.type_key"
-                  class="form-check-input"
-                  type="radio"
-                  name="book-type"
-                  :value="bookType.type_key"
-                  :disabled="isCreatingBook"
-                  @change="handleCreateBookTypeChange(bookType)"
-                >
-                <label class="form-check-label w-100" :for="`book-type-${bookType.type_key}`">
-                  <div class="fw-semibold">{{ $t('bookTypes.' + bookType.type_key) }}</div>
-                  <div v-if="bookType.description" class="small text-secondary mt-1">
-                    {{ bookType.description }}
-                  </div>
+            <div v-else class="gap-2">
+              <div class="mb-2" v-for="bookType in bookTypes" :key="bookType.type_key">
+                <label class="card-check w-full d-block p-3 rounded" :for="`book-type-${bookType.type_key}`">
+                  <input
+                    :id="`book-type-${bookType.type_key}`"
+                    v-model="createBookForm.type_key"
+                    class="form-check-input float-right"
+                    type="radio"
+                    name="book-type"
+                    :value="bookType.type_key"
+                    :disabled="isCreatingBook"
+                    @change="handleCreateBookTypeChange(bookType)"
+                  >
+                  <p class="font-semibold">  📙 {{ $t('bookTypes.' + bookType.type_key) }}</p>
+                  <p v-if="bookType.description" class="small text-secondary mt-1">  {{ bookType.description }}  </p>
                 </label>
               </div>
             </div>
           </fieldset>
-
+          
           <div v-if="showCreateBookFields" class="mt-3">
-            <div class="mb-3">
+            <div class="mb-2">
               <label class="form-label" for="create-book-title">{{ $t('common.fields.name') }}</label>
               <input
                 id="create-book-title"
                 v-model.trim="createBookForm.title"
                 type="text"
-                class="form-control"
+                class="form-control text-capitalize"
                 :placeholder="$t('appLayout.enterBookName')"
                 :disabled="isCreatingBook"
                 required
               >
             </div>
 
-            <div class="mb-3">
-              <label class="form-label" for="create-book-description">{{ $t('common.fields.description') }}</label>
+            <div class="mb-4">
               <textarea
                 id="create-book-description"
                 v-model.trim="createBookForm.description"
                 class="form-control"
-                rows="3"
+                rows="2"
                 :placeholder="$t('appLayout.addBookDescription')"
                 :disabled="isCreatingBook"
               ></textarea>
             </div>
 
-            <div v-if="showCreateBookCurrencyField">
+            <div class="mb-4" v-if="showCreateBookCurrencyField">
               <label class="form-label" for="create-book-currency">{{ $t('common.fields.currency') }}</label>
               <select
                 id="create-book-currency"
                 v-model="createBookForm.currency_code"
-                class="form-select"
+                class="form-select  max-w-50"
                 :disabled="isCreatingBook"
               >
                 <option value="" disabled>{{ $t('appLayout.selectCurrency') }}</option>
@@ -381,18 +379,20 @@
               <div class="small text-secondary mt-1">{{ $t('appLayout.bookCurrencyLockedHint') }}</div>
             </div>
           </div>
-        </div>
 
-        <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
-          <button type="button" class="btn btn-outline" @click="closeCreateBookDialog" :disabled="isCreatingBook">
-            {{ $t('common.actions.cancel') }}
-          </button>
-          <button type="submit" class="btn btn-primary" :disabled="isCreateBookSubmitDisabled">
-            <span v-if="isCreatingBook">{{ $t('common.states.creating') }}</span>
-            <span v-else>{{ $t('common.actions.create') }}</span>
-          </button>
-        </div>
-      </form>
+          <footer class="border-top pt-4 d-flex gap-2">
+            <button type="submit" class="btn flex-1 btn-primary" :disabled="isCreateBookSubmitDisabled">
+              <span v-if="isCreatingBook">{{ $t('common.states.creating') }}</span>
+              <span v-else>{{ $t('common.actions.create') }}</span>
+            </button>
+            <button type="button" class="btn flex-1 btn-default" @click="closeCreateBookDialog" :disabled="isCreatingBook">
+              {{ $t('common.actions.cancel') }}
+            </button>
+          </footer>
+        </form>
+        
+      </div>  <!-- dialog-body .//end -->
+      
   </dialog>
 
   <dialog

@@ -1,0 +1,629 @@
+ERROR - 2026-05-26 17:17:45 --> Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:17:45 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'currency_code' in 'field list'
+[Method: GET, Route: books]
+in SYSTEMPATH/Database/BaseConnection.php on line 865.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 2 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 6 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+ 7 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+ 8 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:17:45 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 310.
+ 1 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 4 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 8 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+ 9 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+10 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:17:45 --> [Caused by] mysqli_sql_exception: Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2026-05-26 17:17:48 --> Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:17:48 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'currency_code' in 'field list'
+[Method: GET, Route: books]
+in SYSTEMPATH/Database/BaseConnection.php on line 865.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 2 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 6 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+ 7 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+ 8 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:17:48 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 310.
+ 1 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 4 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 8 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+ 9 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+10 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:17:48 --> [Caused by] mysqli_sql_exception: Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2026-05-26 17:19:49 --> Unknown column 'requires_currency' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = 1
+ORDER BY `name` ASC, `type_key` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = 1
+ORDER BY `name` ASC, `type_key` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = 1
+ORDER BY `name` ASC, `type_key` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = :is_active:
+ORDER BY `name` ASC, `type_key` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookTypeModel.php(37): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(65): App\Models\BookTypeModel->findActiveForSelection()
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->types()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:19:49 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'requires_currency' in 'field list'
+[Method: GET, Route: books/types]
+in SYSTEMPATH/Database/BaseConnection.php on line 865.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = :is_active:
+ORDER BY `name` ASC, `type_key` ASC', [...], false)
+ 2 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/BookTypeModel.php(37): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/Api/BooksController.php(65): App\Models\BookTypeModel->findActiveForSelection()
+ 6 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->types()
+ 7 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+ 8 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:19:49 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'requires_currency' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 310.
+ 1 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = 1
+ORDER BY `name` ASC, `type_key` ASC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = 1
+ORDER BY `name` ASC, `type_key` ASC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = :is_active:
+ORDER BY `name` ASC, `type_key` ASC', [...], false)
+ 4 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/BookTypeModel.php(37): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/Api/BooksController.php(65): App\Models\BookTypeModel->findActiveForSelection()
+ 8 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->types()
+ 9 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+10 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:19:49 --> [Caused by] mysqli_sql_exception: Unknown column 'requires_currency' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = 1
+ORDER BY `name` ASC, `type_key` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = 1
+ORDER BY `name` ASC, `type_key` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = 1
+ORDER BY `name` ASC, `type_key` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `type_key`, `name`, `description`, `requires_currency`
+FROM `book_types`
+WHERE `is_active` = :is_active:
+ORDER BY `name` ASC, `type_key` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookTypeModel.php(37): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(65): App\Models\BookTypeModel->findActiveForSelection()
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->types()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2026-05-26 17:20:02 --> Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:20:02 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'currency_code' in 'field list'
+[Method: GET, Route: books]
+in SYSTEMPATH/Database/BaseConnection.php on line 865.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 2 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 6 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+ 7 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+ 8 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:20:02 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 310.
+ 1 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 4 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 8 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+ 9 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+10 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:20:02 --> [Caused by] mysqli_sql_exception: Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2026-05-26 17:21:24 --> Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:21:24 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'currency_code' in 'field list'
+[Method: GET, Route: books]
+in SYSTEMPATH/Database/BaseConnection.php on line 865.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 2 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 6 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+ 7 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+ 8 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:21:24 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 310.
+ 1 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 4 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 8 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+ 9 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+10 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-26 17:21:24 --> [Caused by] mysqli_sql_exception: Unknown column 'currency_code' in 'field list'
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 300.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(300): mysqli->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(910): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(827): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = \'11111111-1111-1111-1111-111111111111\'
+AND `deleted_at` IS NULL
+AND `is_archived` = 0
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `id`, `title`, `type_key`, `currency_code`, `description`, `icon`, `color`, `is_archived`
+FROM `books`
+WHERE `user_id` = :user_id:
+AND `deleted_at` IS NULL
+AND `is_archived` = :is_archived:
+AND `books`.`deleted_at` IS NULL
+ORDER BY `sort_order` ASC, `created_at` ASC', [...], false)
+ 5 SYSTEMPATH/Model.php(253): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(676): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/BookModel.php(57): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/Api/BooksController.php(32): App\Models\BookModel->findSidebarBooksForUser('11111111-1111-1111-1111-111111111111')
+ 9 SYSTEMPATH/CodeIgniter.php(951): App\Controllers\Api\BooksController->index()
+10 SYSTEMPATH/CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\BooksController))
+11 SYSTEMPATH/CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
