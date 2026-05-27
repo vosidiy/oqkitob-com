@@ -289,7 +289,8 @@
     >
       
       <div class="dialog-body">
-        <button class="btn-close-dialog">
+
+        <button class="btn-close-dialog" @click="closeCreateBookDialog" :disabled="isCreatingBook">
           <svg viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none">
             <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
           </svg> 
@@ -397,106 +398,108 @@
 
   <dialog
     ref="bookSettingsDialog"
-    class="border rounded shadow p-0"
+    class="mt-10"
     @cancel="handleBookSettingsDialogCancel"
     @close="handleBookSettingsDialogClose"
   >
-    <div class="border-bottom px-4 py-3">
-      <h2 class="h5 mb-1">{{ $t('appLayout.bookSettingsTitle') }}</h2>
-      <p class="text-secondary mb-0">
-        {{ $t('appLayout.bookSettingsDescription', { title: bookForSettings?.title || $t('appLayout.thisBook') }) }}
-      </p>
-    </div>
-
-    <div class="px-4 py-3">
-      <div v-if="bookSettingsErrorMessage" class="alert alert-danger mb-3" role="alert">
-        {{ bookSettingsErrorMessage }}
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label" for="book-settings-title">{{ $t('common.fields.name') }}</label>
-        <input
-          id="book-settings-title"
-          v-model.trim="bookSettingsForm.title"
-          type="text"
-          class="form-control"
-          :placeholder="$t('appLayout.enterBookName')"
+    <div class="dialog-body">
+        
+        <button class="btn-close-dialog"  
           :disabled="isBookSettingsActionPending"
-        >
-      </div>
+          @click="closeBookSettingsDialog">
+          <svg viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none">
+            <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
+          </svg> 
+        </button>
 
-      <div class="mb-3">
-        <label class="form-label" for="book-settings-description">{{ $t('common.fields.description') }}</label>
-        <textarea
-          id="book-settings-description"
-          v-model.trim="bookSettingsForm.description"
-          class="form-control"
-          rows="3"
-          :placeholder="$t('appLayout.addBookDescription')"
-          :disabled="isBookSettingsActionPending"
-        ></textarea>
-      </div>
+        <header>
+          <h4 class="mb-1"> {{ $t('appLayout.bookSettingsTitle') }} </h4>
+        </header>
+        
+        <hr>
 
-      <div class="d-flex gap-3 mobile:flex-col">
-        <div class="flex-grow">
-          <label class="form-label">{{ $t('common.fields.type') }}</label>
-          <p class="mb-0">
-            {{ bookForSettings?.type_key ? $t('bookTypes.' + bookForSettings.type_key) : '-' }}
+        <div v-if="bookSettingsErrorMessage" class="alert alert-danger mb-3" role="alert">
+          {{ bookSettingsErrorMessage }}
+        </div>
+        
+        <div class="card p-3 mb-2">
+          <p class="text-secondary">{{ $t('appLayout.chooseBookType') }}</p>
+          <p class="font-semibold">
+            📙 {{ bookForSettings?.type_key ? $t('bookTypes.' + bookForSettings.type_key) : '-' }}
           </p>
         </div>
 
-        <div v-if="bookForSettings?.currency_code" class="flex-grow">
-          <label class="form-label">{{ $t('common.fields.currency') }}</label>
-          <p class="mb-0">{{ formatCurrencyDisplay(bookForSettings?.currency_code) }}</p>
+        <div class="mb-2">
+          <label class="form-label" for="book-settings-title">{{ $t('common.fields.name') }}</label>
+          <input
+            id="book-settings-title"
+            v-model.trim="bookSettingsForm.title"
+            type="text"
+            class="form-control"
+            :placeholder="$t('appLayout.enterBookName')"
+            :disabled="isBookSettingsActionPending"
+          >
         </div>
-      </div>
+        
+        <div class="mb-4">
+          <textarea
+            id="book-settings-description"
+            v-model.trim="bookSettingsForm.description"
+            class="form-control"
+            rows="2"
+            :placeholder="$t('appLayout.addBookDescription')"
+            :disabled="isBookSettingsActionPending"
+          ></textarea>
+        </div>
+        
+        <div v-if="bookForSettings?.currency_code">
+          <p class="mb-0">{{ $t('common.fields.currency') }}: {{ formatCurrencyDisplay(bookForSettings?.currency_code) }}</p>
+        </div>
+        <p class="text-sm text-secondary mb-4">{{ $t('appLayout.bookCurrencyLockedHint') }}</p>
 
-      <p class="small text-secondary mt-2 mb-4">{{ $t('appLayout.bookCurrencyLockedHint') }}</p>
+        <div class="card border-red p-2 flex-row gap-2">
+          <button
+            type="button"
+            class="btn btn-neutral text-red btn-sm"
+            :disabled="!bookForSettings?.id || isBookSettingsActionPending"
+            @click="handleArchiveBook"
+          >
+            <span v-if="activeBookSettingsAction === 'archive'">{{ $t('common.states.archiving') }}</span>
+            <span v-else>{{ $t('appLayout.archiveBook') }}</span>
+          </button>
 
-      <p class="text-secondary mb-3">{{ $t('appLayout.bookActionPrompt') }}</p>
-
-      <div class="d-flex gap-2 flex-wrap">
-        <button
-          type="button"
-          class="btn btn-outline"
-          :disabled="!bookForSettings?.id || isBookSettingsActionPending"
-          @click="handleArchiveBook"
-        >
-          <span v-if="activeBookSettingsAction === 'archive'">{{ $t('common.states.archiving') }}</span>
-          <span v-else>{{ $t('appLayout.archiveBook') }}</span>
-        </button>
-
-        <button
-          type="button"
-          class="btn btn-outline text-red"
-          :disabled="!bookForSettings?.id || isBookSettingsActionPending"
-          @click="handleDeleteBook"
-        >
-          <span v-if="activeBookSettingsAction === 'delete'">{{ $t('common.states.deleting') }}</span>
-          <span v-else>{{ $t('appLayout.deleteBook') }}</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="border-top px-4 py-3 d-flex justify-content-end gap-2">
-      <button
-        type="button"
-        class="btn btn-outline"
-        :disabled="isBookSettingsActionPending"
-        @click="closeBookSettingsDialog"
-      >
-        {{ $t('common.actions.close') }}
-      </button>
-      <button
-        type="button"
-        class="btn btn-primary"
-        :disabled="!bookForSettings?.id || isBookSettingsActionPending || bookSettingsForm.title.trim() === ''"
-        @click="handleUpdateBookSettings"
-      >
-        <span v-if="isSavingBookSettings">{{ $t('common.states.saving') }}</span>
-        <span v-else>{{ $t('common.actions.saveChanges') }}</span>
-      </button>
-    </div>
+          <button
+            type="button"
+            class="btn btn-red-subtle btn-sm"
+            :disabled="!bookForSettings?.id || isBookSettingsActionPending"
+            @click="handleDeleteBook"
+          >
+            <span v-if="activeBookSettingsAction === 'delete'">{{ $t('common.states.deleting') }}</span>
+            <span v-else>{{ $t('appLayout.deleteBook') }}</span>
+          </button>
+        </div>
+        
+         <footer class="border-top pt-4 d-flex gap-2">
+          <button
+            type="button"
+            class="btn flex-1 btn-primary"
+            :disabled="!bookForSettings?.id || isBookSettingsActionPending || bookSettingsForm.title.trim() === ''"
+            @click="handleUpdateBookSettings"
+          >
+            <span v-if="isSavingBookSettings">{{ $t('common.states.saving') }}</span>
+            <span v-else>{{ $t('common.actions.saveChanges') }}</span>
+          </button>
+          <button
+            type="button"
+            class="btn flex-1 btn-default"
+            :disabled="isBookSettingsActionPending"
+            @click="closeBookSettingsDialog"
+          >
+            {{ $t('common.actions.close') }}
+          </button>
+          
+         </footer>
+    </div>  <!-- dialog-body .//end -->
   </dialog>
 
 </template>
