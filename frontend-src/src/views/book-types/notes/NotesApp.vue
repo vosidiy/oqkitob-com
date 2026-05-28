@@ -9,10 +9,10 @@
         {{ errorMessage }}
       </div>
       
+      
       <div v-if="isLoading" class="mt-10 text-secondary">
           <p class="skeleton"><b>{{ $t('notes.loadingDetailed') }}</b></p>
       </div>
-      <div v-else-if="notes.length === 0" class="mt-10 text-lg text-secondary">{{ $t('notes.empty') }}</div>
 
       <div v-else class="d-grid grid-template-cols-4 mobile:grid-template-cols-1 tablet:grid-template-cols-2 gap-5">
 
@@ -44,6 +44,9 @@
               </div>
         </article>
       </div>
+
+      <div v-if="notes.length === 0" class="mt-10 text-lg text-secondary">{{ $t('notes.empty') }}</div>
+      
 
       </div>
       <!-- container .//end -->
