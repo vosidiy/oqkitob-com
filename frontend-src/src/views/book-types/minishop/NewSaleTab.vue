@@ -277,6 +277,7 @@
 <script setup>
 import { computed } from 'vue'
 import vSelect from 'vue-select'
+import { formatMoneyByBookSettings } from '@/utils/money-display'
 
 const props = defineProps({
   book: {
@@ -442,9 +443,7 @@ function isLowStock(product) {
 }
 
 function formatPrice(price) {
-  const amount = Number(price ?? 0)
-
-  return amount.toFixed(2)
+  return formatMoneyByBookSettings(price, props.book)
 }
 
 function formatQuantity(quantity) {

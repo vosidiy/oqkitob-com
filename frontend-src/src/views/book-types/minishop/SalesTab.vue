@@ -402,6 +402,7 @@
 
   <AddPaymentDialog
     ref="addPaymentDialog"
+    :book="book"
     dialog-class="dialog-sm"
     discount-input-id="sales-add-payment-discount"
     :error-message="paymentErrorMessage"
@@ -420,6 +421,7 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
+import { formatMoneyByBookSettings } from '@/utils/money-display'
 import {
   createMinishopSalePayment,
   deleteMinishopSale,
@@ -902,9 +904,7 @@ function isLatestSalesAnalyticsRequest(requestId) {
 }
 
 function formatMoney(value) {
-  const amount = Number.parseFloat(String(value ?? 0))
-
-  return Number.isFinite(amount) ? amount.toFixed(2) : '0.00'
+  return formatMoneyByBookSettings(value, props.book)
 }
 
 function formatQuantity(value) {

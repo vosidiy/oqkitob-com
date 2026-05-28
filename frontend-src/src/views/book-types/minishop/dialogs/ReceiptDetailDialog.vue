@@ -144,8 +144,13 @@
 
 <script setup>
 import { ref } from 'vue'
+import { formatMoneyByBookSettings } from '@/utils/money-display'
 
-defineProps({
+const props = defineProps({
+  book: {
+    type: Object,
+    required: true,
+  },
   canAddPaymentToReceipt: {
     type: Boolean,
     default: false,
@@ -204,8 +209,7 @@ function isOpen() {
 }
 
 function formatMoney(value) {
-  const amount = Number.parseFloat(String(value ?? 0))
-  return Number.isFinite(amount) ? amount.toFixed(2) : '0.00'
+  return formatMoneyByBookSettings(value, props.book)
 }
 
 function formatQuantity(value) {

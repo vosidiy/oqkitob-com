@@ -117,6 +117,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { formatMoneyByBookSettings } from '@/utils/money-display'
 
 const props = defineProps({
   book: {
@@ -204,8 +205,7 @@ function handlePaidInput(event) {
 }
 
 function formatMoneyValue(value) {
-  const parsedValue = Number.parseFloat(String(value ?? '').trim())
-  return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue.toFixed(2) : '0.00'
+  return formatMoneyByBookSettings(value, props.book)
 }
 
 defineExpose({

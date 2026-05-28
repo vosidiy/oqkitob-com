@@ -61,4 +61,47 @@ class BookTypeModel extends Model
 
         return $bookType ?: null;
     }
+
+    /**
+     * Returns one book type row even if it is no longer active.
+     */
+    public function findByTypeKey(string $typeKey): ?array
+    {
+        if ($typeKey === '') {
+            return null;
+        }
+
+        $bookType = $this->select([
+            'type_key',
+            'name',
+            'description',
+            'requires_currency',
+        ])->where('type_key', $typeKey)
+            ->first();
+
+        return $bookType ?: null;
+    }
+
+    /**
+     * Returns a compact lookup set for multiple book types.
+     *
+     * @param list<string> $typeKeys
+     * @return array<int, array<string, mixed>>
+     */
+    public function findByTypeKeys(array $typeKeys): array
+    {
+        $normalizedTypeKeys = array_values(array_filter(array_map(static fn ($typeKey) => trim((string) $typeKey), $typeKeys)));
+
+        if ($normalizedTypeKeys === []) {
+            return [];
+        }
+
+        return $this->select([
+            'type_key',
+            'name',
+            'description',
+            'requires_currency',
+        ])->whereIn('type_key', array_values(array_unique($normalizedTypeKeys)))
+            ->findAll();
+    }
 }

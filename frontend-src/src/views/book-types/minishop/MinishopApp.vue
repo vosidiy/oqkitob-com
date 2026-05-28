@@ -197,6 +197,7 @@ import BookPageHeader from '@/components/BookPageHeader.vue'
 import CustomersTab from '@/views/book-types/minishop/CustomersTab.vue'
 import NewSaleTab from '@/views/book-types/minishop/NewSaleTab.vue'
 import SalesTab from '@/views/book-types/minishop/SalesTab.vue'
+import { formatMoneyByBookSettings } from '@/utils/money-display'
 import CheckoutPaymentDialog from '@/views/book-types/minishop/dialogs/CheckoutPaymentDialog.vue'
 import { createManageCategoryRow } from '@/views/book-types/minishop/dialogs/categoryRow'
 import CreateCustomerDialog from '@/views/book-types/minishop/dialogs/CreateCustomerDialog.vue'
@@ -425,11 +426,11 @@ const paymentStatusMessage = computed(() => {
   }
 
   if (changeAmount.value > 0) {
-    return t('minishop.main.returnChange', { amount: formatMoneyValue(changeAmount.value) })
+    return t('minishop.main.returnChange', { amount: formatMoneyDisplay(changeAmount.value) })
   }
 
   if (remainingAmount.value > 0) {
-    return t('minishop.main.remaining', { amount: formatMoneyValue(remainingAmount.value) })
+    return t('minishop.main.remaining', { amount: formatMoneyDisplay(remainingAmount.value) })
   }
 
   return t('common.states.paidInFull')
@@ -914,8 +915,8 @@ function buildReceiptHtml() {
       <tr>
         <td>${escapeReceiptText(item.product_name)}</td>
         <td>${escapeReceiptText(item.quantity)}</td>
-        <td>${escapeReceiptText(item.unit_price)}</td>
-        <td>${escapeReceiptText(item.line_total)}</td>
+        <td>${escapeReceiptText(formatMoneyDisplay(item.unit_price))}</td>
+        <td>${escapeReceiptText(formatMoneyDisplay(item.line_total))}</td>
       </tr>
     `
   }).join('')
@@ -924,14 +925,14 @@ function buildReceiptHtml() {
     ? `
       <div class="summary-row success">
         <span>${escapeReceiptText(t('minishop.sales.returnChange'))}</span>
-        <strong>${escapeReceiptText(formatMoneyValue(receipt.changeAmount))}</strong>
+        <strong>${escapeReceiptText(formatMoneyDisplay(receipt.changeAmount))}</strong>
       </div>
     `
     : parseNonNegativeAmount(receipt.sale.due_amount, 0) > 0
       ? `
         <div class="summary-row warning">
           <span>${escapeReceiptText(t('minishop.sales.remainingDebt'))}</span>
-          <strong>${escapeReceiptText(receipt.sale.due_amount)}</strong>
+          <strong>${escapeReceiptText(formatMoneyDisplay(receipt.sale.due_amount))}</strong>
         </div>
       `
       : `
@@ -1011,10 +1012,10 @@ function buildReceiptHtml() {
           <tbody>${itemRows}</tbody>
         </table>
         <div class="summary">
-          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.subtotal'))}</span><strong>${escapeReceiptText(receipt.sale.subtotal_amount)}</strong></div>
-          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.discount'))}</span><strong>- ${escapeReceiptText(receipt.sale.discount_amount)}</strong></div>
-          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.total'))}</span><strong>${escapeReceiptText(receipt.sale.total_amount)}</strong></div>
-          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.paid'))}</span><strong>${escapeReceiptText(formatMoneyValue(receipt.tenderedAmount))}</strong></div>
+          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.subtotal'))}</span><strong>${escapeReceiptText(formatMoneyDisplay(receipt.sale.subtotal_amount))}</strong></div>
+          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.discount'))}</span><strong>- ${escapeReceiptText(formatMoneyDisplay(receipt.sale.discount_amount))}</strong></div>
+          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.total'))}</span><strong>${escapeReceiptText(formatMoneyDisplay(receipt.sale.total_amount))}</strong></div>
+          <div class="summary-row"><span>${escapeReceiptText(t('common.fields.paid'))}</span><strong>${escapeReceiptText(formatMoneyDisplay(receipt.tenderedAmount))}</strong></div>
           ${statusMarkup}
         </div>
       </body>
@@ -1389,6 +1390,10 @@ function parseNonNegativeAmount(value, fallback) {
 
 function formatMoneyValue(value) {
   return parseNonNegativeAmount(value, 0).toFixed(2)
+}
+
+function formatMoneyDisplay(value) {
+  return formatMoneyByBookSettings(value, props.book)
 }
 
 function formatQuantityValue(value) {

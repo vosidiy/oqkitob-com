@@ -27,7 +27,7 @@
             <tr v-for="item in transactions" :key="item.id">
               <td>{{ item.transaction_date }}</td>
               <td class="text-capitalize">{{ item.type }}</td>
-              <td>{{ item.amount }} {{ item.currency_code }}</td>
+              <td>{{ formatMoney(item.amount) }} {{ item.currency_code }}</td>
               <td>{{ item.note || '-' }}</td>
             </tr>
           </tbody>
@@ -44,6 +44,7 @@ import { useI18n } from 'vue-i18n'
 import { isUnauthorizedError } from '@/api/errors'
 import { fetchFinanceTransactions } from '@/api/finance'
 import BookPageHeader from '@/components/BookPageHeader.vue'
+import { formatMoneyByBookSettings } from '@/utils/money-display'
 
 const props = defineProps({
   book: {
@@ -60,6 +61,10 @@ const transactions = ref([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 const hasStartedLoadingTransactions = ref(false)
+
+function formatMoney(value) {
+  return formatMoneyByBookSettings(value, props.book)
+}
 
 watch(() => route.params.page, async (page) => {
   if (page) {

@@ -6,7 +6,18 @@ use CodeIgniter\Model;
 
 class BookModel extends Model
 {
-    private const SIDEBAR_COLUMNS = [
+    private const ACTIVE_SIDEBAR_COLUMNS = [
+        'id',
+        'title',
+        'type_key',
+        'currency_code',
+        'description',
+        'icon',
+        'color',
+        'settings_json',
+        'is_archived',
+    ];
+    private const ARCHIVED_SIDEBAR_COLUMNS = [
         'id',
         'title',
         'type_key',
@@ -48,7 +59,7 @@ class BookModel extends Model
      */
     public function findSidebarBooksForUser(string $userId): array
     {
-        return $this->select(self::SIDEBAR_COLUMNS)
+        return $this->select(self::ACTIVE_SIDEBAR_COLUMNS)
             ->where('user_id', $userId)
             ->where('deleted_at', null)
             ->where('is_archived', 0)
@@ -62,7 +73,7 @@ class BookModel extends Model
      */
     public function findArchivedSidebarBooksForUser(string $userId): array
     {
-        return $this->select(self::SIDEBAR_COLUMNS)
+        return $this->select(self::ARCHIVED_SIDEBAR_COLUMNS)
             ->where('user_id', $userId)
             ->where('deleted_at', null)
             ->where('is_archived', 1)
@@ -80,7 +91,7 @@ class BookModel extends Model
             return null;
         }
 
-        $book = $this->select(self::SIDEBAR_COLUMNS)
+        $book = $this->select(self::ACTIVE_SIDEBAR_COLUMNS)
             ->where('id', $bookId)
             ->where('user_id', $userId)
             ->where('deleted_at', null)
@@ -105,6 +116,7 @@ class BookModel extends Model
             'currency_code',
             'title',
             'description',
+            'settings_json',
             'is_archived',
         ])->where('id', $bookId)
             ->where('user_id', $userId)
@@ -130,6 +142,7 @@ class BookModel extends Model
             'currency_code',
             'title',
             'description',
+            'settings_json',
             'is_archived',
         ])->where('id', $bookId)
             ->where('user_id', $userId)
@@ -173,6 +186,7 @@ class BookModel extends Model
             'currency_code',
             'title',
             'description',
+            'settings_json',
             'is_archived',
         ])->where('id', $bookId)
             ->where('user_id', $userId)
@@ -209,6 +223,7 @@ class BookModel extends Model
             'currency_code',
             'title',
             'description',
+            'settings_json',
             'is_archived',
         ])->where('id', $bookId)
             ->where('deleted_at', null)

@@ -116,8 +116,13 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { formatMoneyByBookSettings } from '@/utils/money-display'
 
 const props = defineProps({
+  book: {
+    type: Object,
+    required: true,
+  },
   discountInputId: {
     type: String,
     required: true,
@@ -201,7 +206,7 @@ watch(
   [paymentMethod, paymentSummaryRemainingBeforePayment],
   ([nextMethod, nextRemaining]) => {
     if (nextMethod === 'card' && paymentSummaryPaidAmount.value > nextRemaining) {
-      paidInput.value = formatMoney(nextRemaining)
+      paidInput.value = formatMoneyInputValue(nextRemaining)
     }
   },
 )
@@ -242,23 +247,23 @@ function handleSubmit() {
 }
 
 function normalizeDiscountInput() {
-  discountInput.value = formatMoney(paymentSummaryDiscountAmount.value)
+  discountInput.value = formatMoneyInputValue(paymentSummaryDiscountAmount.value)
 }
 
 function normalizePaidInput() {
   const normalizedAmount = paymentSummaryPaidAmount.value
 
   if (paymentMethod.value === 'card' && normalizedAmount > paymentSummaryRemainingBeforePayment.value) {
-    paidInput.value = formatMoney(paymentSummaryRemainingBeforePayment.value)
+    paidInput.value = formatMoneyInputValue(paymentSummaryRemainingBeforePayment.value)
     return
   }
 
-  paidInput.value = formatMoney(normalizedAmount)
+  paidInput.value = formatMoneyInputValue(normalizedAmount)
 }
 
 function resetForm() {
-  discountInput.value = formatMoney(props.sale?.discount_amount ?? 0)
-  paidInput.value = formatMoney(props.sale?.due_amount ?? 0)
+  discountInput.value = formatMoneyInputValue(props.sale?.discount_amount ?? 0)
+  paidInput.value = formatMoneyInputValue(props.sale?.due_amount ?? 0)
   paymentMethod.value = props.initialPaymentMethod
 }
 
@@ -268,6 +273,10 @@ function parseNonNegativeAmount(value, fallback) {
 }
 
 function formatMoney(value) {
+  return formatMoneyByBookSettings(value, props.book)
+}
+
+function formatMoneyInputValue(value) {
   return parseNonNegativeAmount(value, 0).toFixed(2)
 }
 
