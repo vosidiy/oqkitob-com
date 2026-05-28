@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
+import AppLayoutMobile from '@/layouts/AppLayoutMobile.vue'
 import GuestLayout from '@/layouts/GuestLayout.vue'
 import HomeView from '@/views/HomeView.vue'
 import BookView from '@/views/BookView.vue'
@@ -8,6 +9,9 @@ import RegisterView from '@/views/auth/RegisterView.vue'
 import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
 import { authStore } from '@/stores/auth'
 import NotFoundView from '@/views/NotFoundView.vue'
+import { isInitialMobileViewport } from '@/utils/device'
+
+const AuthenticatedLayout = isInitialMobileViewport() ? AppLayoutMobile : AppLayout
 
 const router = createRouter({
   history: createWebHistory(),
@@ -44,7 +48,7 @@ const router = createRouter({
     },
     {
       path: '/home',
-      component: AppLayout,
+      component: AuthenticatedLayout,
       meta: {  requiresAuth: true,  },
       children: [
         {

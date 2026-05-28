@@ -38,16 +38,26 @@ The current architecture is intentionally book-centric: a user owns books, each 
 ### Layouts
 
 - `AppLayout.vue`
-  - authenticated shell for `/home`
+  - desktop authenticated shell for `/home`
   - renders:
     - signed-in user summary
     - shared books sidebar
     - create-book dialog
+    - book settings, profile, and archived-book dialogs
     - authenticated language picker
     - logout action
     - child route content
   - warms the shared books list with `booksStore.fetchBooks()`
+  - warms archived-book metadata with `booksStore.fetchArchivedBooks()`
   - keys the child `RouterView` by `bookId` so each selected book remounts as a fresh mini app
+
+- `AppLayoutMobile.vue`
+  - mobile authenticated shell for the same `/home` route group
+  - selected on initial SPA load when `window.innerWidth < 768`
+  - renders `/home` as a full-screen books list instead of showing the desktop dashboard/sidebar layout
+  - renders `/home/books/:bookId/:page?` through the same `BookView.vue` and book mini apps
+  - provides `isMobileAppLayout` so `BookPageHeader.vue` switches to a compact back header
+  - intentionally uses first-load viewport detection only for the MVP
 
 - `GuestLayout.vue`
   - lightweight shell for `/login`, `/register`, and `/forgot-password`
@@ -56,11 +66,18 @@ The current architecture is intentionally book-centric: a user owns books, each 
 ### Route Views
 
 - `HomeView.vue`
-  - authenticated overview page at `/home`
+  - desktop authenticated overview page at `/home`
 - `BookView.vue`
   - selected-book controller view at `/home/books/:bookId`
   - resolves selected-book metadata
   - chooses the correct mini app component
+
+### Shared Components
+
+- `BookPageHeader.vue`
+  - desktop book header by default
+  - compact mobile header with a back button to `/home` when rendered inside `AppLayoutMobile.vue`
+  - passes through optional navigation and action slots for book mini apps
 
 ### Book Mini Apps
 
@@ -71,10 +88,10 @@ Book-specific UI no longer lives in `components/`. It now lives in `views/book-t
 - `views/book-types/finance/FinanceApp.vue`
 - `views/book-types/minishop/MinishopApp.vue`
 - `views/book-types/minishop/*`
-  - `MainTab.vue`
+  - `NewSaleTab.vue`
   - `SalesTab.vue`
   - `CustomersTab.vue`
-  - `ReportsTab.vue`
+  - minishop dialogs for products, customers, categories, receipts, checkout, and payments
 
 Each mini app:
 
@@ -117,20 +134,27 @@ Public methods:
 
 Responsibilities:
 
-- own the shared books list used by the sidebar
+- own the shared active books list used by the desktop sidebar, mobile list, and `BookView`
+- own archived-book metadata used by the archived-books dialog
 - expose list-level loading/error state
-- dedupe concurrent `/books` requests with a module-scoped `listPromise`
+- dedupe concurrent `/books` and `/books/archived` requests with module-scoped promises
 
 State:
 
 - `books`
+- `archivedBooks`
 - `isLoading`
+- `isLoadingArchived`
 - `loaded`
+- `loadedArchived`
 - `errorMessage`
+- `archivedErrorMessage`
 
 Public methods:
 
 - `fetchBooks(force = false)`
+- `fetchArchivedBooks(force = false)`
+- `findBookById(bookId)`
 - `reset()`
 
 This store intentionally does not own selected-book state anymore. Selected-book resolution now lives inside `BookView.vue`.
@@ -145,9 +169,16 @@ This store intentionally does not own selected-book state anymore. Selected-book
   - `/login`
   - `/register`
   - `/forgot-password`
-- authenticated under `AppLayout`
+- authenticated under the first-load authenticated layout (`AppLayout` or `AppLayoutMobile`)
   - `/home`
   - `/home/books/:bookId/:page?`
+
+For authenticated routes, `router/index.js` chooses the route-group layout once during module initialization:
+
+- `AppLayoutMobile.vue` when `window.innerWidth < 768`
+- `AppLayout.vue` otherwise
+
+The URL surface does not change between desktop and mobile. The MVP does not listen for resize events; reloading after a viewport change picks the appropriate layout again.
 
 The global `beforeEach` guard uses `authStore.ensureChecked()`:
 
@@ -160,17 +191,33 @@ The global `beforeEach` guard uses `authStore.ensureChecked()`:
 
 The main metadata source is `GET /api/books`.
 
-`AppLayout.vue` fetches this list once for the sidebar. `BookView.vue` reuses the same shared list first before attempting any fallback request.
+`AppLayout.vue` fetches this list once for the desktop sidebar. `AppLayoutMobile.vue` fetches the same list for the mobile `/home` book list. `BookView.vue` reuses the same shared list first before attempting any fallback request.
 
 ### Book Creation Flow
 
-`AppLayout.vue` also owns the sidebar create flow:
+`AppLayout.vue` owns the desktop sidebar create flow:
 
 1. open the native `<dialog>`
 2. load active types from `GET /api/books/types`
-3. submit `title`, `description`, and `type_key` to `POST /api/books`
-4. validate the returned `book.id`
-5. do a full page navigation to `/home/books/:bookId`
+3. reveal title/description fields after a type is chosen
+4. require `currency_code` when the selected type has `requires_currency = 1`
+5. submit `title`, `description`, `type_key`, and optional `currency_code` to `POST /api/books`
+6. validate the returned `book.id`
+7. do a full page navigation to `/home/books/:bookId`
+
+The mobile layout currently does not implement creation; it focuses on the app-like list and open-book flow.
+
+### Book Settings and Archiving
+
+`AppLayout.vue` also owns desktop book-level management dialogs:
+
+- profile settings
+- book settings via `PUT /api/books/{bookId}`
+- archive via `POST /api/books/{bookId}/archive`
+- restore via `POST /api/books/{bookId}/restore`
+- delete archived book via `DELETE /api/books/{bookId}`
+
+`BookPageHeader.vue` renders `BookHeaderActions.vue` on desktop so book mini apps can open the injected settings dialog. The mobile header currently omits those actions and only provides the back-to-list path.
 
 ### Selected Book Resolution
 
@@ -194,7 +241,7 @@ After the selected book is known:
 - `FinanceApp.vue` calls `fetchFinanceTransactions(book.id)`
 - `MinishopApp.vue` calls minishop product/category/customer/sales helpers under `api/minishop.js`
 
-Because `AppLayout` keys `RouterView` by `bookId`, switching between books remounts `BookView` and the child mini app, which resets filters, dialogs, and local in-memory state cleanly.
+Because both authenticated layouts key `RouterView` by `bookId`, switching between books remounts `BookView` and the child mini app, which resets filters, dialogs, and local in-memory state cleanly.
 
 ## Frontend Localization Architecture
 
@@ -213,11 +260,11 @@ The frontend now uses a shared `vue-i18n` layer instead of component-local strin
 
 Current behavior:
 
-- `AppLayout.vue` and `GuestLayout.vue` both bind to the same locale state
+- `AppLayout.vue`, `AppLayoutMobile.vue`, and `GuestLayout.vue` all bind to the same locale state
 - locale changes apply immediately across routed views
 - unsupported locale values are coerced to English
 - missing keys resolve through English fallback
-- helper functions in `i18n/helpers.js` translate app-owned dynamic labels such as:
+- app-owned dynamic labels are translated through shared message keys such as:
   - book type names
   - todo priorities
   - payment statuses
@@ -238,7 +285,7 @@ API helpers live in `frontend-src/src/api/`.
 - `auth.js`
   - auth request helpers
 - `books-api.js`
-  - books list, book-type loading, single-book fallback, and book creation helpers
+  - active/archived books lists, book-type loading, single-book fallback, creation, settings, archive, restore, and delete helpers
 - `notes.js`, `todos.js`, `finance.js`
   - book-type request helpers
 - `minishop.js`
@@ -254,8 +301,11 @@ This keeps transport code out of views and stores while staying lightweight.
 - `Books`
   - `Api\BooksController`
   - authenticated books list
+  - archived books list
   - active book-type list
   - book creation
+  - book metadata/settings update
+  - archive, restore, and archived-book delete
   - single-book metadata fallback
 - `Notes`
   - `Api\NotesController`
@@ -288,9 +338,13 @@ Current routes:
 /api/auth/me
 /api/books      (GET list)
 /api/books      (POST create)
+/api/books/archived (GET archived list)
 /api/books/types (GET active types)
 /api/books/{bookId} (GET metadata fallback)
 /api/books/{bookId} (PUT update title/description)
+/api/books/{bookId} (DELETE archived book)
+/api/books/{bookId}/archive
+/api/books/{bookId}/restore
 /api/books/{bookId}/notes
 /api/books/{bookId}/todos
 /api/books/{bookId}/finance

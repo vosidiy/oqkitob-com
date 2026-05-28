@@ -2,7 +2,7 @@
 
 `oqkitob-com` is a same-origin Vue SPA with a CodeIgniter 4 API backend and a MySQL database.
 
-The product is organized around user-owned books. Each book has a `type_key` such as `notes`, `todo`, or `finance`, and each type behaves like a small focused app inside the main layout.
+The product is organized around user-owned books. Each book has a `type_key` such as `notes`, `todo`, or `finance`, and each type behaves like a small focused app inside the authenticated layout.
 
 ## What It Is
 A single-page web app where users register, sign in, and create "books".
@@ -47,9 +47,10 @@ oqkitob-com/
 │       ├── components/                 # Reusable UI components only
 │       ├── composables/                # Shared app-side behavior helpers
 │       ├── i18n/                       # Locale config, messages, and helpers
-│       ├── layouts/                    # AppLayout and GuestLayout
+│       ├── layouts/                    # AppLayout, AppLayoutMobile, and GuestLayout
 │       ├── router/                     # Vue Router config and guards
 │       ├── stores/                     # Auth store + books Pinia store
+│       ├── utils/                      # Small shared utilities
 │       ├── views/                      # Route views and book mini apps
 │       │   ├── auth/
 │       │   └── book-types/
@@ -64,18 +65,30 @@ oqkitob-com/
 ## Current Frontend Structure
 
 - `frontend-src/src/layouts/AppLayout.vue`
-  - authenticated shell for `/home`
+  - desktop authenticated shell for `/home`
   - loads the shared books list for the sidebar
   - hosts the native create-book dialog for the sidebar
+  - hosts book settings, profile, and archived-book dialogs
   - owns the authenticated language picker
   - remounts the book page when `bookId` changes
+- `frontend-src/src/layouts/AppLayoutMobile.vue`
+  - mobile authenticated shell selected on initial load when `window.innerWidth < 768`
+  - keeps the same `/home` and `/home/books/:bookId/:page?` routes
+  - renders `/home` as a full-screen app-like books list instead of a sidebar/dashboard split
+  - renders selected books through the same `BookView.vue` and book mini apps
+  - provides a mobile flag so `BookPageHeader.vue` renders a compact back header
 - `frontend-src/src/layouts/GuestLayout.vue`
   - minimal guest shell for auth pages
   - owns the guest-page language picker
+- `frontend-src/src/utils/device.js`
+  - owns the `768px` mobile breakpoint and first-load viewport check
 - `frontend-src/src/views/HomeView.vue`
-  - dashboard overview at `/home`
+  - desktop dashboard overview at `/home`
 - `frontend-src/src/views/BookView.vue`
   - resolves the selected book and chooses the correct mini app
+- `frontend-src/src/components/BookPageHeader.vue`
+  - desktop book header by default
+  - compact mobile book header with a back button to `/home` inside `AppLayoutMobile.vue`
 - `frontend-src/src/views/book-types/*`
   - `NotesApp.vue`
   - `TodoApp.vue`
@@ -95,8 +108,10 @@ Frontend routes:
 - `/login` -> guest auth page
 - `/register` -> guest scaffold page
 - `/forgot-password` -> guest scaffold page
-- `/home` -> authenticated dashboard home
+- `/home` -> authenticated home; desktop shows the dashboard/content area, mobile shows the full-screen books list
 - `/home/books/:bookId/:page?` -> authenticated selected-book page
+
+Authenticated routes keep the same URLs on desktop and mobile. On the first SPA load, `router/index.js` chooses `AppLayoutMobile.vue` when the viewport is narrower than `768px`; otherwise it uses `AppLayout.vue`. This is intentionally first-load only for the MVP, so resizing after load does not swap layouts until the page is reloaded.
 
 Route guards use `authStore.ensureChecked()`:
 
@@ -121,17 +136,23 @@ The frontend currently uses a mixed state approach:
 
 - `frontend-src/src/stores/books-store.js`
   - Pinia setup store via `useBooksStore()`
-  - owns the shared books list only
+  - owns the shared active and archived books lists
   - state:
     - `books`
+    - `archivedBooks`
     - `isLoading`
+    - `isLoadingArchived`
     - `loaded`
+    - `loadedArchived`
     - `errorMessage`
+    - `archivedErrorMessage`
   - methods:
     - `fetchBooks(force = false)`
+    - `fetchArchivedBooks(force = false)`
+    - `findBookById(bookId)`
     - `reset()`
 
-The books store keeps a module-scoped `listPromise` so concurrent sidebar/detail loads reuse the same `/books` request.
+The books store keeps module-scoped promises so concurrent list/detail loads reuse the same `/books` and `/books/archived` requests.
 
 ## Frontend Localization
 
@@ -150,7 +171,8 @@ The SPA now has a shared `vue-i18n` layer.
 
 Behavior:
 
-- authenticated and guest layouts both expose a language picker
+- authenticated and guest layouts expose a language picker
+- desktop and mobile authenticated layouts bind to the same locale state
 - invalid or corrupt stored locale values fall back to English
 - missing translation keys also fall back to English
 - current scope covers visible frontend UI strings only
@@ -170,10 +192,14 @@ Frontend API helpers live under `frontend-src/src/api/`.
   - `fetchCurrentUserRequest`
 - `books-api.js`
   - `fetchBooksList()`
+  - `fetchArchivedBooksList()`
   - `fetchBookTypes()`
   - `fetchBookById(bookId)`
   - `createBookRequest(payload)`
   - `updateBookRequest(bookId, payload)`
+  - `archiveBookRequest(bookId)`
+  - `restoreBookRequest(bookId)`
+  - `deleteBookRequest(bookId)`
 - `minishop.js`
   - minishop products, customers, sales, and payment summary helpers
 - `notes.js`
@@ -201,7 +227,7 @@ Each book mini app then fetches its own content on mount:
 - finance -> `/api/books/{bookId}/finance`
 - minishop -> `/api/books/{bookId}/minishop/*`
 
-The sidebar also owns book creation:
+The desktop sidebar owns book creation:
 
 1. open the native create-book dialog from `AppLayout.vue`
 2. load active book types from `GET /api/books/types`
@@ -212,6 +238,8 @@ The sidebar also owns book creation:
 7. keep `type_key` and `currency_code` immutable after creation
 8. validate the returned `book.id`
 9. do a full page navigation to `/home/books/{bookId}`
+
+The mobile layout currently focuses on the MVP read/open flow: `/home` shows the books list, and tapping a book opens the existing book content route.
 
 Books list responses are used as the primary frontend metadata source for:
 
