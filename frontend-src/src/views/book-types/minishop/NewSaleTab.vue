@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex flex-1 overflow-hidden mobile:flex-col">
+  <div class="d-flex flex-1 overflow-hidden mobile:flex-col relative">
     <aside class="d-flex flex-col overflow-hidden border-right  border-color-neutral-300 max-w-35% mobile:max-w-full flex-grow mobile:w-full">
       <header class="d-flex h-16 gap-2 align-items-center justify-content-between px-4 py-3 border-bottom">
         <div>
@@ -32,7 +32,7 @@
         </div>
       </header>
 
-      <section class="overflow-y-auto scrollbar-thin py-2 flex-1">
+      <section class="overflow-y-auto scrollbar-thin py-2 flex-1 mobile:pb-20">
 
         <div class="px-4  mb-2">
           <a href="#" role="button" class="mr-3 link" @click="emit('open-create-product')">
@@ -111,13 +111,27 @@
       </section>
     </aside>
 
-    <aside class="d-flex flex-col w-full h-full flex-1">
+    <aside
+      class="d-flex flex-col w-full h-full flex-1 bg-base mobile:fixed top-0 left-0 right-0 bottom-0 z-50"
+      :class="{ 'mobile:d-flex': isMobileCartOpen, 'mobile:d-none': !isMobileCartOpen }"
+    >
       <section class="px-4 py-3 border-bottom">
         <div class="d-flex justify-content-between align-items-center gap-2">
-          <h4 class="mb-0">{{ $t('minishop.main.newSale') }}</h4>
-          <div class="small text-secondary">
-            {{ $t('minishop.main.itemCount', { count: cartItems.length }) }}
+          <div>
+            <h4 class="mb-0">{{ $t('minishop.main.newSale') }}</h4>
+            <div class="small text-secondary">
+              {{ $t('minishop.main.itemCount', { count: cartItems.length }) }}
+            </div>
           </div>
+
+          <button
+            type="button"
+            class="btn btn-icon btn-default d-none mobile:d-flex"
+            :title="$t('common.actions.close')"
+            @click="closeMobileCart"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
         </div>
       </section>
 
@@ -271,11 +285,17 @@
         </button>
       </section>
     </aside>
+
+    <div class="d-none mobile:d-block fixed left-0 right-0 bottom-0 z-40 bg-base border-top border-color-neutral-300 p-3">
+      <button type="button" class="btn btn-primary w-full" @click="openMobileCart">
+        {{ $t('minishop.main.selectedCart', { count: cartItems.length }) }}
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import vSelect from 'vue-select'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
 
@@ -413,6 +433,16 @@ const selectedCustomerIdModel = computed({
 const showClearFiltersAction = computed(() => {
   return props.selectedCategoryId !== '' || props.productSearchQuery.trim() !== ''
 })
+
+const isMobileCartOpen = ref(false)
+
+function openMobileCart() {
+  isMobileCartOpen.value = true
+}
+
+function closeMobileCart() {
+  isMobileCartOpen.value = false
+}
 
 function updateSelectedCategoryId(event) {
   emit('update:selectedCategoryId', event.target.value)
