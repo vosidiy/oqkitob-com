@@ -103,513 +103,81 @@
 
 </div>
 
-  <dialog
+  <ProfileDialog
     ref="profileDialog"
-    class="dialog-md"
+    :formatted-profile-created-at="formattedProfileCreatedAt"
+    :is-logging-out="isLoggingOut"
+    :is-name-save-disabled="isNameSaveDisabled"
+    :is-password-save-disabled="isPasswordSaveDisabled"
+    :is-phone-save-disabled="isPhoneSaveDisabled"
+    :is-profile-action-pending="isProfileActionPending"
+    :is-saving-profile-name="isSavingProfileName"
+    :is-saving-profile-password="isSavingProfilePassword"
+    :is-saving-profile-phone="isSavingProfilePhone"
+    :password-form="passwordForm"
+    :profile-error-messages="profileErrorMessages"
+    :profile-form="profileForm"
+    :show-password-update-form="showPasswordUpdateForm"
+    :user="user"
     @cancel="handleProfileDialogCancel"
     @close="handleProfileDialogClose"
-  >
-    <header class="dialog-header">
-      <div class="d-flex align-items-center gap-2">
-        <b class="avatar bg-primary-300 text-white avatar-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </b>
-        <h5>{{ $t('profileDialog.title') }}</h5>
-      </div>
-      <button type="button" class="btn btn-icon" :disabled="isProfileActionPending" @click="closeProfileDialog">
-        <svg viewBox="0 0 24 24" width="24" height="24">
-          <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
-        </svg>
-      </button>
-    </header>
+    @close-password-form="closePasswordUpdateForm"
+    @logout="handleLogout"
+    @open-password-form="openPasswordUpdateForm"
+    @save-name="handleProfileNameSave"
+    @save-password="handleProfilePasswordSave"
+    @save-phone="handleProfilePhoneSave"
+  />
 
-    <div class="dialog-body">
-      <article class="d-flex gap-2 py-4 pt-0 align-items-stretch border-bottom mobile:flex-col">
-        <label class="col-4 mobile:col-12">{{ $t('profileDialog.account') }}</label>
-        <div class="col-8 mobile:col-12">
-          <p class="text-secondary mb-1">
-            {{ $t('profileDialog.accountCreatedAt') }}: {{ formattedProfileCreatedAt }}
-          </p>
-          <b>{{ user?.email || '-' }}</b>
-        </div>
-      </article>
+  <CreateBookDialog
+    ref="createBookDialog"
+    :book-types="bookTypes"
+    :currency-options="BOOK_CURRENCY_OPTIONS"
+    :error-message="createBookErrorMessage"
+    :form="createBookForm"
+    :is-creating-book="isCreatingBook"
+    :is-loading-book-types="isLoadingBookTypes"
+    :is-submit-disabled="isCreateBookSubmitDisabled"
+    :show-create-book-currency-field="showCreateBookCurrencyField"
+    :show-create-book-fields="showCreateBookFields"
+    @cancel="handleCreateBookDialogCancel"
+    @close="handleCreateBookDialogClose"
+    @submit="handleCreateBook"
+    @type-change="handleCreateBookTypeChange"
+  />
 
-      <article class="d-flex gap-2 py-4 align-items-stretch border-bottom mobile:flex-col">
-        <label class="col-4 mobile:col-12" for="profile-name">{{ $t('profileDialog.name') }}</label>
-        <div class="col-8 mobile:col-12">
-          <div class="d-flex gap-2 justify-content-between mobile:flex-col">
-            <input
-              id="profile-name"
-              v-model.trim="profileForm.name"
-              type="text"
-              class="form-control"
-              :placeholder="$t('profileDialog.namePlaceholder')"
-              :disabled="isProfileActionPending"
-            >
-            <button
-              type="button"
-              class="btn btn-primary flex-shrink-0"
-              :disabled="isNameSaveDisabled"
-              @click="handleProfileNameSave"
-            >
-              <span v-if="isSavingProfileName">{{ $t('common.states.saving') }}</span>
-              <span v-else>{{ $t('common.actions.save') }}</span>
-            </button>
-          </div>
-
-          <div v-if="profileErrorMessages.name" class="alert alert-danger mt-2 mb-0" role="alert">
-            {{ profileErrorMessages.name }}
-          </div>
-        </div>
-      </article>
-
-      <article class="d-flex gap-2 py-4 align-items-stretch border-bottom mobile:flex-col">
-        <label class="col-4 mobile:col-12" for="profile-phone">{{ $t('profileDialog.phone') }}</label>
-        <div class="col-8 mobile:col-12">
-          <div class="d-flex gap-2 justify-content-between mobile:flex-col">
-            <input
-              id="profile-phone"
-              v-model.trim="profileForm.phone"
-              type="text"
-              class="form-control"
-              :placeholder="$t('profileDialog.phonePlaceholder')"
-              :disabled="isProfileActionPending"
-            >
-            <button
-              type="button"
-              class="btn btn-primary flex-shrink-0"
-              :disabled="isPhoneSaveDisabled"
-              @click="handleProfilePhoneSave"
-            >
-              <span v-if="isSavingProfilePhone">{{ $t('common.states.saving') }}</span>
-              <span v-else>{{ $t('common.actions.save') }}</span>
-            </button>
-          </div>
-
-          <div v-if="profileErrorMessages.phone" class="alert alert-danger mt-2 mb-0" role="alert">
-            {{ profileErrorMessages.phone }}
-          </div>
-        </div>
-      </article>
-
-      <article class="d-flex gap-2 py-4 align-items-stretch border-bottom mobile:flex-col">
-        <label class="col-4 mobile:col-12">{{ $t('profileDialog.password') }}</label>
-        <div class="col-8 mobile:col-12">
-          <div class="d-flex justify-content-between align-items-center gap-2 mobile:flex-col mobile:align-items-stretch">
-            <span>{{ $t('profileDialog.passwordMask') }}</span>
-            <button
-              v-if="!showPasswordUpdateForm"
-              type="button"
-              class="btn btn-default"
-              :disabled="isProfileActionPending"
-              @click="openPasswordUpdateForm"
-            >
-              {{ $t('profileDialog.changePassword') }}
-            </button>
-          </div>
-
-          <form v-if="showPasswordUpdateForm" class="mt-3" @submit.prevent="handleProfilePasswordSave">
-            <div class="mb-4">
-              <label class="form-label" for="profile-current-password">{{ $t('profileDialog.currentPassword') }}</label>
-              <input
-                id="profile-current-password"
-                v-model="passwordForm.current_password"
-                type="password"
-                class="form-control"
-                :placeholder="$t('profileDialog.currentPasswordPlaceholder')"
-                :disabled="isProfileActionPending"
-                autocomplete="current-password"
-              >
-            </div>
-
-            <div class="mb-2">
-              <label class="form-label" for="profile-new-password">{{ $t('profileDialog.newPassword') }}</label>
-              <input
-                id="profile-new-password"
-                v-model="passwordForm.new_password"
-                type="password"
-                class="form-control mb-2"
-                :placeholder="$t('profileDialog.newPasswordPlaceholder')"
-                :disabled="isProfileActionPending"
-                autocomplete="new-password"
-              >
-              <input
-                id="profile-new-password-confirmation"
-                v-model="passwordForm.new_password_confirmation"
-                type="password"
-                class="form-control mb-2"
-                :placeholder="$t('profileDialog.repeatNewPasswordPlaceholder')"
-                :disabled="isProfileActionPending"
-                autocomplete="new-password"
-              >
-            </div>
-
-            <div v-if="profileErrorMessages.password" class="alert alert-danger mb-3" role="alert">
-              {{ profileErrorMessages.password }}
-            </div>
-
-            <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary" :disabled="isPasswordSaveDisabled">
-                <span v-if="isSavingProfilePassword">{{ $t('common.states.saving') }}</span>
-                <span v-else>{{ $t('profileDialog.saveNewPassword') }}</span>
-              </button>
-              <button
-                type="button"
-                class="btn btn-default"
-                :disabled="isProfileActionPending"
-                @click="closePasswordUpdateForm"
-              >
-                {{ $t('common.actions.cancel') }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </article>
-
-      <div class="d-flex gap-2 mt-4 justify-content-between mobile:flex-col">
-        <button
-          type="button"
-          class="btn btn-plain border text-red"
-          :disabled="isLoggingOut || isProfileActionPending"
-          @click="handleLogout"
-        >
-          <span v-if="isLoggingOut">{{ $t('common.states.loggingOut') }}</span>
-          <span v-else>{{ $t('common.actions.logout') }}</span>
-        </button>
-        <button type="button" class="btn btn-default" :disabled="isProfileActionPending" @click="closeProfileDialog">
-          {{ $t('common.actions.close') }}
-        </button>
-      </div>
-    </div>
-  </dialog>
-
-  <dialog
-      ref="createBookDialog"
-      class="mt-10"
-      @cancel="handleCreateBookDialogCancel"
-      @close="handleCreateBookDialogClose"
-    >
-      
-      <div class="dialog-body">
-
-        <button class="btn-close-dialog" @click="closeCreateBookDialog" :disabled="isCreatingBook">
-          <svg viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none">
-            <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
-          </svg> 
-        </button>
-
-        <header>
-          <h4 class="mb-1">{{ $t('appLayout.createBookDialogTitle') }}</h4>
-        </header>
-
-        <hr>
-
-        <div v-if="createBookErrorMessage" class="alert alert-danger" role="alert">
-            {{ createBookErrorMessage }}
-        </div>
-
-        <form @submit.prevent="handleCreateBook">
-
-          <fieldset class="mb-4">
-            <legend class="form-label mb-2">{{ $t('appLayout.chooseBookType') }}</legend>
-            <div v-if="isLoadingBookTypes" class="text-secondary">{{ $t('appLayout.loadingBookTypes') }}</div>
-            <div v-else-if="bookTypes.length === 0" class="text-secondary">
-              {{ $t('appLayout.noBookTypes') }}
-            </div>
-
-            <div v-else class="gap-2">
-              <div class="mb-2" v-for="bookType in bookTypes" :key="bookType.type_key">
-                <label class="card-check w-full d-block p-3 rounded" :for="`book-type-${bookType.type_key}`">
-                  <input
-                    :id="`book-type-${bookType.type_key}`"
-                    v-model="createBookForm.type_key"
-                    class="form-check-input float-right"
-                    type="radio"
-                    name="book-type"
-                    :value="bookType.type_key"
-                    :disabled="isCreatingBook"
-                    @change="handleCreateBookTypeChange(bookType)"
-                  >
-                  <p class="font-semibold">  📙 {{ $t('bookTypes.' + bookType.type_key) }}</p>
-                  <p v-if="bookType.description" class="small text-secondary mt-1">  {{ bookType.description }}  </p>
-                </label>
-              </div>
-            </div>
-          </fieldset>
-          
-          <div v-if="showCreateBookFields" class="mt-3">
-            <div class="mb-2">
-              <label class="form-label" for="create-book-title">{{ $t('common.fields.name') }}</label>
-              <input
-                id="create-book-title"
-                v-model.trim="createBookForm.title"
-                type="text"
-                class="form-control text-capitalize"
-                :placeholder="$t('appLayout.enterBookName')"
-                :disabled="isCreatingBook"
-                required
-              >
-            </div>
-
-            <div class="mb-4">
-              <textarea
-                id="create-book-description"
-                v-model.trim="createBookForm.description"
-                class="form-control"
-                rows="2"
-                :placeholder="$t('appLayout.addBookDescription')"
-                :disabled="isCreatingBook"
-              ></textarea>
-            </div>
-
-            <div class="mb-4" v-if="showCreateBookCurrencyField">
-              <label class="form-label" for="create-book-currency">{{ $t('common.fields.currency') }}</label>
-              <select
-                id="create-book-currency"
-                v-model="createBookForm.currency_code"
-                class="form-select  max-w-50"
-                :disabled="isCreatingBook"
-              >
-                <option value="" disabled>{{ $t('appLayout.selectCurrency') }}</option>
-                <option
-                  v-for="currencyOption in BOOK_CURRENCY_OPTIONS"
-                  :key="currencyOption.code"
-                  :value="currencyOption.code"
-                >
-                  {{ currencyOption.label }}
-                </option>
-              </select>
-              <div class="small text-secondary mt-1">{{ $t('appLayout.bookCurrencyLockedHint') }}</div>
-            </div>
-          </div>
-
-          <footer class="border-top pt-4 d-flex gap-2">
-            <button type="submit" class="btn flex-1 btn-primary" :disabled="isCreateBookSubmitDisabled">
-              <span v-if="isCreatingBook">{{ $t('common.states.creating') }}</span>
-              <span v-else>{{ $t('common.actions.create') }}</span>
-            </button>
-            <button type="button" class="btn flex-1 btn-default" @click="closeCreateBookDialog" :disabled="isCreatingBook">
-              {{ $t('common.actions.cancel') }}
-            </button>
-          </footer>
-        </form>
-        
-      </div>  <!-- dialog-body .//end -->
-      
-  </dialog>
-
-  <dialog
+  <BookSettingsDialog
     ref="bookSettingsDialog"
-    class="mt-10"
+    :active-book-settings-action="activeBookSettingsAction"
+    :book="bookForSettings"
+    :error-message="bookSettingsErrorMessage"
+    :form="bookSettingsForm"
+    :format-currency-display="formatCurrencyDisplay"
+    :format-money-display-option-label="formatMoneyDisplayOptionLabel"
+    :is-book-settings-action-pending="isBookSettingsActionPending"
+    :is-saving-book-settings="isSavingBookSettings"
+    :money-display-separator-options="moneyDisplaySeparatorOptions"
+    :show-money-display-settings="showMoneyDisplaySettings"
+    @archive="handleArchiveBook"
     @cancel="handleBookSettingsDialogCancel"
     @close="handleBookSettingsDialogClose"
-  >
-    <div class="dialog-body">
-        
-        <button class="btn-close-dialog"  
-          :disabled="isBookSettingsActionPending"
-          @click="closeBookSettingsDialog">
-          <svg viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none">
-            <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
-          </svg> 
-        </button>
+    @save="handleUpdateBookSettings"
+  />
 
-        <header>
-          <h4 class="mb-1"> {{ $t('appLayout.bookSettingsTitle') }} </h4>
-        </header>
-        
-        <hr>
-
-        <div v-if="bookSettingsErrorMessage" class="alert alert-danger mb-3" role="alert">
-          {{ bookSettingsErrorMessage }}
-        </div>
-        
-        <div class="card p-3 mb-2">
-          <p class="text-secondary">{{ $t('appLayout.chooseBookType') }}</p>
-          <p class="font-semibold">
-            📙 {{ bookForSettings?.type_key ? $t('bookTypes.' + bookForSettings.type_key) : '-' }}
-          </p>
-        </div>
-
-        <div class="mb-2">
-          <label class="form-label" for="book-settings-title">{{ $t('common.fields.name') }}</label>
-          <input
-            id="book-settings-title"
-            v-model.trim="bookSettingsForm.title"
-            type="text"
-            class="form-control"
-            :placeholder="$t('appLayout.enterBookName')"
-            :disabled="isBookSettingsActionPending"
-          >
-        </div>
-        
-        <div class="mb-4">
-          <textarea
-            id="book-settings-description"
-            v-model.trim="bookSettingsForm.description"
-            class="form-control"
-            rows="2"
-            :placeholder="$t('appLayout.addBookDescription')"
-            :disabled="isBookSettingsActionPending"
-          ></textarea>
-        </div>
-        
-        <div v-if="bookForSettings?.currency_code">
-          <p class="mb-0">{{ $t('common.fields.currency') }}: {{ formatCurrencyDisplay(bookForSettings?.currency_code) }}</p>
-        </div>
-        <p class="text-sm text-secondary mb-4">{{ $t('appLayout.bookCurrencyLockedHint') }}</p>
-
-        <div v-if="showMoneyDisplaySettings" class="card p-3 mb-4">
-          <h6 class="mb-3">{{ $t('appLayout.moneyDisplaySettingsTitle') }}</h6>
-
-          <div class="mb-3">
-            <label class="form-label" for="book-settings-thousand-separator">
-              {{ $t('appLayout.thousandSeparatorLabel') }}
-            </label>
-            <select
-              id="book-settings-thousand-separator"
-              v-model="bookSettingsForm.settings.money_display.thousand_separator"
-              class="form-select"
-              :disabled="isBookSettingsActionPending"
-            >
-              <option
-                v-for="separatorOption in moneyDisplaySeparatorOptions"
-                :key="separatorOption"
-                :value="separatorOption"
-              >
-                {{ formatMoneyDisplayOptionLabel(separatorOption) }}
-              </option>
-            </select>
-          </div>
-
-          <label class="form-check">
-            <input
-              v-model="bookSettingsForm.settings.money_display.show_cents"
-              class="form-check-input"
-              type="checkbox"
-              :disabled="isBookSettingsActionPending"
-            >
-            <span class="ml-2">{{ $t('appLayout.showCentsLabel') }}</span>
-          </label>
-        </div>
-
-        <div class="card border-red p-2 flex-row gap-2">
-          <button
-            type="button"
-            class="btn btn-neutral text-red btn-sm"
-            :disabled="!bookForSettings?.id || isBookSettingsActionPending"
-            @click="handleArchiveBook"
-          >
-            <span v-if="activeBookSettingsAction === 'archive'">{{ $t('common.states.archiving') }}</span>
-            <span v-else>{{ $t('appLayout.archiveBook') }}</span>
-          </button>
-        </div>
-        
-         <footer class="border-top pt-4 d-flex gap-2">
-          <button
-            type="button"
-            class="btn flex-1 btn-primary"
-            :disabled="!bookForSettings?.id || isBookSettingsActionPending || bookSettingsForm.title.trim() === ''"
-            @click="handleUpdateBookSettings"
-          >
-            <span v-if="isSavingBookSettings">{{ $t('common.states.saving') }}</span>
-            <span v-else>{{ $t('common.actions.saveChanges') }}</span>
-          </button>
-          <button
-            type="button"
-            class="btn flex-1 btn-default"
-            :disabled="isBookSettingsActionPending"
-            @click="closeBookSettingsDialog"
-          >
-            {{ $t('common.actions.close') }}
-          </button>
-          
-         </footer>
-    </div>  <!-- dialog-body .//end -->
-  </dialog>
-
-  <dialog
+  <ArchivedBooksDialog
     ref="archivedBooksDialog"
-    class="mt-10"
+    :active-archived-book-action="activeArchivedBookAction"
+    :active-archived-book-id="activeArchivedBookId"
+    :archived-books="booksStore.archivedBooks"
+    :error-message="archivedBooksDialogErrorMessage"
+    :is-archived-book-action-pending="isArchivedBookActionPending"
+    :is-archived-book-busy="isArchivedBookBusy"
+    :is-loading-archived="booksStore.isLoadingArchived"
     @cancel="handleArchivedBooksDialogCancel"
     @close="handleArchivedBooksDialogClose"
-  >
-    <header class="dialog-header">
-        <h5>{{ $t('appLayout.archivedBooksTitle') }}</h5>
-        <button class="btn btn-icon" :disabled="isArchivedBookActionPending" @click="closeArchivedBooksDialog">
-          <svg viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none">
-            <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
-          </svg>
-        </button>
-      </header>
-    <div class="dialog-body">
-    
-
-      <div v-if="archivedBooksDialogErrorMessage" class="alert alert-danger mb-3" role="alert">
-        {{ archivedBooksDialogErrorMessage }}
-      </div>
-
-      <div v-if="booksStore.isLoadingArchived" class="text-secondary">
-        {{ $t('appLayout.loadingArchivedBooks') }}
-      </div>
-
-      <div v-else-if="booksStore.archivedBooks.length === 0" class="text-secondary">
-        {{ $t('appLayout.noArchivedBooks') }}
-      </div>
-
-      <div v-else class="d-flex flex-col gap-2">
-        <article
-          v-for="book in booksStore.archivedBooks"
-          :key="book.id"
-          class="card border p-3"
-        >
-          <div class="d-flex justify-content-between gap-3 mobile:flex-col">
-            <div class="flex-1">
-              <h6 class="mb-1">{{ book.title }}</h6>
-              <p v-if="book.description" class="text-secondary mb-1">{{ book.description }}</p>
-              <p class="text-secondary mb-0">{{ $t('bookTypes.' + book.type_key) }}</p>
-            </div>
-
-            <div class="d-flex gap-2 align-items-start mobile:w-full">
-              <button
-                type="button"
-                class="btn btn-default"
-                :disabled="isArchivedBookBusy(book.id)"
-                @click="handleRestoreArchivedBook(book)"
-              >
-                <span v-if="activeArchivedBookAction === 'restore' && activeArchivedBookId === book.id">{{ $t('common.states.restoring') }}</span>
-                <span v-else>{{ $t('common.actions.restore') }}</span>
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-red-subtle"
-                :disabled="isArchivedBookBusy(book.id)"
-                @click="handleDeleteArchivedBook(book)"
-              >
-                <span v-if="activeArchivedBookAction === 'delete' && activeArchivedBookId === book.id">{{ $t('common.states.deleting') }}</span>
-                <span v-else>{{ $t('common.actions.delete') }}</span>
-              </button>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      <footer class="border-top pt-4 d-flex gap-2">
-        <button
-          type="button"
-          class="btn flex-1 btn-default"
-          :disabled="isArchivedBookActionPending"
-          @click="closeArchivedBooksDialog"
-        >
-          {{ $t('common.actions.close') }}
-        </button>
-      </footer>
-    </div>
-  </dialog>
+    @delete="handleDeleteArchivedBook"
+    @restore="handleRestoreArchivedBook"
+  />
 
 </template>
 
@@ -630,6 +198,10 @@ import { useI18n } from 'vue-i18n'
 import { useLocale } from '@/composables/use-locale'
 import { authStore } from '@/stores/auth'
 import { useBooksStore } from '@/stores/books-store'
+import ArchivedBooksDialog from './dialogs/ArchivedBooksDialog.vue'
+import BookSettingsDialog from './dialogs/BookSettingsDialog.vue'
+import CreateBookDialog from './dialogs/CreateBookDialog.vue'
+import ProfileDialog from './dialogs/ProfileDialog.vue'
 
 const BOOK_CURRENCY_OPTIONS = [
   { code: 'EUR', label: '🇪🇺 EUR (€) - Euro' },
@@ -900,13 +472,13 @@ function openProfileDialog() {
   resetProfileDialogMessages()
   closePasswordUpdateForm()
 
-  if (!profileDialog.value?.open) {
-    profileDialog.value?.showModal()
+  if (!profileDialog.value?.isOpen()) {
+    profileDialog.value?.open()
   }
 }
 
 function closeProfileDialog() {
-  if (profileDialog.value?.open) {
+  if (profileDialog.value?.isOpen()) {
     profileDialog.value.close()
   }
 }
@@ -1048,8 +620,8 @@ async function handleProfilePasswordSave() {
 async function openCreateBookDialog() {
   createBookErrorMessage.value = ''
 
-  if (!createBookDialog.value?.open) {
-    createBookDialog.value?.showModal()
+  if (!createBookDialog.value?.isOpen()) {
+    createBookDialog.value?.open()
   }
 
   // Load active book types on demand so the dialog reflects backend rules and
@@ -1060,7 +632,7 @@ async function openCreateBookDialog() {
 }
 
 function closeCreateBookDialog() {
-  if (createBookDialog.value?.open) {
+  if (createBookDialog.value?.isOpen()) {
     createBookDialog.value.close()
   }
 }
@@ -1087,15 +659,15 @@ function openBookSettingsDialog(book) {
   activeBookSettingsAction.value = ''
   hydrateBookSettingsForm()
 
-  if (!dialog.open) {
-    dialog.showModal()
+  if (!dialog.isOpen()) {
+    dialog.open()
   }
 }
 
 function closeBookSettingsDialog() {
   const dialog = bookSettingsDialog.value
 
-  if (dialog?.open) {
+  if (dialog?.isOpen()) {
     dialog.close()
   }
 }
@@ -1103,8 +675,8 @@ function closeBookSettingsDialog() {
 async function openArchivedBooksDialog() {
   archivedBooksDialogErrorMessage.value = ''
 
-  if (!archivedBooksDialog.value?.open) {
-    archivedBooksDialog.value?.showModal()
+  if (!archivedBooksDialog.value?.isOpen()) {
+    archivedBooksDialog.value?.open()
   }
 
   try {
@@ -1121,7 +693,7 @@ async function openArchivedBooksDialog() {
 }
 
 function closeArchivedBooksDialog() {
-  if (archivedBooksDialog.value?.open) {
+  if (archivedBooksDialog.value?.isOpen()) {
     archivedBooksDialog.value.close()
   }
 }
