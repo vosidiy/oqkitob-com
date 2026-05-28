@@ -61,7 +61,12 @@
           </RouterLink>
         </div>
         <button class="btn btn-default w-full mt-2" @click="openCreateBookDialog"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-text-icon lucide-book-text"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path><path d="M8 11h8"></path><path d="M8 7h6"></path></svg> {{ $t('appLayout.createBook') }} </button>
-
+        
+        <p v-if="booksStore.hasArchivedBooks" class="text-center mt-3">
+          <a href="#" class="text-secondary text-sm" @click.prevent="openArchivedBooksDialog">
+            {{ $t('appLayout.archivedBooks') }}
+          </a>
+        </p>
     
     </section>
     <section class="mt-auto border-top border-color-neutral-300 p-4 mobile:d-none">
@@ -467,16 +472,6 @@
             <span v-if="activeBookSettingsAction === 'archive'">{{ $t('common.states.archiving') }}</span>
             <span v-else>{{ $t('appLayout.archiveBook') }}</span>
           </button>
-
-          <button
-            type="button"
-            class="btn btn-red-subtle btn-sm"
-            :disabled="!bookForSettings?.id || isBookSettingsActionPending"
-            @click="handleDeleteBook"
-          >
-            <span v-if="activeBookSettingsAction === 'delete'">{{ $t('common.states.deleting') }}</span>
-            <span v-else>{{ $t('appLayout.deleteBook') }}</span>
-          </button>
         </div>
         
          <footer class="border-top pt-4 d-flex gap-2">
@@ -502,6 +497,86 @@
     </div>  <!-- dialog-body .//end -->
   </dialog>
 
+  <dialog
+    ref="archivedBooksDialog"
+    class="mt-10"
+    @cancel="handleArchivedBooksDialogCancel"
+    @close="handleArchivedBooksDialogClose"
+  >
+    <header class="dialog-header">
+        <h5>{{ $t('appLayout.archivedBooksTitle') }}</h5>
+        <button class="btn btn-icon" :disabled="isArchivedBookActionPending" @click="closeArchivedBooksDialog">
+          <svg viewBox="0 0 24 24" width="24" height="24" color="currentColor" fill="none">
+            <path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path>
+          </svg>
+        </button>
+      </header>
+    <div class="dialog-body">
+    
+
+      <div v-if="archivedBooksDialogErrorMessage" class="alert alert-danger mb-3" role="alert">
+        {{ archivedBooksDialogErrorMessage }}
+      </div>
+
+      <div v-if="booksStore.isLoadingArchived" class="text-secondary">
+        {{ $t('appLayout.loadingArchivedBooks') }}
+      </div>
+
+      <div v-else-if="booksStore.archivedBooks.length === 0" class="text-secondary">
+        {{ $t('appLayout.noArchivedBooks') }}
+      </div>
+
+      <div v-else class="d-flex flex-col gap-2">
+        <article
+          v-for="book in booksStore.archivedBooks"
+          :key="book.id"
+          class="card border p-3"
+        >
+          <div class="d-flex justify-content-between gap-3 mobile:flex-col">
+            <div class="flex-1">
+              <h6 class="mb-1">{{ book.title }}</h6>
+              <p v-if="book.description" class="text-secondary mb-1">{{ book.description }}</p>
+              <p class="text-secondary mb-0">{{ $t('bookTypes.' + book.type_key) }}</p>
+            </div>
+
+            <div class="d-flex gap-2 align-items-start mobile:w-full">
+              <button
+                type="button"
+                class="btn btn-default"
+                :disabled="isArchivedBookBusy(book.id)"
+                @click="handleRestoreArchivedBook(book)"
+              >
+                <span v-if="activeArchivedBookAction === 'restore' && activeArchivedBookId === book.id">{{ $t('common.states.restoring') }}</span>
+                <span v-else>{{ $t('common.actions.restore') }}</span>
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-red-subtle"
+                :disabled="isArchivedBookBusy(book.id)"
+                @click="handleDeleteArchivedBook(book)"
+              >
+                <span v-if="activeArchivedBookAction === 'delete' && activeArchivedBookId === book.id">{{ $t('common.states.deleting') }}</span>
+                <span v-else>{{ $t('common.actions.delete') }}</span>
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <footer class="border-top pt-4 d-flex gap-2">
+        <button
+          type="button"
+          class="btn flex-1 btn-default"
+          :disabled="isArchivedBookActionPending"
+          @click="closeArchivedBooksDialog"
+        >
+          {{ $t('common.actions.close') }}
+        </button>
+      </footer>
+    </div>
+  </dialog>
+
 </template>
 
 <script setup>
@@ -512,6 +587,7 @@ import {
   createBookRequest,
   deleteBookRequest,
   fetchBookTypes,
+  restoreBookRequest,
   updateBookRequest,
 } from '@/api/books-api'
 import { updatePasswordRequest, updateProfileRequest } from '@/api/auth'
@@ -539,14 +615,18 @@ const isLoggingOut = ref(false)
 const profileDialog = ref(null)
 const createBookDialog = ref(null)
 const bookSettingsDialog = ref(null)
+const archivedBooksDialog = ref(null)
 const bookTypes = ref([])
 const hasLoadedBookTypes = ref(false)
 const isLoadingBookTypes = ref(false)
 const isCreatingBook = ref(false)
 const createBookErrorMessage = ref('')
 const bookSettingsErrorMessage = ref('')
+const archivedBooksDialogErrorMessage = ref('')
 const activeBookSettingsAction = ref('')
 const activeProfileAction = ref('')
+const activeArchivedBookAction = ref('')
+const activeArchivedBookId = ref('')
 const showPasswordUpdateForm = ref(false)
 const showCreateBookFields = ref(false)
 const showCreateBookCurrencyField = ref(false)
@@ -584,6 +664,7 @@ const currentUserPhone = computed(() => String(user.value?.phone ?? '').trim())
 const isBookSettingsActionPending = computed(() => activeBookSettingsAction.value !== '')
 const isSavingBookSettings = computed(() => activeBookSettingsAction.value === 'save')
 const isProfileActionPending = computed(() => activeProfileAction.value !== '')
+const isArchivedBookActionPending = computed(() => activeArchivedBookAction.value !== '')
 const isSavingProfileName = computed(() => activeProfileAction.value === 'name')
 const isSavingProfilePhone = computed(() => activeProfileAction.value === 'phone')
 const isSavingProfilePassword = computed(() => activeProfileAction.value === 'password')
@@ -717,6 +798,15 @@ onMounted(async () => {
     }
 
     errorMessage.value = booksStore.errorMessage || t('appLayout.unableDashboard')
+    return
+  }
+
+  try {
+    await booksStore.fetchArchivedBooks()
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      router.replace({ name: 'login' })
+    }
   }
 })
 
@@ -940,6 +1030,48 @@ function closeBookSettingsDialog() {
   }
 }
 
+async function openArchivedBooksDialog() {
+  archivedBooksDialogErrorMessage.value = ''
+
+  if (!archivedBooksDialog.value?.open) {
+    archivedBooksDialog.value?.showModal()
+  }
+
+  try {
+    await booksStore.fetchArchivedBooks(true)
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeArchivedBooksDialog()
+      router.replace({ name: 'login' })
+      return
+    }
+
+    archivedBooksDialogErrorMessage.value = getApiErrorMessage(error, t('appLayout.unableLoadArchivedBooks'))
+  }
+}
+
+function closeArchivedBooksDialog() {
+  if (archivedBooksDialog.value?.open) {
+    archivedBooksDialog.value.close()
+  }
+}
+
+function handleArchivedBooksDialogCancel(event) {
+  event.preventDefault()
+
+  if (isArchivedBookActionPending.value) {
+    return
+  }
+
+  closeArchivedBooksDialog()
+}
+
+function handleArchivedBooksDialogClose() {
+  archivedBooksDialogErrorMessage.value = ''
+  activeArchivedBookAction.value = ''
+  activeArchivedBookId.value = ''
+}
+
 function handleBookSettingsDialogCancel(event) {
   event.preventDefault()
 
@@ -1009,7 +1141,7 @@ async function handleArchiveBook() {
   try {
     await archiveBookRequest(bookId)
     closeBookSettingsDialog()
-    await booksStore.fetchBooks(true)
+    await refreshBookLists()
     await router.replace({ name: 'dashboard-home' })
   } catch (error) {
     if (isUnauthorizedError(error)) {
@@ -1024,10 +1156,50 @@ async function handleArchiveBook() {
   }
 }
 
-async function handleDeleteBook() {
-  const bookId = String(bookForSettings.value?.id ?? '').trim()
+function isArchivedBookBusy(bookId) {
+  return isArchivedBookActionPending.value && activeArchivedBookId.value === String(bookId)
+}
 
-  if (bookId === '' || isBookSettingsActionPending.value) {
+async function handleRestoreArchivedBook(book) {
+  const bookId = String(book?.id ?? '').trim()
+
+  if (bookId === '' || isArchivedBookActionPending.value) {
+    return
+  }
+
+  if (!window.confirm(t('appLayout.confirmRestoreBook'))) {
+    return
+  }
+
+  archivedBooksDialogErrorMessage.value = ''
+  activeArchivedBookAction.value = 'restore'
+  activeArchivedBookId.value = bookId
+
+  try {
+    await restoreBookRequest(bookId)
+    await refreshBookLists()
+
+    if (!booksStore.hasArchivedBooks) {
+      closeArchivedBooksDialog()
+    }
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeArchivedBooksDialog()
+      router.replace({ name: 'login' })
+      return
+    }
+
+    archivedBooksDialogErrorMessage.value = getApiErrorMessage(error, t('appLayout.unableRestoreBook'))
+  } finally {
+    activeArchivedBookAction.value = ''
+    activeArchivedBookId.value = ''
+  }
+}
+
+async function handleDeleteArchivedBook(book) {
+  const bookId = String(book?.id ?? '').trim()
+
+  if (bookId === '' || isArchivedBookActionPending.value) {
     return
   }
 
@@ -1035,25 +1207,40 @@ async function handleDeleteBook() {
     return
   }
 
-  bookSettingsErrorMessage.value = ''
-  activeBookSettingsAction.value = 'delete'
+  archivedBooksDialogErrorMessage.value = ''
+  activeArchivedBookAction.value = 'delete'
+  activeArchivedBookId.value = bookId
 
   try {
-    await deleteBookRequest(bookId)
-    closeBookSettingsDialog()
-    await booksStore.fetchBooks(true)
-    await router.replace({ name: 'dashboard-home' })
+    await deleteBookById(bookId)
+    await refreshBookLists()
+
+    if (!booksStore.hasArchivedBooks) {
+      closeArchivedBooksDialog()
+    }
   } catch (error) {
     if (isUnauthorizedError(error)) {
-      closeBookSettingsDialog()
+      closeArchivedBooksDialog()
       router.replace({ name: 'login' })
       return
     }
 
-    bookSettingsErrorMessage.value = getApiErrorMessage(error, t('appLayout.unableDeleteBook'))
+    archivedBooksDialogErrorMessage.value = getApiErrorMessage(error, t('appLayout.unableDeleteBook'))
   } finally {
-    activeBookSettingsAction.value = ''
+    activeArchivedBookAction.value = ''
+    activeArchivedBookId.value = ''
   }
+}
+
+async function refreshBookLists() {
+  await Promise.all([
+    booksStore.fetchBooks(true),
+    booksStore.fetchArchivedBooks(true),
+  ])
+}
+
+function deleteBookById(bookId) {
+  return deleteBookRequest(bookId)
 }
 
 async function loadBookTypes() {

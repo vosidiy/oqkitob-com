@@ -33,6 +33,15 @@ class BooksController extends AuthenticatedApiController
         ]);
     }
 
+    public function archived()
+    {
+        $userId = $this->currentUserIdAndCloseSession();
+
+        return $this->respond([
+            'books' => $this->books->findArchivedSidebarBooksForUser($userId),
+        ]);
+    }
+
     public function show(string $bookId)
     {
         $userId = $this->currentUserIdAndCloseSession();
@@ -233,12 +242,36 @@ class BooksController extends AuthenticatedApiController
         ]);
     }
 
+    public function restore(string $bookId)
+    {
+        $userId = $this->currentUserId();
+        $book = $this->books->findOwnedArchivedBook($userId, $bookId);
+
+        if ($book === null) {
+            return $this->failNotFound('Book not found.');
+        }
+
+        $restored = $this->books->update($bookId, [
+            'is_archived' => 0,
+        ]);
+
+        if ($restored === false) {
+            return $this->failServerError('Unable to restore book right now.');
+        }
+
+        return $this->respond([
+            'message' => 'Book restored successfully.',
+            'bookId' => $bookId,
+            'is_archived' => 0,
+        ]);
+    }
+
     public function delete(string $bookId)
     {
         $userId = $this->currentUserId();
-        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId);
+        $book = $this->books->findOwnedBookById($userId, $bookId);
 
-        if ($permission === 'none') {
+        if ($book === null) {
             return $this->failNotFound('Book not found.');
         }
 

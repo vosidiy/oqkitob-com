@@ -5,6 +5,10 @@ export function fetchBooksList() {
   return apiClient.get('/books')
 }
 
+export function fetchArchivedBooksList() {
+  return apiClient.get('/books/archived')
+}
+
 export function fetchBookTypes() {
   // The create-book dialog uses the active backend types so the UI stays in sync with the API.
   return apiClient.get('/books/types')
@@ -28,6 +32,10 @@ export function updateBookRequest(bookId, payload) {
 
 export function archiveBookRequest(bookId) {
   return apiClient.post(`/books/${bookId}/archive`)
+}
+
+export function restoreBookRequest(bookId) {
+  return apiClient.post(`/books/${bookId}/restore`)
 }
 
 export function deleteBookRequest(bookId) {

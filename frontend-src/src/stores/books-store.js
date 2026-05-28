@@ -1,20 +1,26 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { i18n } from '@/i18n'
-import { fetchBooksList } from '@/api/books-api'
+import { fetchArchivedBooksList, fetchBooksList } from '@/api/books-api'
 
 // Keep the shared list request outside the store state so we can dedupe calls
 // without polluting serializable Pinia state.
 let listPromise = null
+let archivedListPromise = null
 
 export const useBooksStore = defineStore('books', () => {
   // Shared book metadata cache used by the sidebar and by BookView lookups.
   const books = ref([])
+  const archivedBooks = ref([])
 
   // List-level UI state used by the dashboard shell.
   const isLoading = ref(false)
+  const isLoadingArchived = ref(false)
   const loaded = ref(false)
+  const loadedArchived = ref(false)
   const errorMessage = ref('')
+  const archivedErrorMessage = ref('')
+  const hasArchivedBooks = computed(() => archivedBooks.value.length > 0)
 
   async function fetchBooks(force = false) {
     // Reuse the active list request unless the caller explicitly asks for a refresh.
@@ -57,6 +63,39 @@ export const useBooksStore = defineStore('books', () => {
     return listPromise
   }
 
+  async function fetchArchivedBooks(force = false) {
+    if (archivedListPromise && !force) {
+      return archivedListPromise
+    }
+
+    if (loadedArchived.value && !force) {
+      return archivedBooks.value
+    }
+
+    isLoadingArchived.value = true
+    archivedErrorMessage.value = ''
+
+    const existingArchivedBooks = archivedBooks.value
+
+    archivedListPromise = (async () => {
+      try {
+        const { data } = await fetchArchivedBooksList()
+        archivedBooks.value = data.books ?? []
+        loadedArchived.value = true
+        return archivedBooks.value
+      } catch (error) {
+        archivedErrorMessage.value = i18n.global.t('appLayout.unableLoadArchivedBooks')
+        archivedBooks.value = existingArchivedBooks
+        throw error
+      } finally {
+        isLoadingArchived.value = false
+        archivedListPromise = null
+      }
+    })()
+
+    return archivedListPromise
+  }
+
   function findBookById(bookId) {
     // Book detail views use the warmed sidebar metadata first and only fall
     // back to the single-book endpoint when the shared list truly cannot help.
@@ -66,18 +105,29 @@ export const useBooksStore = defineStore('books', () => {
   function reset() {
     // Clear both UI state and the shared list request marker on logout.
     books.value = []
+    archivedBooks.value = []
     isLoading.value = false
+    isLoadingArchived.value = false
     loaded.value = false
+    loadedArchived.value = false
     errorMessage.value = ''
+    archivedErrorMessage.value = ''
     listPromise = null
+    archivedListPromise = null
   }
 
   return {
     books,
+    archivedBooks,
     isLoading,
+    isLoadingArchived,
     loaded,
+    loadedArchived,
     errorMessage,
+    archivedErrorMessage,
+    hasArchivedBooks,
     fetchBooks,
+    fetchArchivedBooks,
     findBookById,
     reset,
   }

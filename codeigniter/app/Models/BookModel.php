@@ -58,6 +58,20 @@ class BookModel extends Model
     }
 
     /**
+     * Archived sidebar projection for the authenticated shell.
+     */
+    public function findArchivedSidebarBooksForUser(string $userId): array
+    {
+        return $this->select(self::SIDEBAR_COLUMNS)
+            ->where('user_id', $userId)
+            ->where('deleted_at', null)
+            ->where('is_archived', 1)
+            ->orderBy('updated_at', 'DESC')
+            ->orderBy('created_at', 'DESC')
+            ->findAll();
+    }
+
+    /**
      * Returns one sidebar-formatted book after a successful create request.
      */
     public function findSidebarBookByIdForUser(string $userId, string $bookId): ?array
@@ -70,6 +84,57 @@ class BookModel extends Model
             ->where('id', $bookId)
             ->where('user_id', $userId)
             ->where('deleted_at', null)
+            ->first();
+
+        return $book ?: null;
+    }
+
+    /**
+     * Returns one owned book regardless of archive status.
+     */
+    public function findOwnedBookById(string $userId, string $bookId): ?array
+    {
+        if ($userId === '' || $bookId === '') {
+            return null;
+        }
+
+        $book = $this->select([
+            'id',
+            'user_id',
+            'type_key',
+            'currency_code',
+            'title',
+            'description',
+            'is_archived',
+        ])->where('id', $bookId)
+            ->where('user_id', $userId)
+            ->where('deleted_at', null)
+            ->first();
+
+        return $book ?: null;
+    }
+
+    /**
+     * Returns the book row for an owned archived book when the caller needs it.
+     */
+    public function findOwnedArchivedBook(string $userId, string $bookId): ?array
+    {
+        if ($userId === '' || $bookId === '') {
+            return null;
+        }
+
+        $book = $this->select([
+            'id',
+            'user_id',
+            'type_key',
+            'currency_code',
+            'title',
+            'description',
+            'is_archived',
+        ])->where('id', $bookId)
+            ->where('user_id', $userId)
+            ->where('deleted_at', null)
+            ->where('is_archived', 1)
             ->first();
 
         return $book ?: null;
