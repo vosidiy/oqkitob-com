@@ -27,14 +27,14 @@
 
         <div class="row gap-3">
           <div class="col-6 mb-4">
-            <label class="form-label" for="edit-product-category">{{ $t('common.fields.category') }}</label>
+            <label class="form-label" for="edit-product-category">{{ $t('common.fields.category') }}  <a href="#" @click.prevent="emit('open-manage-categories')">[⚙️]</a> </label>
             <select
               id="edit-product-category"
               v-model="form.category_id"
               class="form-select"
               :disabled="isBusy || isLoadingCategories"
             >
-              <option value="">{{ $t('minishop.main.noCategory') }}</option>
+              <option value=""> --- {{ $t('minishop.main.noCategory') }} --- </option>
               <option :value="createCategoryOptionValue">+ {{ $t('minishop.dialogs.addCategory') }}</option>
               <option v-for="category in categories" :key="category.id" :value="category.id">
                 {{ category.name }}
@@ -65,21 +65,22 @@
 
         <div class="row gap-3">
           <div class="col-6 mb-4">
+            
             <label class="form-label" for="edit-product-price">{{ $t('common.fields.price') }}</label>
-            <input
-              id="edit-product-price"
-              v-model.trim="form.price"
-              type="number"
-              class="form-control"
-              min="0"
-              step="1"
-              placeholder="0.00"
-              :disabled="isBusy"
-              required
-            >
-            <p class="small text-secondary mt-1">
-              <small class="currency-code">{{ props.book.currency_code }}</small>
-            </p>
+            <div class="relative">
+              <input
+                id="edit-product-price"
+                v-model.trim="form.price"
+                type="number"
+                class="form-control"
+                min="0"
+                step="1"
+                placeholder="0.00"
+                :disabled="isBusy"
+                required
+              >
+              <small class="currency-code text-secondary text-default  bg-neutral-50 absolute right-2 top-1 p-1">{{ props.book.currency_code }}</small>
+            </div>
           </div>
           <div class="col-3 mb-4">
             <label class="form-label" for="edit-product-quantity">{{ $t('common.fields.quantity') }}</label>

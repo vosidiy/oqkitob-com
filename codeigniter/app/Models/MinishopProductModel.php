@@ -97,4 +97,27 @@ class MinishopProductModel extends Model
 
         return $product ?: null;
     }
+
+    /**
+     * Clears category links for active products in the given book.
+     *
+     * @param list<string> $categoryIds
+     */
+    public function clearCategoryAssignmentsByBook(string $bookId, array $categoryIds, string $timestamp): void
+    {
+        $normalizedIds = array_values(array_filter(array_map(static fn ($categoryId) => trim((string) $categoryId), $categoryIds)));
+
+        if ($bookId === '' || $normalizedIds === []) {
+            return;
+        }
+
+        $this->builder()
+            ->where('book_id', $bookId)
+            ->where('deleted_at', null)
+            ->whereIn('category_id', $normalizedIds)
+            ->update([
+                'category_id' => null,
+                'updated_at' => $timestamp,
+            ]);
+    }
 }

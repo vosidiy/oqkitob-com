@@ -85,6 +85,26 @@ class MinishopCategoryModel extends Model
     }
 
     /**
+     * Loads active categories by ids for a specific book.
+     *
+     * @param list<string> $categoryIds
+     * @return array<int, array<string, mixed>>
+     */
+    public function findExistingByIdsAndBook(string $bookId, array $categoryIds): array
+    {
+        $normalizedIds = array_values(array_filter(array_map(static fn ($categoryId) => trim((string) $categoryId), $categoryIds)));
+
+        if ($bookId === '' || $normalizedIds === []) {
+            return [];
+        }
+
+        return $this->where('book_id', $bookId)
+            ->where('deleted_at', null)
+            ->whereIn('id', $normalizedIds)
+            ->findAll();
+    }
+
+    /**
      * Lightweight category options for product-create forms.
      */
     public function findSelectionByBook(string $bookId): array

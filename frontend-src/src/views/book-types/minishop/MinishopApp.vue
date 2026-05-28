@@ -56,6 +56,7 @@
       @open-payment-dialog="openCheckoutPaymentDialog"
       @open-create-customer="openCreateCustomerDialogFromCheckout"
       @open-create-product="openCreateProductDialog"
+      @open-manage-categories="openManageCategoriesDialog"
       @open-edit-product="openEditProductDialog"
       @remove-cart-item="removeCartItem"
       @update-cart-item-price="updateCartItemPrice"
@@ -104,6 +105,7 @@
       :is-submit-disabled="isCreateProductSubmitDisabled"
       @cancel="handleCreateProductDialogCancel"
       @close="handleCreateProductDialogClose"
+      @open-manage-categories="openManageCategoriesDialog"
       @submit="handleCreateProduct"
     />
 
@@ -159,6 +161,19 @@
       @close="handleReceiptDialogClose"
       @print="printReceipt"
     />
+
+    <ManageCategoriesDialog
+      ref="manageCategoriesDialog"
+      :error-message="manageCategoriesErrorMessage"
+      :is-saving="isSavingCategories"
+      :is-submit-disabled="isManageCategoriesSubmitDisabled"
+      :rows="manageCategoryRows"
+      @add-row="appendManageCategoryRow"
+      @cancel="handleManageCategoriesDialogCancel"
+      @close="handleManageCategoriesDialogClose"
+      @remove-row="removeManageCategoryRow"
+      @submit="handleManageCategoriesSubmit"
+    />
   </div>
 </template>
 
@@ -175,6 +190,7 @@ import {
   fetchMinishopCategories,
   fetchMinishopCustomersList,
   fetchMinishopProducts,
+  manageMinishopCategories,
   updateMinishopProduct,
 } from '@/api/minishop'
 import BookPageHeader from '@/components/BookPageHeader.vue'
@@ -182,13 +198,17 @@ import CustomersTab from '@/views/book-types/minishop/CustomersTab.vue'
 import NewSaleTab from '@/views/book-types/minishop/NewSaleTab.vue'
 import SalesTab from '@/views/book-types/minishop/SalesTab.vue'
 import CheckoutPaymentDialog from '@/views/book-types/minishop/dialogs/CheckoutPaymentDialog.vue'
+import { createManageCategoryRow } from '@/views/book-types/minishop/dialogs/categoryRow'
 import CreateCustomerDialog from '@/views/book-types/minishop/dialogs/CreateCustomerDialog.vue'
 import CreateProductDialog from '@/views/book-types/minishop/dialogs/CreateProductDialog.vue'
 import EditProductDialog from '@/views/book-types/minishop/dialogs/EditProductDialog.vue'
+import ManageCategoriesDialog from '@/views/book-types/minishop/dialogs/ManageCategoriesDialog.vue'
 import ReceiptDialog from '@/views/book-types/minishop/dialogs/ReceiptDialog.vue'
 
 const NO_CATEGORY_FILTER_VALUE = '__no_category__'
 const CREATE_CATEGORY_OPTION_VALUE = '__create_category__'
+const DEFAULT_CREATE_PRODUCT_QUANTITY = '10'
+const DEFAULT_CREATE_PRODUCT_LOW_STOCK_ALERT = '3'
 const pageComponentByKey = {
   customers: CustomersTab,
   main: NewSaleTab,
@@ -209,6 +229,7 @@ const { t, locale } = useI18n()
 const createCustomerDialog = ref(null)
 const createProductDialog = ref(null)
 const editProductDialog = ref(null)
+const manageCategoriesDialog = ref(null)
 const checkoutPaymentDialog = ref(null)
 const receiptDialog = ref(null)
 const products = ref([])
@@ -222,6 +243,7 @@ const isCreatingCustomer = ref(false)
 const isCreatingProduct = ref(false)
 const isUpdatingProduct = ref(false)
 const isDeactivatingProduct = ref(false)
+const isSavingCategories = ref(false)
 const isSavingSale = ref(false)
 const hasLoadedMainData = ref(false)
 const hasLoadedCustomerOptions = ref(false)
@@ -232,6 +254,7 @@ const customerErrorMessage = ref('')
 const createCustomerErrorMessage = ref('')
 const createProductErrorMessage = ref('')
 const editProductErrorMessage = ref('')
+const manageCategoriesErrorMessage = ref('')
 const saleErrorMessage = ref('')
 const selectedCategoryId = ref('')
 const selectedCustomerId = ref('')
@@ -243,6 +266,7 @@ const saleNoteInput = ref('')
 const isPaidManuallyEdited = ref(false)
 const receiptState = ref(null)
 const editingProductId = ref('')
+const manageCategoryRows = ref([])
 
 const createProductForm = reactive({
   name: '',
@@ -250,8 +274,8 @@ const createProductForm = reactive({
   new_category_name: '',
   sku: '',
   price: '',
-  quantity: '5',
-  low_stock_alert: '2',
+  quantity: DEFAULT_CREATE_PRODUCT_QUANTITY,
+  low_stock_alert: DEFAULT_CREATE_PRODUCT_LOW_STOCK_ALERT,
 })
 
 const createCustomerForm = reactive({
@@ -300,6 +324,23 @@ const isEditProductSubmitDisabled = computed(() => {
     editProductForm.price === '' ||
     editProductForm.quantity === ''
   )
+})
+
+const isManageCategoriesSubmitDisabled = computed(() => {
+  return isSavingCategories.value || manageCategoryRows.value.length === 0
+})
+
+const categoryProductCountById = computed(() => {
+  return products.value.reduce((lookup, product) => {
+    const categoryId = String(product?.category_id ?? '').trim()
+
+    if (categoryId === '') {
+      return lookup
+    }
+
+    lookup[categoryId] = (lookup[categoryId] ?? 0) + 1
+    return lookup
+  }, {})
 })
 
 const filteredProducts = computed(() => {
@@ -513,6 +554,13 @@ async function openCreateProductDialog() {
   createProductDialog.value?.open()
 }
 
+async function openManageCategoriesDialog() {
+  manageCategoriesErrorMessage.value = ''
+  await ensureMainDataLoaded()
+  resetManageCategoryRows()
+  manageCategoriesDialog.value?.open()
+}
+
 async function openEditProductDialog(product) {
   editProductErrorMessage.value = ''
   await ensureMainDataLoaded()
@@ -547,6 +595,10 @@ function closeEditProductDialog() {
 
 function closeCreateCustomerDialog() {
   createCustomerDialog.value?.close()
+}
+
+function closeManageCategoriesDialog() {
+  manageCategoriesDialog.value?.close()
 }
 
 function addProductToCart(product) {
@@ -683,6 +735,78 @@ function handleCreateCustomerDialogClose() {
 function handleCreateCustomerDialogCancel(event) {
   if (isCreatingCustomer.value) {
     event.preventDefault()
+  }
+}
+
+function handleManageCategoriesDialogClose() {
+  resetManageCategoryRows()
+}
+
+function handleManageCategoriesDialogCancel(event) {
+  if (isSavingCategories.value) {
+    event.preventDefault()
+  }
+}
+
+function appendManageCategoryRow() {
+  manageCategoryRows.value.push(createManageCategoryRow())
+}
+
+function removeManageCategoryRow(rowKey) {
+  manageCategoryRows.value = manageCategoryRows.value.filter((row) => row.key !== rowKey)
+}
+
+function resetManageCategoryRows() {
+  manageCategoryRows.value = categories.value.map((category) => {
+    return createManageCategoryRow(category, categoryProductCountById.value[category.id] ?? 0)
+  })
+}
+
+async function handleManageCategoriesSubmit() {
+  if (isManageCategoriesSubmitDisabled.value) {
+    return
+  }
+
+  manageCategoriesErrorMessage.value = ''
+  isSavingCategories.value = true
+
+  const hasPotentialProductCategoryChanges = manageCategoryRows.value.some((row) => {
+    if (row.id === '') {
+      return false
+    }
+
+    const existingCategory = categories.value.find((category) => category.id === row.id)
+
+    return row.remove || String(existingCategory?.name ?? '') !== row.name
+  })
+
+  try {
+    const { data } = await manageMinishopCategories(props.book.id, {
+      categories: manageCategoryRows.value.map((row) => ({
+        id: row.id,
+        name: row.name,
+        remove: row.remove,
+      })),
+    })
+
+    categories.value = data.categories ?? []
+    syncCategorySelections()
+
+    if (hasPotentialProductCategoryChanges) {
+      await loadProducts()
+    }
+
+    closeManageCategoriesDialog()
+  } catch (error) {
+    if (isUnauthorizedError(error)) {
+      closeManageCategoriesDialog()
+      await router.replace({ name: 'login' })
+      return
+    }
+
+    manageCategoriesErrorMessage.value = getApiErrorMessage(error, t('minishop.dialogs.unableSaveCategories'))
+  } finally {
+    isSavingCategories.value = false
   }
 }
 
@@ -914,11 +1038,13 @@ async function loadCategories() {
   try {
     const { data } = await fetchMinishopCategories(props.book.id)
     categories.value = data.categories ?? []
+    syncCategorySelections()
     return true
   } catch (error) {
     if (isUnauthorizedError(error)) {
       closeCreateProductDialog()
       closeEditProductDialog()
+      closeManageCategoriesDialog()
       router.replace({ name: 'login' })
       return false
     }
@@ -972,6 +1098,7 @@ async function loadProducts() {
   } catch (error) {
     if (isUnauthorizedError(error)) {
       closeEditProductDialog()
+      closeManageCategoriesDialog()
       router.replace({ name: 'login' })
       return false
     }
@@ -1134,8 +1261,8 @@ function resetCreateProductForm() {
   createProductForm.new_category_name = ''
   createProductForm.sku = ''
   createProductForm.price = ''
-  createProductForm.quantity = ''
-  createProductForm.low_stock_alert = ''
+  createProductForm.quantity = DEFAULT_CREATE_PRODUCT_QUANTITY
+  createProductForm.low_stock_alert = DEFAULT_CREATE_PRODUCT_LOW_STOCK_ALERT
   createProductErrorMessage.value = ''
   isCreatingProduct.value = false
 }
@@ -1165,6 +1292,34 @@ function resetEditProductForm() {
   editingProductId.value = ''
   isUpdatingProduct.value = false
   isDeactivatingProduct.value = false
+}
+
+function syncCategorySelections() {
+  const activeCategoryIds = new Set(categories.value.map((category) => String(category.id)))
+
+  if (
+    selectedCategoryId.value !== ''
+    && selectedCategoryId.value !== NO_CATEGORY_FILTER_VALUE
+    && !activeCategoryIds.has(selectedCategoryId.value)
+  ) {
+    selectedCategoryId.value = ''
+  }
+
+  if (
+    createProductForm.category_id !== ''
+    && createProductForm.category_id !== CREATE_CATEGORY_OPTION_VALUE
+    && !activeCategoryIds.has(createProductForm.category_id)
+  ) {
+    createProductForm.category_id = ''
+  }
+
+  if (
+    editProductForm.category_id !== ''
+    && editProductForm.category_id !== CREATE_CATEGORY_OPTION_VALUE
+    && !activeCategoryIds.has(editProductForm.category_id)
+  ) {
+    editProductForm.category_id = ''
+  }
 }
 
 function upsertProduct(product) {

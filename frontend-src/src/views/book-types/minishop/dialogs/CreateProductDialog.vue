@@ -27,9 +27,10 @@
 
         <div class="row gap-3">
           <div class="col-6 mb-4">
-            <label class="form-label" for="create-product-category">{{ $t('common.fields.category') }}</label>
-            <select
-              id="create-product-category"
+            <label class="form-label" for="create-product-category">
+              {{ $t('common.fields.category') }} <a href="#" @click.prevent="emit('open-manage-categories')">[⚙️]</a>
+            </label>
+            <select id="create-product-category"
               v-model="form.category_id"
               class="form-select"
               :disabled="isCreatingProduct || isLoadingCategories"
@@ -66,20 +67,20 @@
         <div class="row gap-3">
           <div class="col-6 mb-4">
             <label class="form-label" for="create-product-price">{{ $t('common.fields.price') }}</label>
-            <input
-              id="create-product-price"
-              v-model.trim="form.price"
-              type="number"
-              class="form-control"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              :disabled="isCreatingProduct"
-              required
-            >
-            <p class="small text-secondary mt-1">
-              <small class="currency-code">{{ props.book.currency_code }}</small>
-            </p>
+            <div class="relative">
+              <input
+                id="create-product-price"
+                v-model.trim="form.price"
+                type="number"
+                class="form-control"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                :disabled="isCreatingProduct"
+                required
+              >
+               <small class="currency-code text-secondary text-default  bg-neutral-50 absolute right-2 top-1 p-1">{{ props.book.currency_code }}</small>
+            </div>
           </div>
           <div class="col-3 mb-4">
             <label class="form-label" for="create-product-quantity">{{ $t('common.fields.quantity') }}</label>
@@ -166,7 +167,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['cancel', 'close', 'submit'])
+const emit = defineEmits(['cancel', 'close', 'open-manage-categories', 'submit'])
 const dialogRef = ref(null)
 
 function open() {

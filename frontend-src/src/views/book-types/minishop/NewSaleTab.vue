@@ -34,8 +34,8 @@
 
       <section class="overflow-y-auto scrollbar-thin py-2 flex-1">
 
-        <div class="px-4 mb-2">
-          <a href="#" role="button" class="text-secondary link" @click="emit('open-create-product')">
+        <div class="px-4  mb-2">
+          <a href="#" role="button" class="mr-3 link" @click="emit('open-create-product')">
             + {{ $t('minishop.main.createProduct') }}
           </a>
         </div>
@@ -50,8 +50,12 @@
 
         <div v-if="isLoadingProducts" class="m-3 text-secondary">{{ $t('minishop.main.loadingProducts') }}</div>
 
-        <div v-else-if="products.length === 0" class="m-4 text-secondary">
-          {{ $t('minishop.main.noProducts') }} 
+        <div v-else-if="products.length === 0" class="m-5 text-secondary text-lg text-center p-3">
+          <p class="mb-3"> 📦 {{ $t('minishop.main.noProducts') }} </p>
+
+          <a href="#" role="button" class="btn btn-primary" @click="emit('open-create-product')">
+            + {{ $t('minishop.main.createProduct') }}
+          </a>
         </div>
 
         <div v-else-if="filteredProducts.length === 0" class="m-4 p-4 text-center border-top">
@@ -100,6 +104,10 @@
             {{ $t('minishop.main.clearFilters') }}
           </button>
         </div>
+
+        <p class="px-4 mt-4 text-center">
+          <a href="#" role="button" class="text-secondary link" @click.prevent="emit('open-manage-categories')"> {{ $t('minishop.main.categories') }}  </a>
+        </p>
       </section>
     </aside>
 
@@ -365,6 +373,7 @@ const emit = defineEmits([
   'open-payment-dialog',
   'open-create-customer',
   'open-create-product',
+  'open-manage-categories',
   'open-edit-product',
   'remove-cart-item',
   'update-cart-item-price',
