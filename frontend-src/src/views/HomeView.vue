@@ -9,8 +9,12 @@
           <div class="fw-semibold">{{ user.name || '-' }}</div>
         </div>
         <div class="col-6">
+          <div class="text-secondary small">{{ $t('common.fields.phone') }}</div>
+          <div class="fw-semibold">{{ user.phone || '-' }}</div>
+        </div>
+        <div v-if="user.email" class="col-6">
           <div class="text-secondary small">{{ $t('common.fields.email') }}</div>
-          <div class="fw-semibold">{{ user.email || '-' }}</div>
+          <div class="fw-semibold">{{ user.email }}</div>
         </div>
         <div class="col-6">
           <div class="text-secondary small">{{ $t('common.fields.city') }}</div>

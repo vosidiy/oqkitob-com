@@ -14,14 +14,14 @@
 
       <form @submit.prevent="handleSubmit">
         <div class="mb-3">
-          <label class="form-label" for="email">{{ $t('common.fields.email') }}</label>
+          <label class="form-label" for="phone">{{ $t('common.fields.phone') }}</label>
           <input
-            id="email"
-            v-model.trim="form.email"
-            type="email"
+            id="phone"
+            v-model.trim="form.phone"
+            type="tel"
             class="form-control"
-            placeholder="example@mail.com"
-            autocomplete="email"
+            :placeholder="$t('auth.login.phonePlaceholder')"
+            autocomplete="tel"
           >
         </div>
 
@@ -74,7 +74,7 @@ const router = useRouter()
 const { t } = useI18n()
 
 const form = reactive({
-  email: '',
+  phone: '+998',
   password: '',
 })
 
@@ -88,7 +88,7 @@ async function handleSubmit() {
 
   try {
     await authStore.login({
-      email: form.email,
+      phone: form.phone,
       password: form.password,
     })
 

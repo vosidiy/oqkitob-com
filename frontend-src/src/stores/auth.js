@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { fetchCurrentUserRequest, loginRequest, logoutRequest } from '@/api/auth'
+import { fetchCurrentUserRequest, loginRequest, logoutRequest, registerRequest } from '@/api/auth'
 
 const state = reactive({
   user: null,
@@ -49,6 +49,15 @@ export const authStore = {
 
   async login(payload) {
     const { data } = await loginRequest(payload)
+    state.user = data.user
+    state.checked = true
+    hasValidatedServer = true
+
+    return data
+  },
+
+  async register(payload) {
+    const { data } = await registerRequest(payload)
     state.user = data.user
     state.checked = true
     hasValidatedServer = true

@@ -22,7 +22,7 @@
         <div class="d-flex align-items-center mb-3">
           <div class="lh-sm text-base">
             <p class="font-semibold">{{ user?.name || '-' }}</p>
-            <small class="text-sm text-secondary">{{ user?.email || '-' }}</small>
+            <small class="text-sm text-secondary">{{ user?.phone || '-' }}</small>
           </div>
         </div>
 

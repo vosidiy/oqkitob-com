@@ -17,7 +17,7 @@
           </span>
           <div class="ml-1 lh-sm text-base w-100%">
             <p class="font-semibold">{{ user?.name || '-' }}</p>
-            <small class="text-sm text-secondary">{{ user?.email || '-' }}</small>
+            <small class="text-sm text-secondary">{{ user?.phone || '-' }}</small>
           </div>
         </a>
         <select id="language_picker" v-model="currentLocale" class="form-select max-w-20">

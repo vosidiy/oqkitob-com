@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
     id CHAR(36) NOT NULL,
     default_book_id CHAR(36) DEFAULT NULL,
     name VARCHAR(255) DEFAULT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(50) DEFAULT NULL,
+    email VARCHAR(255) DEFAULT NULL,
+    phone VARCHAR(50) NOT NULL,
     country_name VARCHAR(100) DEFAULT NULL,
     country_code VARCHAR(10) DEFAULT NULL,
     city VARCHAR(100) DEFAULT NULL,
@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
     deleted_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uq_users_email (email),
+    UNIQUE KEY uq_users_phone (phone),
     KEY idx_users_default_book_id (default_book_id),
     KEY idx_users_google_id (google_id),
     KEY idx_users_plan (plan)

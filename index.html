@@ -23,7 +23,7 @@
             <div style="font-size:24px; letter-spacing:1px" class="font-semibold ml-1">Oq<span class="text-secondary">kitob</span> </div>
         </a>
 
-        <div class="nav">
+        <div class="nav mobile:d-none">
             <a href="/"  class="nav-link "> Asosiy </a>
             <a class="nav-link" href="/about.html">Haqimizda</a>
             <a href="#" onclick="open_dialog('dialog_help')" class="nav-link  mobile:d-none">Yordam</a> 
@@ -67,8 +67,8 @@
                     <input type="hidden" name="_token" value="" autocomplete="off">                
                     <div id="landing-login-error" class="alert alert-danger mb-4" role="alert" hidden></div>
                     <div class="mb-4">
-                        <label class="form-label font-medium">Email</label>
-                        <input type="email" name="email" class="form-control" placeholder="Enter email" required> 
+                        <label class="form-label font-medium">Telefon raqami</label>
+                        <input type="tel" name="phone" class="form-control" placeholder="+998901234567" value="+998" autocomplete="tel" required> 
                     </div>
                     <div class="mb-2">
                         <label class="form-label font-medium">Parol</label>
@@ -203,7 +203,7 @@ function setLandingLoginSubmitting(isSubmitting) {
 
   if (landingLoginSubmitButton) {
     landingLoginSubmitButton.disabled = isSubmitting;
-    landingLoginSubmitButton.textContent = isSubmitting ? 'Logging in...' : landingLoginDefaultButtonText;
+    landingLoginSubmitButton.textContent = isSubmitting ? 'Kirilmoqda...' : landingLoginDefaultButtonText;
   }
 }
 
@@ -252,7 +252,7 @@ async function handleLandingLoginSubmit(event) {
   setLandingLoginSubmitting(true);
 
   const formData = new FormData(landingLoginForm);
-  const email = String(formData.get('email') || '').trim();
+  const phone = String(formData.get('phone') || '').trim();
   const password = String(formData.get('password') || '');
 
   try {
@@ -263,7 +263,7 @@ async function handleLandingLoginSubmit(event) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email,
+        phone,
         password,
       }),
     });

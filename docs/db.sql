@@ -602,8 +602,8 @@ CREATE TABLE `users` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `default_book_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `country_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `country_code` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -629,8 +629,8 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `default_book_id`, `name`, `email`, `phone`, `country_name`, `country_code`, `city`, `timezone`, `date_of_birth`, `email_verified_at`, `password_hash`, `google_id`, `avatar`, `locale`, `status`, `last_login_at`, `plan`, `license_expires_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
 ('11111111-1111-1111-1111-111111111111', 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 'Muslimbek VD', 'vosidiy@gmail.com', '+998946875461', 'Uzbekistan', 'UZ', 'Tashkent', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', '$2y$10$IeDce2Wh1snpcmmg3ZdpPeKC9vwbQcDZBkvmBR/MiN0vWC2xKPoUy', NULL, NULL, 'en', 'active', '2026-05-23 10:40:45', 'free', NULL, '2026-05-11 20:52:13', '2026-05-23 15:40:45', NULL),
-('22222222-2222-2222-2222-222222222222', 'bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1', 'Malika Karimova', 'test@example.com', NULL, 'Uzbekistan', 'UZ', 'Samarkand', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', '$2a$12$zUU8F9/PAkRTMbqIlzsMCesPJJ6bVKAlhIDOHgBfJ3dR07rJ468SW', NULL, NULL, 'en', 'active', '2026-05-17 07:18:36', 'free', NULL, '2026-05-11 20:52:13', '2026-05-17 12:18:36', NULL),
-('33333333-3333-3333-3333-333333333333', 'ccccccc1-cccc-cccc-cccc-ccccccccccc1', 'Jasur Rahimov', 'demo@example.com', NULL, 'Uzbekistan', 'UZ', 'Bukhara', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', '$2a$12$zUU8F9/PAkRTMbqIlzsMCesPJJ6bVKAlhIDOHgBfJ3dR07rJ468SW', NULL, NULL, 'en', 'active', '2026-05-17 07:18:37', 'free', NULL, '2026-05-11 20:52:13', '2026-05-17 12:18:37', NULL);
+('22222222-2222-2222-2222-222222222222', 'bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbb1', 'Malika Karimova', 'test@example.com', '+998901234568', 'Uzbekistan', 'UZ', 'Samarkand', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', '$2a$12$zUU8F9/PAkRTMbqIlzsMCesPJJ6bVKAlhIDOHgBfJ3dR07rJ468SW', NULL, NULL, 'en', 'active', '2026-05-17 07:18:36', 'free', NULL, '2026-05-11 20:52:13', '2026-05-17 12:18:36', NULL),
+('33333333-3333-3333-3333-333333333333', 'ccccccc1-cccc-cccc-cccc-ccccccccccc1', 'Jasur Rahimov', 'demo@example.com', '+998901234569', 'Uzbekistan', 'UZ', 'Bukhara', 'Asia/Tashkent', NULL, '2026-05-11 20:52:13', '$2a$12$zUU8F9/PAkRTMbqIlzsMCesPJJ6bVKAlhIDOHgBfJ3dR07rJ468SW', NULL, NULL, 'en', 'active', '2026-05-17 07:18:37', 'free', NULL, '2026-05-11 20:52:13', '2026-05-17 12:18:37', NULL);
 
 -- --------------------------------------------------------
 
@@ -794,6 +794,7 @@ ALTER TABLE `todos`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_users_email` (`email`),
+  ADD UNIQUE KEY `uq_users_phone` (`phone`),
   ADD KEY `idx_users_default_book_id` (`default_book_id`),
   ADD KEY `idx_users_google_id` (`google_id`),
   ADD KEY `idx_users_plan` (`plan`);

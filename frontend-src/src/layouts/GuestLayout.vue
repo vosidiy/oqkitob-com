@@ -9,7 +9,7 @@
 			</a>
 
 			<div class="d-flex align-items-center gap-3">
-        <div class="nav">
+        <div class="nav mobile:d-none">
           <a class="nav-link" href="/">{{ $t('nav.home') }}</a>
           <a class="nav-link" href="/about.html">{{ $t('nav.about') }}</a>
           <a class="nav-link" href="/contact.html">{{ $t('nav.help') }}</a>

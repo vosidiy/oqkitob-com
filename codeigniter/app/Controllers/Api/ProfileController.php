@@ -3,6 +3,7 @@
 namespace App\Controllers\Api;
 
 use App\Models\UserModel;
+use App\Support\AuthRules;
 use CodeIgniter\I18n\Time;
 use InvalidArgumentException;
 use RuntimeException;
@@ -88,11 +89,14 @@ class ProfileController extends AuthenticatedApiController
             'has_phone' => $hasPhone,
             'name' => $hasName ? trim((string) $payload['name']) : null,
             'phone' => null,
+            'phone_is_invalid' => false,
         ];
 
         if ($hasPhone) {
+            helper('phone');
             $phone = trim((string) ($payload['phone'] ?? ''));
-            $normalized['phone'] = $phone !== '' ? $phone : null;
+            $normalized['phone'] = $phone !== '' ? normalize_phone_e164($phone) : null;
+            $normalized['phone_is_invalid'] = $phone !== '' && $normalized['phone'] === null;
         }
 
         return $normalized;
@@ -126,7 +130,7 @@ class ProfileController extends AuthenticatedApiController
 
     private function saveProfile(string $userId, array $payload): array
     {
-        $this->validateProfilePayload($payload);
+        $this->validateProfilePayload($userId, $payload);
 
         $updateData = [
             'updated_at' => Time::now('UTC')->toDateTimeString(),
@@ -155,7 +159,7 @@ class ProfileController extends AuthenticatedApiController
         return $profile;
     }
 
-    private function validateProfilePayload(array $payload): void
+    private function validateProfilePayload(string $userId, array $payload): void
     {
         if ($payload['has_name']) {
             $name = (string) $payload['name'];
@@ -172,8 +176,16 @@ class ProfileController extends AuthenticatedApiController
         if ($payload['has_phone']) {
             $phone = $payload['phone'];
 
+            if ($payload['phone_is_invalid']) {
+                throw new InvalidArgumentException('Please enter a valid international phone number.');
+            }
+
             if ($phone !== null && mb_strlen((string) $phone) > 50) {
                 throw new InvalidArgumentException('Phone must be 50 characters or fewer.');
+            }
+
+            if ($phone !== null && $this->users->phoneExists($phone, $userId)) {
+                throw new InvalidArgumentException('This phone number is already registered.');
             }
         }
     }
@@ -206,11 +218,7 @@ class ProfileController extends AuthenticatedApiController
             throw new InvalidArgumentException('Current password, new password, and confirmation are required.');
         }
 
-        if (
-            mb_strlen($currentPassword) > 255 ||
-            mb_strlen($newPassword) > 255 ||
-            mb_strlen($confirmation) > 255
-        ) {
+        if (mb_strlen($currentPassword) > 255) {
             throw new InvalidArgumentException('Passwords must be 255 characters or fewer.');
         }
 
@@ -222,8 +230,10 @@ class ProfileController extends AuthenticatedApiController
             throw new InvalidArgumentException('New password must be different from the current password.');
         }
 
-        if ($newPassword !== $confirmation) {
-            throw new InvalidArgumentException('New password confirmation does not match.');
+        $passwordError = AuthRules::validateNewPassword($newPassword, $confirmation);
+
+        if ($passwordError !== null) {
+            throw new InvalidArgumentException($passwordError);
         }
     }
 }

@@ -28,7 +28,8 @@ Stores account profile data and account-level settings.
 
 Key notes:
 
-- `email` must be unique
+- `phone` is the required unique login identifier
+- `email` is optional and should stay unique when present
 - `password_hash` stores the hashed password
 - `default_book_id` points to the user's preferred book
 - `email_verified_at` indicates verification status

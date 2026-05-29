@@ -11,6 +11,7 @@ class UserModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true;
     protected $allowedFields    = [
+        'id',
         'default_book_id',
         'name',
         'email',
@@ -35,13 +36,25 @@ class UserModel extends Model
     ];
     protected $useTimestamps    = false;
 
-    public function findActiveByEmail(string $email): ?array
+    public function findActiveByPhone(string $phone): ?array
     {
-        $user = $this->where('email', $email)
+        $user = $this->where('phone', $phone)
             ->where('deleted_at', null)
             ->first();
 
         return $user ?: null;
+    }
+
+    public function phoneExists(string $phone, ?string $excludeUserId = null): bool
+    {
+        $builder = $this->where('phone', $phone)
+            ->where('deleted_at', null);
+
+        if ($excludeUserId !== null && $excludeUserId !== '') {
+            $builder->where('id !=', $excludeUserId);
+        }
+
+        return $builder->countAllResults() > 0;
     }
 
     public function getProfileById(string $userId): ?array

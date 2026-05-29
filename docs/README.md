@@ -17,7 +17,7 @@ Money-focused books can also carry a fixed book-level `currency_code`.
 | Frontend  | Vue 3, Vite, Vue Router, Axios, Vue I18n |
 | Backend   | CodeIgniter 4 (JSON API only)     |
 | Database  | MySQL                             |
-| Auth      | Same-origin cookie sessions       |
+| Auth      | Same-origin cookie sessions with phone-first login |
 | Styling   | `assets/final.min.css` + `assets/custom.css` |
 
 ## CSS Library
@@ -106,7 +106,7 @@ Frontend routes:
 
 - `/app.html` -> redirects to `login`
 - `/login` -> guest auth page
-- `/register` -> guest scaffold page
+- `/register` -> guest registration page
 - `/forgot-password` -> guest scaffold page
 - `/home` -> authenticated home; desktop shows the dashboard/content area, mobile shows the full-screen books list
 - `/home/books/:bookId/:page?` -> authenticated selected-book page
@@ -132,6 +132,7 @@ The frontend currently uses a mixed state approach:
     - `checkAuth()`
     - `ensureChecked()`
     - `login(payload)`
+    - `register(payload)`
     - `logout()`
 
 - `frontend-src/src/stores/books-store.js`
@@ -188,6 +189,7 @@ Frontend API helpers live under `frontend-src/src/api/`.
   - lightweight helpers for checking `401`, `404`, and backend error messages without importing Axios into every view
 - `auth.js`
   - `loginRequest`
+  - `registerRequest`
   - `logoutRequest`
   - `fetchCurrentUserRequest`
 - `books-api.js`

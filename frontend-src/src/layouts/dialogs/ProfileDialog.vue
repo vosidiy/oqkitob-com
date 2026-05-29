@@ -24,7 +24,10 @@
           <p class="text-secondary mb-1">
             {{ $t('profileDialog.accountCreatedAt') }}: {{ formattedProfileCreatedAt }}
           </p>
-          <b>{{ user?.email || '-' }}</b>
+          <b>{{ user?.phone || '-' }}</b>
+          <p v-if="user?.email" class="text-secondary mt-1 mb-0">
+            {{ $t('common.fields.email') }}: {{ user.email }}
+          </p>
         </div>
       </article>
 

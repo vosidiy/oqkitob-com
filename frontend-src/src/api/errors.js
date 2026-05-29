@@ -23,6 +23,11 @@ export function isNotFoundError(error) {
 export function getApiErrorMessage(error, fallbackMessage) {
   const response = getResponse(error)
   const message = response?.data?.message
+  const nestedError = response?.data?.messages?.error
+
+  if (typeof nestedError === 'string' && nestedError.trim() !== '') {
+    return nestedError
+  }
 
   return typeof message === 'string' && message.trim() !== '' ? message : fallbackMessage
 }
