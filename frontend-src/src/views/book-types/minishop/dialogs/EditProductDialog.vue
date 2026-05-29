@@ -74,7 +74,7 @@
                 type="number"
                 class="form-control"
                 min="0"
-                step="1"
+                step="0.01"
                 placeholder="0.00"
                 :disabled="isBusy"
                 required
@@ -90,7 +90,7 @@
               type="number"
               class="form-control"
               min="0"
-              step="1"
+              step="0.001"
               placeholder="0"
               :disabled="isBusy"
               required

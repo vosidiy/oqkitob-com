@@ -138,7 +138,7 @@ const props = defineProps({
   },
   discountInput: {
     type: String,
-    default: '0.00',
+    default: '0',
   },
   errorMessage: {
     type: String,
@@ -150,7 +150,7 @@ const props = defineProps({
   },
   paidInput: {
     type: String,
-    default: '0.00',
+    default: '0',
   },
   paymentMethod: {
     type: String,

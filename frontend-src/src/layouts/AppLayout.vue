@@ -198,6 +198,7 @@ import { useI18n } from 'vue-i18n'
 import { useLocale } from '@/composables/use-locale'
 import { authStore } from '@/stores/auth'
 import { useBooksStore } from '@/stores/books-store'
+import { formatDate } from '@/utils/date-time'
 import ArchivedBooksDialog from './dialogs/ArchivedBooksDialog.vue'
 import BookSettingsDialog from './dialogs/BookSettingsDialog.vue'
 import CreateBookDialog from './dialogs/CreateBookDialog.vue'
@@ -316,27 +317,7 @@ const moneyDisplaySeparatorOptions = computed(() => {
   return Array.isArray(options) ? options : []
 })
 const formattedProfileCreatedAt = computed(() => {
-  const rawValue = String(user.value?.created_at ?? '').trim()
-
-  if (rawValue === '') {
-    return '-'
-  }
-
-  const parsedDate = new Date(rawValue.replace(' ', 'T'))
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return '-'
-  }
-
-  try {
-    return new Intl.DateTimeFormat(currentLocale.value || 'en', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-    }).format(parsedDate)
-  } catch {
-    return '-'
-  }
+  return formatDate(user.value?.created_at, { locale: currentLocale.value })
 })
 
 // Remount the book detail page whenever the route's bookId changes so each

@@ -82,12 +82,12 @@
 
         <div class="mb-2">
           <div v-if="paymentSummaryChangeAmount > 0" class="text-green">
-            <span>{{ $t('minishop.sales.returnChange') }}</span>
-            <strong class="text-sm">{{ formatMoney(paymentSummaryChangeAmount) }} <small class="currency-code">{{ props.sale?.currency_code }}</small></strong>
+            <span>{{ $t('minishop.sales.returnChange') }}: </span> 
+            <strong class="text-sm">{{ formatMoney(paymentSummaryChangeAmount) }}<small class="currency-code"> {{ props.sale?.currency_code }}</small></strong>
           </div>
           <div v-else-if="paymentSummaryRemainingAmount > 0" class="text-orange">
-            <span>{{ $t('minishop.sales.remainingDebt') }}</span>
-            <strong class="text-sm">{{ formatMoney(paymentSummaryRemainingAmount) }} <small class="currency-code">{{ props.sale?.currency_code }}</small></strong>
+            <span>{{ $t('minishop.sales.remainingDebt') }}: </span> 
+            <strong class="text-sm">{{ formatMoney(paymentSummaryRemainingAmount) }} <small class="currency-code"> {{ props.sale?.currency_code }}</small></strong>
           </div>
           <div v-else class="text-green">
             <strong class="text-sm">{{ $t('common.states.paidInFull') }}</strong>
@@ -155,8 +155,8 @@ const props = defineProps({
 
 const emit = defineEmits(['cancel', 'close', 'submit'])
 const dialogRef = ref(null)
-const discountInput = ref('0.00')
-const paidInput = ref('0.00')
+const discountInput = ref('0')
+const paidInput = ref('0')
 const paymentMethod = ref(props.initialPaymentMethod)
 
 const paymentSummarySubtotal = computed(() => {
@@ -206,7 +206,7 @@ watch(
   [paymentMethod, paymentSummaryRemainingBeforePayment],
   ([nextMethod, nextRemaining]) => {
     if (nextMethod === 'card' && paymentSummaryPaidAmount.value > nextRemaining) {
-      paidInput.value = formatMoneyInputValue(nextRemaining)
+      paidInput.value = normalizeMoneyInputValue(nextRemaining)
     }
   },
 )
@@ -247,23 +247,20 @@ function handleSubmit() {
 }
 
 function normalizeDiscountInput() {
-  discountInput.value = formatMoneyInputValue(paymentSummaryDiscountAmount.value)
+  discountInput.value = clampMoneyInputValue(discountInput.value, {
+    max: paymentSummarySubtotal.value,
+  })
 }
 
 function normalizePaidInput() {
-  const normalizedAmount = paymentSummaryPaidAmount.value
-
-  if (paymentMethod.value === 'card' && normalizedAmount > paymentSummaryRemainingBeforePayment.value) {
-    paidInput.value = formatMoneyInputValue(paymentSummaryRemainingBeforePayment.value)
-    return
-  }
-
-  paidInput.value = formatMoneyInputValue(normalizedAmount)
+  paidInput.value = clampMoneyInputValue(paidInput.value, {
+    max: paymentMethod.value === 'card' ? paymentSummaryRemainingBeforePayment.value : null,
+  })
 }
 
 function resetForm() {
-  discountInput.value = formatMoneyInputValue(props.sale?.discount_amount ?? 0)
-  paidInput.value = formatMoneyInputValue(props.sale?.due_amount ?? 0)
+  discountInput.value = normalizeMoneyInputValue(props.sale?.discount_amount ?? 0)
+  paidInput.value = normalizeMoneyInputValue(props.sale?.due_amount ?? 0)
   paymentMethod.value = props.initialPaymentMethod
 }
 
@@ -276,8 +273,29 @@ function formatMoney(value) {
   return formatMoneyByBookSettings(value, props.book)
 }
 
-function formatMoneyInputValue(value) {
-  return parseNonNegativeAmount(value, 0).toFixed(2)
+function normalizeMoneyInputValue(value) {
+  return String(parseNonNegativeAmount(value, 0))
+}
+
+function clampMoneyInputValue(value, options = {}) {
+  const { max = null } = options
+  const trimmedValue = String(value ?? '').trim()
+
+  if (trimmedValue === '') {
+    return '0'
+  }
+
+  const parsedValue = Number.parseFloat(trimmedValue)
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+    return '0'
+  }
+
+  if (max != null && parsedValue > max) {
+    return normalizeMoneyInputValue(max)
+  }
+
+  return trimmedValue
 }
 
 defineExpose({

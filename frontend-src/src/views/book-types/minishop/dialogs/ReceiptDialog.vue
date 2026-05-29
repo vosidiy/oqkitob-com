@@ -11,7 +11,7 @@
       <div class="mb-3">
         <div><strong>{{ $t('common.fields.book') }}:</strong> {{ book.title }}</div>
         <div><strong>{{ $t('common.fields.receipt') }} ID:</strong> {{ receiptState.sale.id }}</div>
-        <div><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ receiptState.sale.sold_at }}</div>
+        <div><strong>{{ $t('common.fields.soldAt') }}:</strong> {{ formatDateTime(receiptState.sale.sold_at) }}</div>
         <div><strong>{{ $t('common.fields.currency') }}:</strong> {{ receiptState.sale.currency_code }}</div>
         <div v-if="receiptState.sale.customer_name">
           <strong>{{ $t('common.fields.customer') }}:</strong>
@@ -33,7 +33,7 @@
           <tbody>
             <tr v-for="item in receiptState.items" :key="item.id">
               <td>{{ item.product_name }}</td>
-              <td>{{ item.quantity }}</td>
+              <td>{{ formatQuantityValue(item.quantity) }}</td>
               <td class="text-right">{{ formatMoneyValue(item.unit_price) }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></td>
               <td class="text-right">{{ formatMoneyValue(item.line_total) }} <small class="currency-code">{{ receiptState.sale.currency_code }}</small></td>
             </tr>
@@ -86,7 +86,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
+import { formatQuantityDisplay } from '@/utils/quantity'
 
 const props = defineProps({
   book: {
@@ -120,6 +122,10 @@ function isOpen() {
 
 function formatMoneyValue(value) {
   return formatMoneyByBookSettings(value, props.book)
+}
+
+function formatQuantityValue(value) {
+  return formatQuantityDisplay(value)
 }
 
 defineExpose({

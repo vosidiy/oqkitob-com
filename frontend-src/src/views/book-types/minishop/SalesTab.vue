@@ -421,7 +421,9 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
+import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
+import { formatQuantityDisplay } from '@/utils/quantity'
 import {
   createMinishopSalePayment,
   deleteMinishopSale,
@@ -908,27 +910,7 @@ function formatMoney(value) {
 }
 
 function formatQuantity(value) {
-  const quantity = Number.parseFloat(String(value ?? 0))
-
-  if (!Number.isFinite(quantity)) {
-    return '0'
-  }
-
-  return quantity.toFixed(3).replace(/\.?0+$/, '')
-}
-
-function formatDateTime(value) {
-  if (!value) {
-    return '-'
-  }
-
-  const parsedDate = new Date(String(value).replace(' ', 'T'))
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return String(value)
-  }
-
-  return parsedDate.toLocaleString()
+  return formatQuantityDisplay(value)
 }
 
 function makeLocalDateTimeString(date = new Date()) {

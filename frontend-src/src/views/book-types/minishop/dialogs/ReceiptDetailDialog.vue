@@ -144,7 +144,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
+import { formatQuantityDisplay } from '@/utils/quantity'
 
 const props = defineProps({
   book: {
@@ -213,24 +215,7 @@ function formatMoney(value) {
 }
 
 function formatQuantity(value) {
-  const quantity = Number.parseFloat(String(value ?? 0))
-  if (!Number.isFinite(quantity)) {
-    return '0'
-  }
-  return quantity.toFixed(3).replace(/\.?0+$/, '')
-}
-
-function formatDateTime(value) {
-  if (!value) {
-    return '-'
-  }
-
-  const parsedDate = new Date(String(value).replace(' ', 'T'))
-  if (Number.isNaN(parsedDate.getTime())) {
-    return String(value)
-  }
-
-  return parsedDate.toLocaleString()
+  return formatQuantityDisplay(value)
 }
 
 defineExpose({

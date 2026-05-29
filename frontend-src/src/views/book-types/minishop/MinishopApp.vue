@@ -197,7 +197,9 @@ import BookPageHeader from '@/components/BookPageHeader.vue'
 import CustomersTab from '@/views/book-types/minishop/CustomersTab.vue'
 import NewSaleTab from '@/views/book-types/minishop/NewSaleTab.vue'
 import SalesTab from '@/views/book-types/minishop/SalesTab.vue'
+import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
+import { formatQuantityDisplay, normalizeQuantityInput } from '@/utils/quantity'
 import CheckoutPaymentDialog from '@/views/book-types/minishop/dialogs/CheckoutPaymentDialog.vue'
 import { createManageCategoryRow } from '@/views/book-types/minishop/dialogs/categoryRow'
 import CreateCustomerDialog from '@/views/book-types/minishop/dialogs/CreateCustomerDialog.vue'
@@ -260,8 +262,8 @@ const saleErrorMessage = ref('')
 const selectedCategoryId = ref('')
 const selectedCustomerId = ref('')
 const productSearchQuery = ref('')
-const discountInput = ref('0.00')
-const paidInput = ref('0.00')
+const discountInput = ref('0')
+const paidInput = ref('0')
 const paymentMethod = ref('cash')
 const saleNoteInput = ref('')
 const isPaidManuallyEdited = ref(false)
@@ -463,30 +465,30 @@ watch(subtotal, (nextSubtotal) => {
   }
 
   if (parseNonNegativeAmount(discountInput.value, 0) > nextSubtotal) {
-    discountInput.value = formatMoneyValue(nextSubtotal)
+    discountInput.value = normalizeMoneyInputValue(nextSubtotal)
   }
 })
 
 watch(total, (nextTotal) => {
   if (!isPaidManuallyEdited.value) {
-    paidInput.value = formatMoneyValue(nextTotal)
+    paidInput.value = normalizeMoneyInputValue(nextTotal)
     return
   }
 
   if (paymentMethod.value === 'card' && paidAmount.value > nextTotal) {
-    paidInput.value = formatMoneyValue(nextTotal)
+    paidInput.value = normalizeMoneyInputValue(nextTotal)
   }
 }, { immediate: true })
 
 watch(paymentMethod, (nextMethod) => {
   if (nextMethod === 'card' && paidAmount.value > total.value) {
-    paidInput.value = formatMoneyValue(total.value)
+    paidInput.value = normalizeMoneyInputValue(total.value)
   }
 })
 
 watch(paidAmount, (nextPaidAmount) => {
   if (paymentMethod.value === 'card' && nextPaidAmount > total.value) {
-    paidInput.value = formatMoneyValue(total.value)
+    paidInput.value = normalizeMoneyInputValue(total.value)
   }
 })
 
@@ -571,11 +573,11 @@ async function openEditProductDialog(product) {
   editProductForm.category_id = String(product?.category_id ?? '')
   editProductForm.new_category_name = ''
   editProductForm.sku = String(product?.sku ?? '')
-  editProductForm.price = String(product?.price ?? '')
-  editProductForm.quantity = String(product?.quantity ?? '')
+  editProductForm.price = normalizeMoneyInputValue(product?.price ?? 0)
+  editProductForm.quantity = normalizeQuantityInput(product?.quantity ?? 0)
   editProductForm.low_stock_alert = product?.low_stock_alert == null
     ? ''
-    : String(product.low_stock_alert)
+    : normalizeQuantityInput(product.low_stock_alert)
 
   editProductDialog.value?.open()
 }
@@ -607,7 +609,7 @@ function addProductToCart(product) {
 
   if (existingCartItem) {
     const nextQuantity = parsePositiveQuantity(existingCartItem.quantityInput, 1) + 1
-    existingCartItem.quantityInput = formatQuantityValue(nextQuantity)
+    existingCartItem.quantityInput = normalizeQuantityInput(nextQuantity, 1)
     return
   }
 
@@ -615,7 +617,7 @@ function addProductToCart(product) {
     productId: product.id,
     name: product.name,
     quantityInput: '1',
-    unitPriceInput: formatMoneyValue(product.price),
+    unitPriceInput: normalizeMoneyInputValue(product.price),
   })
 }
 
@@ -636,7 +638,7 @@ function normalizeCartItemQuantity(productId) {
     return
   }
 
-  cartItem.quantityInput = formatQuantityValue(cartItem.quantityInput)
+  cartItem.quantityInput = normalizeQuantityInput(cartItem.quantityInput, 1)
 }
 
 function updateCartItemPrice(productId, rawValue) {
@@ -656,7 +658,7 @@ function normalizeCartItemPrice(productId) {
     return
   }
 
-  cartItem.unitPriceInput = formatMoneyValue(cartItem.unitPriceInput)
+  cartItem.unitPriceInput = clampMoneyInputValue(cartItem.unitPriceInput)
 }
 
 function removeCartItem(productId) {
@@ -664,7 +666,9 @@ function removeCartItem(productId) {
 }
 
 function normalizeDiscountInput() {
-  discountInput.value = formatMoneyValue(discountAmount.value)
+  discountInput.value = clampMoneyInputValue(discountInput.value, {
+    max: subtotal.value,
+  })
 }
 
 function markPaidManuallyEdited() {
@@ -672,12 +676,9 @@ function markPaidManuallyEdited() {
 }
 
 function normalizePaidInput() {
-  if (paymentMethod.value === 'card' && paidAmount.value > total.value) {
-    paidInput.value = formatMoneyValue(total.value)
-    return
-  }
-
-  paidInput.value = formatMoneyValue(paidInput.value)
+  paidInput.value = clampMoneyInputValue(paidInput.value, {
+    max: paymentMethod.value === 'card' ? total.value : null,
+  })
 }
 
 function openCheckoutPaymentDialog() {
@@ -914,7 +915,7 @@ function buildReceiptHtml() {
     return `
       <tr>
         <td>${escapeReceiptText(item.product_name)}</td>
-        <td>${escapeReceiptText(item.quantity)}</td>
+        <td>${escapeReceiptText(formatQuantityDisplay(item.quantity))}</td>
         <td>${escapeReceiptText(formatMoneyDisplay(item.unit_price))}</td>
         <td>${escapeReceiptText(formatMoneyDisplay(item.line_total))}</td>
       </tr>
@@ -993,7 +994,7 @@ function buildReceiptHtml() {
         <div class="meta">
           <div><span>${escapeReceiptText(t('common.fields.book'))}</span><strong>${escapeReceiptText(props.book.title)}</strong></div>
           <div><span>${escapeReceiptText(t('common.fields.receipt'))}</span><strong>${escapeReceiptText(receipt.sale.id)}</strong></div>
-          <div><span>${escapeReceiptText(t('common.fields.soldAt'))}</span><strong>${escapeReceiptText(receipt.sale.sold_at)}</strong></div>
+          <div><span>${escapeReceiptText(t('common.fields.soldAt'))}</span><strong>${escapeReceiptText(formatDateTime(receipt.sale.sold_at, { locale: locale.value }))}</strong></div>
           <div><span>${escapeReceiptText(t('common.fields.currency'))}</span><strong>${escapeReceiptText(receipt.sale.currency_code)}</strong></div>
           ${receipt.sale.customer_name
             ? `<div><span>${escapeReceiptText(t('common.fields.customer'))}</span><strong>${escapeReceiptText(receipt.sale.customer_name)}${receipt.sale.customer_phone ? ` · ${escapeReceiptText(receipt.sale.customer_phone)}` : ''}</strong></div>`
@@ -1363,8 +1364,8 @@ function findCartItem(productId) {
 
 function resetCheckoutState() {
   selectedCustomerId.value = ''
-  discountInput.value = '0.00'
-  paidInput.value = '0.00'
+  discountInput.value = '0'
+  paidInput.value = '0'
   paymentMethod.value = 'cash'
   saleNoteInput.value = ''
   isPaidManuallyEdited.value = false
@@ -1388,18 +1389,35 @@ function parseNonNegativeAmount(value, fallback) {
   return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : fallback
 }
 
-function formatMoneyValue(value) {
-  return parseNonNegativeAmount(value, 0).toFixed(2)
+function normalizeMoneyInputValue(value) {
+  const normalizedAmount = parseNonNegativeAmount(value, 0)
+
+  return Number.isInteger(normalizedAmount) ? String(normalizedAmount) : String(normalizedAmount)
+}
+
+function clampMoneyInputValue(value, options = {}) {
+  const { max = null } = options
+  const trimmedValue = String(value ?? '').trim()
+
+  if (trimmedValue === '') {
+    return '0'
+  }
+
+  const parsedValue = Number.parseFloat(trimmedValue)
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+    return '0'
+  }
+
+  if (max != null && parsedValue > max) {
+    return normalizeMoneyInputValue(max)
+  }
+
+  return trimmedValue
 }
 
 function formatMoneyDisplay(value) {
   return formatMoneyByBookSettings(value, props.book)
-}
-
-function formatQuantityValue(value) {
-  const formattedQuantity = parsePositiveQuantity(value, 1).toFixed(3)
-
-  return formattedQuantity.replace(/\.?0+$/, '')
 }
 
 function makeLocalDateTimeString(date = new Date()) {

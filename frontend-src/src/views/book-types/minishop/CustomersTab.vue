@@ -63,7 +63,7 @@
 
                 <div class="text-right flex-shrink-0">
                   <p>
-                    🧾 {{ $t('minishop.customers.receiptCount', { count: formatInteger(customer.receipt_count) }) }}
+                    🧾 {{ $t('minishop.customers.receiptCount', { count: formatQuantityDisplay(customer.receipt_count) }) }}
                   </p>
                   <p class="mt-1 text-secondary" :class="{ 'text-red': Number(customer.outstanding_balance) > 0 }">
                   {{ $t('minishop.customers.outstandingDebt') }}:  {{ formatMoney(customer.outstanding_balance) }} <small class="currency-code">{{ props.book.currency_code }}</small>
@@ -127,7 +127,7 @@
               <div>
                 <div class="border rounded bg-lower p-2">
                   <p class="text-secondary mb-1">{{ $t('minishop.customers.receipts') }}</p>
-                  <strong class="text-lg">{{ formatInteger(selectedCustomer.receipt_count) }} 🧾 </strong>
+                  <strong class="text-lg">{{ formatQuantityDisplay(selectedCustomer.receipt_count) }} 🧾 </strong>
                 </div>
               </div>
               <div>
@@ -282,7 +282,9 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
+import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
+import { formatQuantityDisplay } from '@/utils/quantity'
 import {
   createMinishopCustomer,
   createMinishopSalePayment,
@@ -891,36 +893,6 @@ function sortCustomers(items) {
 
 function formatMoney(value) {
   return formatMoneyByBookSettings(value, props.book)
-}
-
-function formatQuantity(value) {
-  const quantity = Number.parseFloat(String(value ?? 0))
-
-  if (!Number.isFinite(quantity)) {
-    return '0'
-  }
-
-  return quantity.toFixed(3).replace(/\.?0+$/, '')
-}
-
-function formatInteger(value) {
-  const amount = Number.parseInt(String(value ?? 0), 10)
-
-  return Number.isFinite(amount) ? String(amount) : '0'
-}
-
-function formatDateTime(value) {
-  if (!value) {
-    return '-'
-  }
-
-  const parsedDate = new Date(String(value).replace(' ', 'T'))
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return String(value)
-  }
-
-  return parsedDate.toLocaleString()
 }
 
 function makeLocalDateTimeString(date = new Date()) {

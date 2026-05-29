@@ -195,7 +195,7 @@
                     type="number"
                     class="form-control rounded-0"
                     min="0"
-                    step="1"
+                    step="0.01"
                     @input="emit('update-cart-item-price', item.productId, $event.target.value)"
                     @blur="emit('normalize-cart-item-price', item.productId)"
                   >
@@ -298,6 +298,7 @@
 import { computed, ref } from 'vue'
 import vSelect from 'vue-select'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
+import { formatQuantityDisplay } from '@/utils/quantity'
 
 const props = defineProps({
   book: {
@@ -477,8 +478,6 @@ function formatPrice(price) {
 }
 
 function formatQuantity(quantity) {
-  const formattedQuantity = Number(quantity ?? 0).toFixed(3)
-
-  return formattedQuantity.replace(/\.?0+$/, '')
+  return formatQuantityDisplay(quantity)
 }
 </script>
