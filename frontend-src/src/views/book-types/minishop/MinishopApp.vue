@@ -1,24 +1,24 @@
 <template>
-  <div class="d-flex flex-col h-full w-full">
+  <div class="d-flex flex-col h-full w-full mobile:pt-25">
     <BookPageHeader :book="book">
       <template #nav>
         <RouterLink
           :to="{ name: 'book-detail', params: { bookId: book.id } }"
-          class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
+          class="tab-link py-4 mobile:py-2 mobile:px-1 flex-grow justify-content-center rounded-0"
           :class="{ active: activePageKey === 'main' }"
         >
           {{ $t('minishop.tabs.main') }}
         </RouterLink>
         <RouterLink
           :to="{ name: 'book-detail', params: { bookId: book.id, page: 'sales' } }"
-          class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
+          class="tab-link py-4 mobile:py-2 mobile:px-1 flex-grow justify-content-center rounded-0"
           :class="{ active: activePageKey === 'sales' }"
         >
           {{ $t('minishop.tabs.sales') }}
         </RouterLink>
         <RouterLink
           :to="{ name: 'book-detail', params: { bookId: book.id, page: 'customers' } }"
-          class="tab-link py-4 mobile:py-2 mobile:px-1 rounded-0"
+          class="tab-link py-4 mobile:py-2 mobile:px-1 flex-grow justify-content-center rounded-0"
           :class="{ active: activePageKey === 'customers' }"
         >
           {{ $t('minishop.tabs.customers') }}

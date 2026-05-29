@@ -1,7 +1,7 @@
 <template>
-  <div class="d-flex flex-col h-full w-full overflow-hidden bg-secondary">
+  <div class="bg-secondary">
     <template v-if="isBookListRoute">
-      <header class="d-flex align-items-center gap-2 h-14 flex-shrink-0 bg-base border-bottom border-color-neutral-300 px-3">
+      <header class="d-flex align-items-center fixed-top gap-2 h-14 flex-shrink-0 bg-base border-bottom border-color-neutral-300 px-3">
         <a href="/home" class="hover:opacity-80 d-flex text-decoration-none align-items-center m-0 mr-auto">
           <img src="/assets/img/logo.svg" alt="" height="28">
           <div style="font-size:20px;" class="font-semibold ml-1">Oq<span class="text-secondary">kitob</span></div>
@@ -20,9 +20,9 @@
         </div>
 
         <div class="d-flex align-items-center mb-3">
-          <div>
-            <h1 class="text-xl">{{ $t('nav.home') }}</h1>
-            <p class="text-secondary text-sm">{{ user?.name || user?.email || '-' }}</p>
+          <div class="lh-sm text-base">
+            <p class="font-semibold">{{ user?.name || '-' }}</p>
+            <small class="text-sm text-secondary">{{ user?.email || '-' }}</small>
           </div>
         </div>
 
@@ -39,19 +39,19 @@
             :to="{ name: 'book-detail', params: { bookId: book.id } }"
             class="card border-transparent bg-raised hover:border-color-neutral-400 d-flex flex-row align-items-center relative p-3 mb-2"
           >
-            <div class="w-12 h-12 d-flex flex-center rounded overflow-hidden flex-shrink-0 bg-neutral-0">
-              <img src="/assets/img/book-finance.png" width="42" alt="Book">
+            <div class="w-18 h-auto d-flex flex-center rounded overflow-hidden flex-shrink-0 bg-neutral-0">
+              <img src="/assets/img/book-finance-open.png" width="60" alt="Book">
             </div>
             <div class="p-2 min-w-0">
-              <h2 class="text-base text-capitalize font-semibold">{{ book.title }}</h2>
+              <h5 class="text-base text-lg text-capitalize font-bold">{{ book.title }}</h5>
               <div
                 v-if="book.description"
-                class="text-secondary text-sm mt-1"
+                class="text-secondary"
                 style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"
               >
                 {{ book.description }}
               </div>
-              <p class="text-secondary text-sm mt-1">{{ $t('bookTypes.' + book.type_key) }}</p>
+              <p class="text-sm text-muted text-uppercase mt-1"> [{{ $t('bookTypes.' + book.type_key) }}]</p>
             </div>
           </RouterLink>
         </div>

@@ -1,8 +1,8 @@
 <template>
-  <header v-if="isMobileAppLayout" class="d-flex flex-col flex-shrink-0 bg-base border-bottom border-color-neutral-300">
+  <header v-if="isMobileAppLayout" class="d-flex fixed-top top-0 flex-col shadow flex-shrink-0 bg-base border-bottom border-color-neutral-300">
     <div class="d-flex align-items-center gap-2 h-14 px-2">
       <RouterLink :to="{ name: 'dashboard-home' }" class="btn btn-icon btn-default flex-shrink-0" :title="$t('common.actions.back')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-icon lucide-arrow-left"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" style="max-width: 24px; max-height: 24px;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
       </RouterLink>
 
       <div class="min-w-0 flex-grow">

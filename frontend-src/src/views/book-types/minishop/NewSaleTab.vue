@@ -112,7 +112,7 @@
     </aside>
 
     <aside
-      class="d-flex flex-col w-full h-full flex-1 bg-base mobile:fixed top-0 left-0 right-0 bottom-0 z-50"
+      class="d-flex flex-col w-full h-full  mobile:pt-25  flex-1 bg-base mobile:fixed top-0 left-0 right-0 bottom-0 z-20"
       :class="{ 'mobile:d-flex': isMobileCartOpen, 'mobile:d-none': !isMobileCartOpen }"
     >
       <section class="px-4 py-3 border-bottom">
@@ -126,11 +126,11 @@
 
           <button
             type="button"
-            class="btn btn-icon btn-default d-none mobile:d-flex"
+            class="btn btn-default d-none mobile:d-flex"
             :title="$t('common.actions.close')"
             @click="closeMobileCart"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            {{ $t('common.actions.back') }}
           </button>
         </div>
       </section>
@@ -286,7 +286,7 @@
       </section>
     </aside>
 
-    <div class="d-none mobile:d-block fixed left-0 right-0 bottom-0 z-40 bg-base border-top border-color-neutral-300 p-3">
+    <div class="d-none mobile:d-block fixed left-0 right-0 bottom-0 z-10 bg-base border-top border-color-neutral-300 p-3">
       <button type="button" class="btn btn-primary w-full" @click="openMobileCart">
         {{ $t('minishop.main.selectedCart', { count: cartItems.length }) }}
       </button>

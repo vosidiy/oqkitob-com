@@ -1,5 +1,5 @@
 <template>
-  <section class="d-flex flex-1 overflow-hidden mobile:flex-col">
+  <section class="d-flex flex-1 overflow-hidden mobile:flex-col relative">
     <aside class="col-6 d-flex flex-col overflow-hidden border-right mobile:max-w-full flex-grow mobile:w-full">
       <header class="d-flex h-16 gap-2 align-items-center justify-content-between px-4 py-3 border-bottom">
         <div>
@@ -77,7 +77,7 @@
       </div>
     </aside>
 
-    <aside class="col-6">
+    <aside class="col-6 mobile:max-w-full flex-grow mobile:w-full">
       <section class="flex-1 overflow-y-auto p-4 bg-neutral-100 h-full">
         <div v-if="selectedCustomerErrorMessage" class="alert alert-danger mb-2" role="alert">
           {{ selectedCustomerErrorMessage }}
@@ -87,7 +87,7 @@
           <div class="p-10 text-secondary">{{ $t('minishop.customers.loadingCustomer') }}</div>
         </div>
 
-        <article v-else-if="selectedCustomer" class="card shadow">
+        <article v-else-if="selectedCustomer" class="card shadow mobile:absolute mobile:top-0 mobile:left-0 mobile:bottom-0 mobile:right-0 z-40">
           <div class="card-body">
             
             <div class="d-flex align-items-start gap-3 mb-4 mobile:flex-col">
@@ -123,7 +123,7 @@
               </div>
             </div>
 
-            <article class="row row-cols-4 gap-2 mb-4">
+            <article class="row row-cols-4 mobile:row-cols-2 gap-2 mb-4">
               <div>
                 <div class="border rounded bg-lower p-2">
                   <p class="text-secondary mb-1">{{ $t('minishop.customers.receipts') }}</p>

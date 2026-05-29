@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex flex-col h-full w-full">
+  <div class="d-flex flex-col h-full w-full mobile:pt-14">
     <BookPageHeader :book="book" />
 
     <main class="min-h-100 overflow-y-scroll py-5 flex-1">

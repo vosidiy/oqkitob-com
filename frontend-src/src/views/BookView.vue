@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex flex-col h-full w-full">
+
     <div v-if="errorMessage" class="alert" :class="errorMessage === bookNotFoundMessage ? 'alert-warning' : 'alert-danger'" role="alert">
       {{ errorMessage }}
     </div>
@@ -17,7 +17,7 @@
     <div v-else class="alert alert-warning" role="alert">
       {{ BOOK_NOT_FOUND_MESSAGE }}
     </div>
-  </div>
+    
 </template>
 
 <script setup>

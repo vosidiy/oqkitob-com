@@ -1,5 +1,5 @@
 <template>
-  <section class="d-flex flex-1 overflow-hidden mobile:flex-col">
+  <section class="d-flex flex-1 overflow-hidden mobile:flex-col relative">
     <aside class="col-6 d-flex flex-col overflow-hidden border-right mobile:max-w-full flex-grow mobile:w-full">
       <header class="d-flex h-16 gap-2 align-items-center justify-content-between px-4 py-3 border-bottom">
         <div>
@@ -140,7 +140,7 @@
       </section>
     </aside>
 
-    <aside class="col-6">
+    <aside class="col-6 mobile:max-w-full flex-grow mobile:w-full">
       <section class="flex-1 overflow-y-auto p-4 bg-lower h-full">
         <div v-if="selectedSaleErrorMessage" class="alert alert-danger" role="alert">
           {{ selectedSaleErrorMessage }}
@@ -150,7 +150,7 @@
           <div class="p-10 text-center text-secondary text-lg">{{ $t('minishop.sales.loadingReceipt') }}</div>
         </article>
 
-        <article v-else-if="selectedSale" class="card">
+        <article v-else-if="selectedSale" class="card mobile:absolute mobile:top-0 mobile:left-0 mobile:bottom-0 mobile:right-0 z-40">
           <div class="card-body">
             
             <header class="d-flex mb-2">
