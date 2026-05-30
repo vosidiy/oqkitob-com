@@ -548,6 +548,12 @@ async function handleProfilePhoneSave() {
   }
 
   profileErrorMessages.phone = ''
+
+  if (! isValidOptionalInternationalPhone(profileForm.phone.trim())) {
+    profileErrorMessages.phone = t('profileDialog.validationPhoneInvalid')
+    return
+  }
+
   activeProfileAction.value = 'phone'
 
   try {
@@ -567,6 +573,20 @@ async function handleProfilePhoneSave() {
   } finally {
     activeProfileAction.value = ''
   }
+}
+
+function isValidOptionalInternationalPhone(phone) {
+  if (phone === '') {
+    return true
+  }
+
+  if (/\p{L}/u.test(phone)) {
+    return false
+  }
+
+  const digits = phone.replace(/\D+/g, '')
+
+  return digits.length >= 8 && digits.length <= 15 && digits[0] !== '0'
 }
 
 async function handleProfilePasswordSave() {

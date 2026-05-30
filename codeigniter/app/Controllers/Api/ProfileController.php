@@ -93,13 +93,33 @@ class ProfileController extends AuthenticatedApiController
         ];
 
         if ($hasPhone) {
-            helper('phone');
             $phone = trim((string) ($payload['phone'] ?? ''));
-            $normalized['phone'] = $phone !== '' ? normalize_phone_e164($phone) : null;
+            $normalized['phone'] = $phone !== '' ? $this->normalizeProfilePhone($phone) : null;
             $normalized['phone_is_invalid'] = $phone !== '' && $normalized['phone'] === null;
         }
 
         return $normalized;
+    }
+
+    private function normalizeProfilePhone(string $value): ?string
+    {
+        $phone = trim($value);
+
+        if ($phone === '' || preg_match('/\p{L}/u', $phone)) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        if (! is_string($digits) || strlen($digits) < 8 || strlen($digits) > 15) {
+            return null;
+        }
+
+        if ($digits[0] === '0') {
+            return null;
+        }
+
+        return '+' . $digits;
     }
 
     private function getPasswordPayload(): array

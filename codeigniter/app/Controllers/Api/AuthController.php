@@ -40,8 +40,7 @@ class AuthController extends BaseController
             ], 422);
         }
 
-        helper('phone');
-        $normalizedPhone = normalize_phone_e164($phone);
+        $normalizedPhone = $this->normalizeAuthPhone($phone);
 
         if ($normalizedPhone === null) {
             return $this->respond([
@@ -136,9 +135,7 @@ class AuthController extends BaseController
     private function getRegisterPayload(): array
     {
         $payload = $this->request->getJSON(true) ?? $this->request->getPost();
-        helper('phone');
-
-        $phone = normalize_phone_e164((string) ($payload['phone'] ?? ''));
+        $phone = $this->normalizeAuthPhone((string) ($payload['phone'] ?? ''));
         $name = trim((string) ($payload['name'] ?? ''));
         $password = (string) ($payload['password'] ?? '');
         $passwordConfirmation = (string) ($payload['password_confirmation'] ?? '');
@@ -166,6 +163,27 @@ class AuthController extends BaseController
             'name' => $name,
             'password' => $password,
         ];
+    }
+
+    private function normalizeAuthPhone(string $value): ?string
+    {
+        $phone = trim($value);
+
+        if ($phone === '' || preg_match('/\p{L}/u', $phone)) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        if (! is_string($digits) || strlen($digits) < 8 || strlen($digits) > 15) {
+            return null;
+        }
+
+        if ($digits[0] === '0') {
+            return null;
+        }
+
+        return '+' . $digits;
     }
 
     private function registerUser(array $payload): array

@@ -158,6 +158,7 @@ export const messages = {
       unableUpdateName: 'Unable to update your name right now.',
       unableUpdatePhone: 'Unable to update your phone right now.',
       unableUpdatePassword: 'Unable to update your password right now.',
+      validationPhoneInvalid: 'Please enter a valid international phone number, for example +998901234567.',
     },
     guestLayout: {
       ariaLanguagePicker: 'Language picker',
@@ -186,6 +187,7 @@ export const messages = {
         submit: 'Create account',
         backToLogin: 'Back to login',
         unableToRegister: 'Unable to create your account right now.',
+        validationPhoneInvalid: 'Please enter a valid international phone number, for example +998901234567.',
         validationNameTooShort: 'Name must be at least 2 characters.',
         validationNameGibberish: 'Please enter a real name, not random characters.',
         validationPasswordTooShort: 'Password must be at least {min} characters.',
@@ -602,6 +604,7 @@ export const messages = {
       unableUpdateName: 'Hozir ismingizni yangilab bo‘lmadi.',
       unableUpdatePhone: 'Hozir telefon raqamingizni yangilab bo‘lmadi.',
       unableUpdatePassword: 'Hozir parolingizni yangilab bo‘lmadi.',
+      validationPhoneInvalid: 'Iltimos, xalqaro formatdagi telefon raqamini kiriting, masalan +998901234567.',
     },
     guestLayout: {
       ariaLanguagePicker: 'Til tanlash',
@@ -630,6 +633,7 @@ export const messages = {
         submit: 'Hisob yaratish',
         backToLogin: 'Kirishga qaytish',
         unableToRegister: 'Hozir akkaunt yaratib bo‘lmadi.',
+        validationPhoneInvalid: 'Iltimos, xalqaro formatdagi telefon raqamini kiriting, masalan +998901234567.',
         validationNameTooShort: 'Ism kamida 2 ta belgidan iborat bo‘lishi kerak.',
         validationNameGibberish: 'Iltimos, tasodifiy harflar emas, haqiqiy ism kiriting.',
         validationPasswordTooShort: 'Parol kamida {min} ta belgidan iborat bo‘lishi kerak.',
@@ -1046,6 +1050,7 @@ export const messages = {
       unableUpdateName: 'Не удалось обновить ваше имя.',
       unableUpdatePhone: 'Не удалось обновить ваш номер телефона.',
       unableUpdatePassword: 'Не удалось обновить ваш пароль.',
+      validationPhoneInvalid: 'Введите действительный международный номер телефона, например +998901234567.',
     },
     guestLayout: {
       ariaLanguagePicker: 'Выбор языка',
@@ -1074,6 +1079,7 @@ export const messages = {
         submit: 'Создать аккаунт',
         backToLogin: 'Назад ко входу',
         unableToRegister: 'Не удалось создать аккаунт прямо сейчас.',
+        validationPhoneInvalid: 'Введите действительный международный номер телефона, например +998901234567.',
         validationNameTooShort: 'Имя должно быть не короче 2 символов.',
         validationNameGibberish: 'Пожалуйста, введите настоящее имя, а не случайные символы.',
         validationPasswordTooShort: 'Пароль должен содержать не менее {min} символов.',

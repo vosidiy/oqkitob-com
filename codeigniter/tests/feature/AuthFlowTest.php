@@ -36,7 +36,7 @@ CREATE TABLE db_users (
     id TEXT PRIMARY KEY,
     default_book_id TEXT NULL,
     name TEXT NULL,
-    email TEXT NOT NULL,
+    email TEXT NULL,
     phone TEXT NULL,
     city TEXT NULL,
     country_name TEXT NULL,
@@ -146,7 +146,7 @@ SQL);
     {
         $response = $this->withBodyFormat('json')
             ->post('auth/login', [
-                'email' => 'ali@example.com',
+                'phone' => '+998900000111',
                 'password' => 'Demo123!',
             ]);
 
@@ -160,11 +160,58 @@ SQL);
         self::assertArrayNotHasKey('password_hash', $payload['user']);
     }
 
+    public function testLoginAcceptsPhoneWithoutLeadingPlus(): void
+    {
+        $response = $this->withBodyFormat('json')
+            ->post('auth/login', [
+                'phone' => '998900000111',
+                'password' => 'Demo123!',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Login successful.', $payload['message']);
+        self::assertSame('+998900000111', $payload['user']['phone']);
+    }
+
+    public function testLoginAcceptsFormattedPhoneWithoutLeadingPlus(): void
+    {
+        $response = $this->withBodyFormat('json')
+            ->post('auth/login', [
+                'phone' => '998-90 000 01 11',
+                'password' => 'Demo123!',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Login successful.', $payload['message']);
+        self::assertSame('+998900000111', $payload['user']['phone']);
+    }
+
+    public function testLoginRejectsInvalidPhone(): void
+    {
+        $response = $this->withBodyFormat('json')
+            ->post('auth/login', [
+                'phone' => 'not-a-phone',
+                'password' => 'Demo123!',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Please enter a valid international phone number.', $payload['message']);
+    }
+
     public function testLoginFailsWithWrongPassword(): void
     {
         $response = $this->withBodyFormat('json')
             ->post('auth/login', [
-                'email' => 'ali@example.com',
+                'phone' => '+998900000111',
                 'password' => 'WrongPassword1!',
             ]);
 
@@ -172,14 +219,14 @@ SQL);
 
         $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertSame('Invalid email or password.', $payload['message']);
+        self::assertSame('Invalid phone or password.', $payload['message']);
     }
 
     public function testLoginFailsForBlockedUser(): void
     {
         $response = $this->withBodyFormat('json')
             ->post('auth/login', [
-                'email' => 'blocked@example.com',
+                'phone' => '+998900000999',
                 'password' => 'Demo123!',
             ]);
 
@@ -188,6 +235,46 @@ SQL);
         $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
 
         self::assertSame('This account is not allowed to sign in.', $payload['message']);
+    }
+
+    public function testRegisterAcceptsPhoneWithoutLeadingPlusAndStoresCanonicalPhone(): void
+    {
+        $response = $this->withBodyFormat('json')
+            ->post('auth/register', [
+                'phone' => '998-90 123 45 67',
+                'name' => 'New User',
+                'password' => 'Demo123!',
+                'password_confirmation' => 'Demo123!',
+            ]);
+
+        $response->assertStatus(201);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('users')
+            ->where('phone', '+998901234567')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Registration successful.', $payload['message']);
+        self::assertSame('+998901234567', $payload['user']['phone']);
+        self::assertSame('+998901234567', $row['phone']);
+    }
+
+    public function testRegisterRejectsInvalidPhone(): void
+    {
+        $response = $this->withBodyFormat('json')
+            ->post('auth/register', [
+                'phone' => 'not-a-phone',
+                'name' => 'New User',
+                'password' => 'Demo123!',
+                'password_confirmation' => 'Demo123!',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Please enter a valid international phone number.', $payload['message']);
     }
 
     public function testMeRequiresAuthentication(): void
@@ -269,6 +356,72 @@ SQL);
         self::assertSame('+998901234567', $row['phone']);
     }
 
+    public function testProfileUpdateAcceptsFormattedPhoneWithLeadingPlus(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'phone' => '+998-90 123 45 67',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('users')
+            ->where('id', '11111111-1111-1111-1111-111111111111')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Profile updated successfully.', $payload['message']);
+        self::assertSame('+998901234567', $payload['user']['phone']);
+        self::assertSame('+998901234567', $row['phone']);
+    }
+
+    public function testProfileUpdateAcceptsPhoneWithoutLeadingPlus(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'phone' => '998901234567',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('users')
+            ->where('id', '11111111-1111-1111-1111-111111111111')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Profile updated successfully.', $payload['message']);
+        self::assertSame('+998901234567', $payload['user']['phone']);
+        self::assertSame('+998901234567', $row['phone']);
+    }
+
+    public function testProfileUpdateAcceptsFormattedPhoneWithoutLeadingPlus(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'phone' => '998-90 123 45 67',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('users')
+            ->where('id', '11111111-1111-1111-1111-111111111111')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Profile updated successfully.', $payload['message']);
+        self::assertSame('+998901234567', $payload['user']['phone']);
+        self::assertSame('+998901234567', $row['phone']);
+    }
+
     public function testProfileUpdateCanClearPhoneWithBlankInput(): void
     {
         $response = $this->withSession([
@@ -335,7 +488,23 @@ SQL);
 
         $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertSame('Phone must be 50 characters or fewer.', $payload['message']);
+        self::assertSame('Please enter a valid international phone number.', $payload['message']);
+    }
+
+    public function testProfileUpdateRejectsInvalidPhoneText(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('auth/profile', [
+                'phone' => 'not-a-phone',
+            ]);
+
+        $response->assertStatus(422);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Please enter a valid international phone number.', $payload['message']);
     }
 
     public function testProfileUpdateRejectsEmptyPayload(): void
@@ -462,12 +631,12 @@ SQL);
 
         $oldLogin = $this->withBodyFormat('json')
             ->post('auth/login', [
-                'email' => 'ali@example.com',
+                'phone' => '+998900000111',
                 'password' => 'Demo123!',
             ]);
         $newLogin = $this->withBodyFormat('json')
             ->post('auth/login', [
-                'email' => 'ali@example.com',
+                'phone' => '+998900000111',
                 'password' => 'BetterPass123!',
             ]);
 

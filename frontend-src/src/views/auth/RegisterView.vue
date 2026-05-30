@@ -142,6 +142,11 @@ function togglePasswordVisibility() {
 
 function validateRegisterForm() {
   const trimmedName = form.name.trim()
+  const trimmedPhone = form.phone.trim()
+
+  if (! isValidInternationalPhone(trimmedPhone)) {
+    return t('auth.register.validationPhoneInvalid')
+  }
 
   if (trimmedName.length < 2) {
     return t('auth.register.validationNameTooShort')
@@ -187,5 +192,15 @@ function looksLikeGibberish(value) {
   }
 
   return false
+}
+
+function isValidInternationalPhone(phone) {
+  if (phone === '' || /\p{L}/u.test(phone)) {
+    return false
+  }
+
+  const digits = phone.replace(/\D+/g, '')
+
+  return digits.length >= 8 && digits.length <= 15 && digits[0] !== '0'
 }
 </script>
