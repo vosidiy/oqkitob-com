@@ -7,6 +7,16 @@
           <div style="font-size:20px;" class="font-semibold ml-1">Oq<span class="text-secondary">kitob</span></div>
         </a>
 
+        <button
+          v-if="canInstallApp"
+          class="btn btn-neutral ml-1"
+          id="installAppBtn"
+          type="button"
+          @click="handleInstallApp"
+        >
+            Install
+        </button>
+        
         <select id="mobile_language_picker" v-model="currentLocale" class="form-select max-w-20">
           <option v-for="option in localeOptions" :key="option.code" :value="option.code">
             {{ option.label }}
@@ -73,7 +83,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, provide, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { isUnauthorizedError } from '@/api/errors'
@@ -89,8 +99,10 @@ const { currentLocale, localeOptions } = useLocale()
 
 const errorMessage = ref('')
 const isLoggingOut = ref(false)
+const canInstallApp = ref(false)
 const user = computed(() => authStore.state.user)
 const isBookListRoute = computed(() => route.name === 'dashboard-home')
+let deferredInstallPrompt = null
 
 const routerViewKey = computed(() => {
   if (route.name === 'book-detail') {
@@ -103,7 +115,21 @@ const routerViewKey = computed(() => {
 provide('isMobileAppLayout', true)
 provide('openBookSettingsDialog', () => {})
 
+function handleBeforeInstallPrompt(event) {
+  event.preventDefault()
+  deferredInstallPrompt = event
+  canInstallApp.value = true
+}
+
+function handleAppInstalled() {
+  deferredInstallPrompt = null
+  canInstallApp.value = false
+}
+
 onMounted(async () => {
+  window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+  window.addEventListener('appinstalled', handleAppInstalled)
+
   try {
     const authenticatedUser = await authStore.ensureChecked()
 
@@ -123,6 +149,11 @@ onMounted(async () => {
   }
 })
 
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+  window.removeEventListener('appinstalled', handleAppInstalled)
+})
+
 async function handleLogout() {
   isLoggingOut.value = true
 
@@ -135,5 +166,16 @@ async function handleLogout() {
   } finally {
     isLoggingOut.value = false
   }
+}
+
+async function handleInstallApp() {
+  if (!deferredInstallPrompt) {
+    return
+  }
+
+  deferredInstallPrompt.prompt()
+  await deferredInstallPrompt.userChoice
+  deferredInstallPrompt = null
+  canInstallApp.value = false
 }
 </script>

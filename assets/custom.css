@@ -70,14 +70,14 @@ border-radius: 4px;
 .skeleton > * {
     display:block; 
     width:90%;
-    color:#6d6d6d;
+    color:#999;
     font-weight:300;
     border-radius: 6px;
     min-height: 12px;
     font-size:14px;
     padding:3px 8px;
     margin: 8px 0;
-    background: linear-gradient(90deg, #dfe0e0 0%, #ffffff 100%);
+    background: linear-gradient(90deg, #d9dadd 0%, #ffffff 100%);
 }
 
 @media(max-width:680px){
@@ -171,10 +171,4 @@ meter {
 }
 .drag-handle:active {
     cursor: grabbing;
-}
-
-
-.rectangle-pattern {
-    background-image:  linear-gradient(#ececec 1px, transparent 1px), linear-gradient(to right,#ececec 1px, var(--neutral-100) 1px);
-    background-size: 20px 20px;
 }

@@ -76,9 +76,11 @@
         <button type="button" class="btn flex-1 btn-outline" @click="emit('print')">
           🖨️ {{ $t('common.actions.printReceipt') }}
         </button>
+        <button class="btn btn-default flex-1" id="download_pdf"> Send </button>
         <button type="button" class="btn flex-1 btn-primary" @click="close">
           {{ $t('common.actions.ok') }}
         </button>
+
       </div>
     </div>
   </dialog>

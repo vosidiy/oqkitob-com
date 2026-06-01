@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
+// import vueDevTools from 'vite-plugin-vue-devtools'
 // import { viteSingleFile } from 'vite-plugin-singlefile' // optional to keep js in html
 
 function renameIndexHtmlToAppHtml() {
@@ -34,7 +34,7 @@ function renameIndexHtmlToAppHtml() {
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
+    // vueDevTools(),
     renameIndexHtmlToAppHtml(),
    //  viteSingleFile(), // optional to keep js in html
   ],

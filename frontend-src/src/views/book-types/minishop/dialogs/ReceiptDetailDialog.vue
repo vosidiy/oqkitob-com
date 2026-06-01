@@ -132,10 +132,12 @@
             <span v-if="isDeletingReceipt">{{ $t('common.states.deleting') }}</span>
             <span v-else>{{ $t('minishop.sales.deleteSale') }}</span>
         </button>
-
-        <button type="button" class="btn btn-default float-right" :disabled="isLoadingReceiptDetail || isDeletingReceipt" @click="close">
-          {{ $t('common.actions.ok') }}
-        </button>
+        <div class="float-right">
+          <button class="btn btn-default" id="download_pdf"> Send </button>
+          <button type="button" class="btn ml-2 btn-default" :disabled="isLoadingReceiptDetail || isDeletingReceipt" @click="close">
+            {{ $t('common.actions.ok') }}
+          </button>
+        </div>
       </footer>
       
     </div>

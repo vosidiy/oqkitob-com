@@ -159,6 +159,7 @@
                 <p class="text-secondary text-xs"> ID: {{ selectedSale.id }}</p>
               </div>
               <div class="d-flex gap-2">
+                <button class="btn btn-default" id="download_pdf"> Send </button>
                 <button type="button"
                   class="btn btn-neutral"
                   :disabled="isDeletingSelectedSale"
