@@ -133,7 +133,6 @@
             <span v-else>{{ $t('minishop.sales.deleteSale') }}</span>
         </button>
         <div class="float-right">
-          <button class="btn btn-default" id="download_pdf"> Send </button>
           <button type="button" class="btn ml-2 btn-default" :disabled="isLoadingReceiptDetail || isDeletingReceipt" @click="close">
             {{ $t('common.actions.ok') }}
           </button>

@@ -73,10 +73,10 @@
       </div>
 
       <div class="d-flex flex-row gap-2 border-top pt-3">
+        <button type="button" class="btn btn-default btn-icon" @click="openSendDialog"> ✈️ </button>
         <button type="button" class="btn flex-1 btn-outline" @click="emit('print')">
           🖨️ {{ $t('common.actions.printReceipt') }}
         </button>
-        <button class="btn btn-default flex-1" id="download_pdf"> Send </button>
         <button type="button" class="btn flex-1 btn-primary" @click="close">
           {{ $t('common.actions.ok') }}
         </button>
@@ -84,6 +84,12 @@
       </div>
     </div>
   </dialog>
+
+  <ReceiptSendDialog
+    ref="sendDialogRef"
+    :book-id="book.id"
+    :sale-id="receiptState?.sale?.id || ''"
+  />
 </template>
 
 <script setup>
@@ -91,6 +97,7 @@ import { ref } from 'vue'
 import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
 import { formatQuantityDisplay } from '@/utils/quantity'
+import ReceiptSendDialog from '@/views/book-types/minishop/dialogs/ReceiptSendDialog.vue'
 
 const props = defineProps({
   book: {
@@ -105,6 +112,7 @@ const props = defineProps({
 
 const emit = defineEmits(['cancel', 'close', 'print'])
 const dialogRef = ref(null)
+const sendDialogRef = ref(null)
 
 function open() {
   if (!dialogRef.value?.open) {
@@ -120,6 +128,10 @@ function close() {
 
 function isOpen() {
   return dialogRef.value?.open === true
+}
+
+function openSendDialog() {
+  sendDialogRef.value?.open()
 }
 
 function formatMoneyValue(value) {

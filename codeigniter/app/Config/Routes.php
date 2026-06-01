@@ -9,6 +9,8 @@ $routes->get('/', 'Home::index');
 
 // We use 'test' because the baseURL already ends in /api/
 $routes->get('test', 'Api\TestController::getStatus');
+$routes->get('public/books/(:segment)/minishop/sales/(:segment)/receipt.pdf', 'Api\MinishopPublicReceiptsController::pdf/$1/$2');
+$routes->get('public/books/(:segment)/minishop/sales/(:segment)/receipt', 'Api\MinishopPublicReceiptsController::show/$1/$2');
 
 $routes->group('auth', static function ($routes) {
     $routes->post('login', 'Api\AuthController::login');

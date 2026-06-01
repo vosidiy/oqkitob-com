@@ -159,7 +159,14 @@
                 <p class="text-secondary text-xs"> ID: {{ selectedSale.id }}</p>
               </div>
               <div class="d-flex gap-2">
-                <button class="btn btn-default" id="download_pdf"> Send </button>
+                <button
+                  type="button"
+                  class="btn btn-default"
+                  :disabled="!selectedSale || isDeletingSelectedSale || isLoadingSelectedSale"
+                  @click="openReceiptSendDialog"
+                >
+                  ✈️
+                </button>
                 <button type="button"
                   class="btn btn-neutral"
                   :disabled="isDeletingSelectedSale"
@@ -415,6 +422,12 @@
     @close="handleAddPaymentDialogClose"
     @submit="handleAddPayment"
   />
+
+  <ReceiptSendDialog
+    ref="receiptSendDialog"
+    :book-id="book.id"
+    :sale-id="selectedSale?.id || ''"
+  />
 </template>
 
 <script setup>
@@ -434,6 +447,7 @@ import {
   fetchMinishopSales,
 } from '@/api/minishop'
 import AddPaymentDialog from '@/views/book-types/minishop/dialogs/AddPaymentDialog.vue'
+import ReceiptSendDialog from '@/views/book-types/minishop/dialogs/ReceiptSendDialog.vue'
 
 const props = defineProps({
   book: {
@@ -446,6 +460,7 @@ const router = useRouter()
 const { t } = useI18n()
 
 const addPaymentDialog = ref(null)
+const receiptSendDialog = ref(null)
 const sales = ref([])
 const salesAnalyticsSummary = ref(makeEmptySalesAnalyticsSummary())
 const salesAnalyticsProducts = ref([])
@@ -742,6 +757,14 @@ function openAddPaymentDialog() {
 
   paymentErrorMessage.value = ''
   addPaymentDialog.value?.open()
+}
+
+function openReceiptSendDialog() {
+  if (!selectedSale.value) {
+    return
+  }
+
+  receiptSendDialog.value?.open()
 }
 
 function closeAddPaymentDialog() {
