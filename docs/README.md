@@ -2,13 +2,14 @@
 
 `oqkitob-com` is a same-origin Vue SPA with a CodeIgniter 4 API backend and a MySQL database.
 
-The product is organized around user-owned books. Each book has a `type_key` such as `notes`, `todo`, or `finance`, and each type behaves like a small focused app inside the authenticated layout.
+The product is organized around user-owned books. Each book has a `type_key` such as `notes`, `finance`, or `minishop`, and each type behaves like a small focused app inside the authenticated layout.
 
 ## What It Is
 A single-page web app where users register, sign in, and create "books".
 A book is a mini application workspace. Each book has a type, and each type
 maps to dedicated database tables and dedicated frontend/backend behavior.
 Money-focused books can also carry a fixed book-level `currency_code`.
+System tables keep plain names, while book-content tables use the `app_` prefix.
 
 ## Tech Stack
 
@@ -91,7 +92,6 @@ oqkitob-com/
   - compact mobile book header with a back button to `/home` inside `AppLayoutMobile.vue`
 - `frontend-src/src/views/book-types/*`
   - `NotesApp.vue`
-  - `TodoApp.vue`
   - `FinanceApp.vue`
   - `MinishopApp.vue`
   - each child app fetches and renders its own type-specific data
@@ -206,8 +206,6 @@ Frontend API helpers live under `frontend-src/src/api/`.
   - minishop products, customers, sales, and payment summary helpers
 - `notes.js`
   - `fetchNotes(bookId)`
-- `todos.js`
-  - `fetchTodos(bookId)`
 - `finance.js`
   - `fetchFinanceTransactions(bookId)`
 
@@ -225,7 +223,6 @@ Frontend API helpers live under `frontend-src/src/api/`.
 Each book mini app then fetches its own content on mount:
 
 - notes -> `/api/books/{bookId}/notes`
-- todo -> `/api/books/{bookId}/todos`
 - finance -> `/api/books/{bookId}/finance`
 - minishop -> `/api/books/{bookId}/minishop/*`
 
@@ -236,7 +233,7 @@ The desktop sidebar owns book creation:
 3. show only book types first; reveal the rest of the form after a type is chosen
 4. if the selected type has `requires_currency = 1`, require a currency choice
 5. submit the new book to `POST /api/books`
-6. book settings edits use `PUT /api/books/{bookId}` for `title` and `description` only
+6. book settings edits use `PUT /api/books/{bookId}` for `title`, `description`, `show_cents`, and `thousand_separator`
 7. keep `type_key` and `currency_code` immutable after creation
 8. validate the returned `book.id`
 9. do a full page navigation to `/home/books/{bookId}`
@@ -249,6 +246,8 @@ Books list responses are used as the primary frontend metadata source for:
 - `type_key`
 - `currency_code`
 - `description`
+- `show_cents`
+- `thousand_separator`
 
 Book type responses from `GET /api/books/types` now also include:
 

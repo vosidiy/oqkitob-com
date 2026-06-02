@@ -57,6 +57,8 @@ CREATE TABLE db_books (
     icon TEXT NULL,
     color TEXT NULL,
     settings_json TEXT NULL,
+    show_cents INTEGER NOT NULL DEFAULT 1,
+    thousand_separator TEXT NOT NULL DEFAULT 'comma',
     is_archived INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
     last_opened_at TEXT NULL,
@@ -296,6 +298,8 @@ SQL);
             'icon' => null,
             'color' => null,
             'settings_json' => null,
+            'show_cents' => 1,
+            'thousand_separator' => 'comma',
             'is_archived' => 0,
             'sort_order' => 1,
             'last_opened_at' => null,
@@ -309,12 +313,12 @@ SQL);
     {
         $db = db_connect('tests');
 
-        $db->table('minishop_sale_payments')->emptyTable();
-        $db->table('minishop_sale_items')->emptyTable();
-        $db->table('minishop_sales')->emptyTable();
-        $db->table('minishop_products')->emptyTable();
+        $db->table('app_minishop_sale_payments')->emptyTable();
+        $db->table('app_minishop_sale_items')->emptyTable();
+        $db->table('app_minishop_sales')->emptyTable();
+        $db->table('app_minishop_products')->emptyTable();
 
-        $db->table('minishop_products')->insert([
+        $db->table('app_minishop_products')->insert([
             'id' => self::PRODUCT_ID,
             'book_id' => self::BOOK_ID,
             'created_by' => self::USER_ID,
@@ -350,7 +354,7 @@ SQL);
 
     private function findProduct(): array
     {
-        $product = db_connect('tests')->table('minishop_products')
+        $product = db_connect('tests')->table('app_minishop_products')
             ->where('id', self::PRODUCT_ID)
             ->get()
             ->getRowArray();

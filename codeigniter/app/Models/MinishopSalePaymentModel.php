@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class MinishopSalePaymentModel extends Model
 {
-    protected $table            = 'minishop_sale_payments';
+    protected $table            = 'app_minishop_sale_payments';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = 'array';

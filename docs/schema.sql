@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS books (
     icon VARCHAR(50) DEFAULT NULL,
     color VARCHAR(20) DEFAULT NULL,
     settings_json JSON DEFAULT NULL,
+    show_cents TINYINT(1) NOT NULL DEFAULT 1,
+    thousand_separator ENUM('comma','dot','space') NOT NULL DEFAULT 'comma',
     is_archived TINYINT(1) NOT NULL DEFAULT 0,
     sort_order INT NOT NULL DEFAULT 0,
     last_opened_at DATETIME DEFAULT NULL,
@@ -116,7 +118,7 @@ CREATE TABLE IF NOT EXISTS books (
         ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS notes (
+CREATE TABLE IF NOT EXISTS app_notes (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
     created_by CHAR(36) DEFAULT NULL,
@@ -143,39 +145,7 @@ CREATE TABLE IF NOT EXISTS notes (
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS todos (
-    id CHAR(36) NOT NULL,
-    book_id CHAR(36) NOT NULL,
-    created_by CHAR(36) DEFAULT NULL,
-    parent_id CHAR(36) DEFAULT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT DEFAULT NULL,
-    priority ENUM('low', 'medium', 'high') NOT NULL DEFAULT 'medium',
-    is_completed TINYINT(1) NOT NULL DEFAULT 0,
-    due_at DATETIME DEFAULT NULL,
-    completed_at DATETIME DEFAULT NULL,
-    position INT NOT NULL DEFAULT 0,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at DATETIME DEFAULT NULL,
-    PRIMARY KEY (id),
-    KEY idx_todos_book_id (book_id),
-    KEY idx_todos_created_by (created_by),
-    KEY idx_todos_parent_id (parent_id),
-    KEY idx_todos_book_completed (book_id, is_completed),
-    KEY idx_todos_book_due_at (book_id, due_at),
-    CONSTRAINT fk_todos_book
-        FOREIGN KEY (book_id) REFERENCES books(id)
-        ON DELETE CASCADE,
-    CONSTRAINT fk_todos_created_by
-        FOREIGN KEY (created_by) REFERENCES users(id)
-        ON DELETE SET NULL,
-    CONSTRAINT fk_todos_parent
-        FOREIGN KEY (parent_id) REFERENCES todos(id)
-        ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS finance_categories (
+CREATE TABLE IF NOT EXISTS app_finance_categories (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
     created_by CHAR(36) DEFAULT NULL,
@@ -197,7 +167,7 @@ CREATE TABLE IF NOT EXISTS finance_categories (
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS finance_transactions (
+CREATE TABLE IF NOT EXISTS app_finance_transactions (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
     created_by CHAR(36) DEFAULT NULL,
@@ -224,11 +194,11 @@ CREATE TABLE IF NOT EXISTS finance_transactions (
         FOREIGN KEY (created_by) REFERENCES users(id)
         ON DELETE SET NULL,
     CONSTRAINT fk_finance_transactions_category
-        FOREIGN KEY (category_id) REFERENCES finance_categories(id)
+        FOREIGN KEY (category_id) REFERENCES app_finance_categories(id)
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS minishop_categories (
+CREATE TABLE IF NOT EXISTS app_minishop_categories (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
     created_by CHAR(36) DEFAULT NULL,
@@ -250,7 +220,7 @@ CREATE TABLE IF NOT EXISTS minishop_categories (
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS minishop_products (
+CREATE TABLE IF NOT EXISTS app_minishop_products (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
     created_by CHAR(36) DEFAULT NULL,
@@ -279,11 +249,11 @@ CREATE TABLE IF NOT EXISTS minishop_products (
         FOREIGN KEY (created_by) REFERENCES users(id)
         ON DELETE SET NULL,
     CONSTRAINT fk_minishop_products_category
-        FOREIGN KEY (category_id) REFERENCES minishop_categories(id)
+        FOREIGN KEY (category_id) REFERENCES app_minishop_categories(id)
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS minishop_customers (
+CREATE TABLE IF NOT EXISTS app_minishop_customers (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
     created_by CHAR(36) DEFAULT NULL,
@@ -309,7 +279,7 @@ CREATE TABLE IF NOT EXISTS minishop_customers (
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS minishop_sales (
+CREATE TABLE IF NOT EXISTS app_minishop_sales (
     id CHAR(36) NOT NULL,
     book_id CHAR(36) NOT NULL,
     created_by CHAR(36) DEFAULT NULL,
@@ -341,11 +311,11 @@ CREATE TABLE IF NOT EXISTS minishop_sales (
         FOREIGN KEY (created_by) REFERENCES users(id)
         ON DELETE SET NULL,
     CONSTRAINT fk_minishop_sales_customer
-        FOREIGN KEY (customer_id) REFERENCES minishop_customers(id)
+        FOREIGN KEY (customer_id) REFERENCES app_minishop_customers(id)
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS minishop_sale_items (
+CREATE TABLE IF NOT EXISTS app_minishop_sale_items (
     id CHAR(36) NOT NULL,
     sale_id CHAR(36) NOT NULL,
     product_id CHAR(36) DEFAULT NULL,
@@ -358,14 +328,14 @@ CREATE TABLE IF NOT EXISTS minishop_sale_items (
     KEY idx_minishop_sale_items_sale_id (sale_id),
     KEY idx_minishop_sale_items_product_id (product_id),
     CONSTRAINT fk_minishop_sale_items_sale
-        FOREIGN KEY (sale_id) REFERENCES minishop_sales(id)
+        FOREIGN KEY (sale_id) REFERENCES app_minishop_sales(id)
         ON DELETE CASCADE,
     CONSTRAINT fk_minishop_sale_items_product
-        FOREIGN KEY (product_id) REFERENCES minishop_products(id)
+        FOREIGN KEY (product_id) REFERENCES app_minishop_products(id)
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS minishop_sale_payments (
+CREATE TABLE IF NOT EXISTS app_minishop_sale_payments (
     id CHAR(36) NOT NULL,
     sale_id CHAR(36) NOT NULL,
     created_by CHAR(36) DEFAULT NULL,
@@ -380,7 +350,7 @@ CREATE TABLE IF NOT EXISTS minishop_sale_payments (
     KEY idx_minishop_sale_payments_created_by (created_by),
     KEY idx_minishop_sale_payments_paid_at (paid_at),
     CONSTRAINT fk_minishop_sale_payments_sale
-        FOREIGN KEY (sale_id) REFERENCES minishop_sales(id)
+        FOREIGN KEY (sale_id) REFERENCES app_minishop_sales(id)
         ON DELETE CASCADE,
     CONSTRAINT fk_minishop_sale_payments_created_by
         FOREIGN KEY (created_by) REFERENCES users(id)
@@ -395,7 +365,6 @@ ALTER TABLE users
 INSERT INTO book_types (type_key, name, description, requires_currency, is_active, created_at, updated_at)
 VALUES
     ('notes', 'Notes', 'Book type for note taking', 0, 1, NOW(), NOW()),
-    ('todo', 'Todo', 'Book type for task management', 0, 1, NOW(), NOW()),
     ('finance', 'Finance', 'Book type for income and expense tracking', 1, 1, NOW(), NOW()),
     ('minishop', 'Minishop', 'Book type for small shop sales and inventory tracking', 1, 1, NOW(), NOW())
 ON DUPLICATE KEY UPDATE

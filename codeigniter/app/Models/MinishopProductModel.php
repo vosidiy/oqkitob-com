@@ -21,7 +21,7 @@ class MinishopProductModel extends Model
         'updated_at',
     ];
 
-    protected $table            = 'minishop_products';
+    protected $table            = 'app_minishop_products';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = 'array';

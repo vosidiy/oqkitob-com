@@ -11,14 +11,15 @@ const LOCALE_BY_SEPARATOR = Object.freeze({
 
 const formatterCache = new Map()
 
-function normalizeMoneyDisplaySettings(settings) {
-  const thousandSeparator = ['comma', 'dot', 'space'].includes(settings?.thousand_separator)
-    ? settings.thousand_separator
+function normalizeMoneyDisplaySettings(book) {
+  const thousandSeparator = ['comma', 'dot', 'space'].includes(book?.thousand_separator)
+    ? book.thousand_separator
     : DEFAULT_MONEY_DISPLAY_SETTINGS.thousand_separator
+  const rawShowCents = book?.show_cents
 
   return {
     thousand_separator: thousandSeparator,
-    show_cents: settings?.show_cents === false ? false : DEFAULT_MONEY_DISPLAY_SETTINGS.show_cents,
+    show_cents: ['0', 0, false].includes(rawShowCents) ? false : DEFAULT_MONEY_DISPLAY_SETTINGS.show_cents,
   }
 }
 
@@ -46,7 +47,7 @@ function parseMoneyValue(value) {
 }
 
 export function formatMoneyByBookSettings(value, book) {
-  const settings = normalizeMoneyDisplaySettings(book?.settings?.money_display ?? null)
+  const settings = normalizeMoneyDisplaySettings(book)
   let formattedValue = getFormatter(settings).format(parseMoneyValue(value))
 
   if (settings.thousand_separator === 'space') {

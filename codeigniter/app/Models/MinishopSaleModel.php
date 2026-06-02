@@ -7,7 +7,7 @@ use CodeIgniter\Model;
 
 class MinishopSaleModel extends Model
 {
-    protected $table            = 'minishop_sales';
+    protected $table            = 'app_minishop_sales';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = 'array';
@@ -52,8 +52,8 @@ class MinishopSaleModel extends Model
         $offset = ($currentPage - 1) * $itemsPerPage;
 
         $sales = $this->makeSaleListQuery($bookId, $soldFrom, $soldTo, $search)
-            ->orderBy('minishop_sales.sold_at', 'DESC')
-            ->orderBy('minishop_sales.created_at', 'DESC')
+            ->orderBy('app_minishop_sales.sold_at', 'DESC')
+            ->orderBy('app_minishop_sales.created_at', 'DESC')
             ->limit($itemsPerPage, $offset)
             ->get()
             ->getResultArray();
@@ -79,9 +79,9 @@ class MinishopSaleModel extends Model
         }
 
         $sale = $this->makeSaleSummaryQuery()
-            ->where('minishop_sales.id', $saleId)
-            ->where('minishop_sales.book_id', $bookId)
-            ->where('minishop_sales.deleted_at', null)
+            ->where('app_minishop_sales.id', $saleId)
+            ->where('app_minishop_sales.book_id', $bookId)
+            ->where('app_minishop_sales.deleted_at', null)
             ->first();
 
         return $sale ?: null;
@@ -98,22 +98,22 @@ class MinishopSaleModel extends Model
         }
 
         $sale = $this->makeSaleSummaryQuery([
-            'minishop_sales.id',
-            'minishop_sales.book_id',
-            'minishop_sales.customer_id',
-            'minishop_sales.currency_code',
-            'minishop_sales.subtotal_amount',
-            'minishop_sales.discount_amount',
-            'minishop_sales.total_amount',
-            'minishop_sales.paid_amount',
-            'minishop_sales.due_amount',
-            'minishop_sales.payment_status',
-            'minishop_sales.sold_at',
-            'minishop_customers.name AS customer_name',
-            'minishop_customers.phone AS customer_phone',
-        ])->where('minishop_sales.id', $saleId)
-            ->where('minishop_sales.book_id', $bookId)
-            ->where('minishop_sales.deleted_at', null)
+            'app_minishop_sales.id',
+            'app_minishop_sales.book_id',
+            'app_minishop_sales.customer_id',
+            'app_minishop_sales.currency_code',
+            'app_minishop_sales.subtotal_amount',
+            'app_minishop_sales.discount_amount',
+            'app_minishop_sales.total_amount',
+            'app_minishop_sales.paid_amount',
+            'app_minishop_sales.due_amount',
+            'app_minishop_sales.payment_status',
+            'app_minishop_sales.sold_at',
+            'app_minishop_customers.name AS customer_name',
+            'app_minishop_customers.phone AS customer_phone',
+        ])->where('app_minishop_sales.id', $saleId)
+            ->where('app_minishop_sales.book_id', $bookId)
+            ->where('app_minishop_sales.deleted_at', null)
             ->first();
 
         return $sale ?: null;
@@ -126,11 +126,11 @@ class MinishopSaleModel extends Model
         }
 
         return $this->makeSaleSummaryQuery()
-            ->where('minishop_sales.book_id', $bookId)
-            ->where('minishop_sales.customer_id', $customerId)
-            ->where('minishop_sales.deleted_at', null)
-            ->orderBy('minishop_sales.sold_at', 'DESC')
-            ->orderBy('minishop_sales.created_at', 'DESC')
+            ->where('app_minishop_sales.book_id', $bookId)
+            ->where('app_minishop_sales.customer_id', $customerId)
+            ->where('app_minishop_sales.deleted_at', null)
+            ->orderBy('app_minishop_sales.sold_at', 'DESC')
+            ->orderBy('app_minishop_sales.created_at', 'DESC')
             ->findAll();
     }
 
@@ -141,21 +141,21 @@ class MinishopSaleModel extends Model
     ): array {
         $query = $this->builder()
             ->select([
-                'COUNT(minishop_sales.id) AS sale_count',
-                'COALESCE(SUM(minishop_sales.discount_amount), 0) AS total_discount_amount',
-                'COALESCE(SUM(minishop_sales.total_amount), 0) AS total_amount',
-                'COALESCE(SUM(minishop_sales.paid_amount), 0) AS paid_amount',
-                'COALESCE(SUM(minishop_sales.due_amount), 0) AS due_amount',
+                'COUNT(app_minishop_sales.id) AS sale_count',
+                'COALESCE(SUM(app_minishop_sales.discount_amount), 0) AS total_discount_amount',
+                'COALESCE(SUM(app_minishop_sales.total_amount), 0) AS total_amount',
+                'COALESCE(SUM(app_minishop_sales.paid_amount), 0) AS paid_amount',
+                'COALESCE(SUM(app_minishop_sales.due_amount), 0) AS due_amount',
             ])
-            ->where('minishop_sales.book_id', $bookId)
-            ->where('minishop_sales.deleted_at', null);
+            ->where('app_minishop_sales.book_id', $bookId)
+            ->where('app_minishop_sales.deleted_at', null);
 
         if ($soldFrom !== null) {
-            $query->where('minishop_sales.sold_at >=', $soldFrom);
+            $query->where('app_minishop_sales.sold_at >=', $soldFrom);
         }
 
         if ($soldTo !== null) {
-            $query->where('minishop_sales.sold_at <=', $soldTo);
+            $query->where('app_minishop_sales.sold_at <=', $soldTo);
         }
 
         $row = $query->get()->getRowArray() ?? [];
@@ -172,9 +172,9 @@ class MinishopSaleModel extends Model
     private function makeSaleSummaryQuery(?array $columns = null): self
     {
         return $this->select($columns ?? $this->saleSummaryColumns())->join(
-            'minishop_customers',
-            'minishop_customers.id = minishop_sales.customer_id'
-            . ' AND minishop_customers.deleted_at IS NULL',
+            'app_minishop_customers',
+            'app_minishop_customers.id = app_minishop_sales.customer_id'
+            . ' AND app_minishop_customers.deleted_at IS NULL',
             'left'
         );
     }
@@ -188,34 +188,34 @@ class MinishopSaleModel extends Model
         $query = $this->builder()
             ->select($this->saleSummaryColumns())
             ->join(
-                'minishop_customers',
-                'minishop_customers.id = minishop_sales.customer_id'
-                . ' AND minishop_customers.deleted_at IS NULL',
+                'app_minishop_customers',
+                'app_minishop_customers.id = app_minishop_sales.customer_id'
+                . ' AND app_minishop_customers.deleted_at IS NULL',
                 'left'
             )
-            ->where('minishop_sales.book_id', $bookId)
-            ->where('minishop_sales.deleted_at', null);
+            ->where('app_minishop_sales.book_id', $bookId)
+            ->where('app_minishop_sales.deleted_at', null);
 
         if ($soldFrom !== null) {
-            $query->where('minishop_sales.sold_at >=', $soldFrom);
+            $query->where('app_minishop_sales.sold_at >=', $soldFrom);
         }
 
         if ($soldTo !== null) {
-            $query->where('minishop_sales.sold_at <=', $soldTo);
+            $query->where('app_minishop_sales.sold_at <=', $soldTo);
         }
 
         $normalizedSearch = trim($search);
 
         if ($normalizedSearch !== '') {
             $query->join(
-                'minishop_sale_items',
-                'minishop_sale_items.sale_id = minishop_sales.id',
+                'app_minishop_sale_items',
+                'app_minishop_sale_items.sale_id = app_minishop_sales.id',
                 'left'
             )->groupStart()
-                ->like('minishop_sales.id', $normalizedSearch)
-                ->orLike('minishop_customers.name', $normalizedSearch)
-                ->orLike('minishop_sale_items.product_name', $normalizedSearch)
-                ->orLike('minishop_sale_items.product_sku', $normalizedSearch)
+                ->like('app_minishop_sales.id', $normalizedSearch)
+                ->orLike('app_minishop_customers.name', $normalizedSearch)
+                ->orLike('app_minishop_sale_items.product_name', $normalizedSearch)
+                ->orLike('app_minishop_sale_items.product_sku', $normalizedSearch)
                 ->groupEnd()
                 ->distinct();
         }
@@ -230,36 +230,36 @@ class MinishopSaleModel extends Model
         string $search = ''
     ): int {
         $query = $this->builder()
-            ->select('COUNT(DISTINCT minishop_sales.id) AS total_items', false)
+            ->select('COUNT(DISTINCT app_minishop_sales.id) AS total_items', false)
             ->join(
-                'minishop_customers',
-                'minishop_customers.id = minishop_sales.customer_id'
-                . ' AND minishop_customers.deleted_at IS NULL',
+                'app_minishop_customers',
+                'app_minishop_customers.id = app_minishop_sales.customer_id'
+                . ' AND app_minishop_customers.deleted_at IS NULL',
                 'left'
             )
-            ->where('minishop_sales.book_id', $bookId)
-            ->where('minishop_sales.deleted_at', null);
+            ->where('app_minishop_sales.book_id', $bookId)
+            ->where('app_minishop_sales.deleted_at', null);
 
         if ($soldFrom !== null) {
-            $query->where('minishop_sales.sold_at >=', $soldFrom);
+            $query->where('app_minishop_sales.sold_at >=', $soldFrom);
         }
 
         if ($soldTo !== null) {
-            $query->where('minishop_sales.sold_at <=', $soldTo);
+            $query->where('app_minishop_sales.sold_at <=', $soldTo);
         }
 
         $normalizedSearch = trim($search);
 
         if ($normalizedSearch !== '') {
             $query->join(
-                'minishop_sale_items',
-                'minishop_sale_items.sale_id = minishop_sales.id',
+                'app_minishop_sale_items',
+                'app_minishop_sale_items.sale_id = app_minishop_sales.id',
                 'left'
             )->groupStart()
-                ->like('minishop_sales.id', $normalizedSearch)
-                ->orLike('minishop_customers.name', $normalizedSearch)
-                ->orLike('minishop_sale_items.product_name', $normalizedSearch)
-                ->orLike('minishop_sale_items.product_sku', $normalizedSearch)
+                ->like('app_minishop_sales.id', $normalizedSearch)
+                ->orLike('app_minishop_customers.name', $normalizedSearch)
+                ->orLike('app_minishop_sale_items.product_name', $normalizedSearch)
+                ->orLike('app_minishop_sale_items.product_sku', $normalizedSearch)
                 ->groupEnd();
         }
 
@@ -269,23 +269,23 @@ class MinishopSaleModel extends Model
     private function saleSummaryColumns(): array
     {
         return [
-            'minishop_sales.id',
-            'minishop_sales.book_id',
-            'minishop_sales.created_by',
-            'minishop_sales.customer_id',
-            'minishop_sales.currency_code',
-            'minishop_sales.subtotal_amount',
-            'minishop_sales.discount_amount',
-            'minishop_sales.total_amount',
-            'minishop_sales.paid_amount',
-            'minishop_sales.due_amount',
-            'minishop_sales.payment_status',
-            'minishop_sales.note',
-            'minishop_sales.sold_at',
-            'minishop_sales.created_at',
-            'minishop_sales.updated_at',
-            'minishop_customers.name AS customer_name',
-            'minishop_customers.phone AS customer_phone',
+            'app_minishop_sales.id',
+            'app_minishop_sales.book_id',
+            'app_minishop_sales.created_by',
+            'app_minishop_sales.customer_id',
+            'app_minishop_sales.currency_code',
+            'app_minishop_sales.subtotal_amount',
+            'app_minishop_sales.discount_amount',
+            'app_minishop_sales.total_amount',
+            'app_minishop_sales.paid_amount',
+            'app_minishop_sales.due_amount',
+            'app_minishop_sales.payment_status',
+            'app_minishop_sales.note',
+            'app_minishop_sales.sold_at',
+            'app_minishop_sales.created_at',
+            'app_minishop_sales.updated_at',
+            'app_minishop_customers.name AS customer_name',
+            'app_minishop_customers.phone AS customer_phone',
         ];
     }
 

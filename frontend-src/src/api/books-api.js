@@ -26,7 +26,7 @@ export function createBookRequest(payload) {
 }
 
 export function updateBookRequest(bookId, payload) {
-  // Settings dialog updates mutable book metadata only.
+  // Settings dialog updates mutable book metadata and top-level money settings.
   return apiClient.put(`/books/${bookId}`, payload)
 }
 

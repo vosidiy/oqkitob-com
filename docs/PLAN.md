@@ -7,7 +7,6 @@ Build `oqkitob-com` as a single-page web app where users register, sign in, and 
 Initial book types planned for MVP:
 
 - `notes`
-- `todo`
 - `finance`
 
 Future book types:
@@ -44,9 +43,8 @@ Core idea:
 
 Examples:
 
-- `notes` book -> data stored in `notes` table
-- `todo` book -> data stored in `todos` table
-- `finance` book -> data stored in `finance_categories`, `finance_transactions` tables
+- `notes` book -> data stored in `app_notes` table
+- `finance` book -> data stored in `app_finance_categories`, `app_finance_transactions` tables
 
 ## Architecture Decisions
 
@@ -116,21 +114,14 @@ Reason:
 - Create/update/delete note
 - Optional pinning and ordering
 
-### Phase 3: Todo Book
-
-- Create todo book
-- List tasks
-- Mark complete/incomplete
-- Due date and priority support
-
-### Phase 4: Finance Book
+### Phase 3: Finance Book
 
 - Create finance book
 - Manage finance categories
 - Add income/expense transactions
 - Monthly summaries later
 
-### Phase 5: Hardening
+### Phase 4: Hardening
 
 - Email verification
 - Password reset

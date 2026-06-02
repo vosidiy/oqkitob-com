@@ -46,11 +46,14 @@ CREATE TABLE db_books (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     type_key TEXT NOT NULL,
+    currency_code TEXT NULL,
     title TEXT NOT NULL,
     description TEXT NULL,
     icon TEXT NULL,
     color TEXT NULL,
     settings_json TEXT NULL,
+    show_cents INTEGER NOT NULL DEFAULT 1,
+    thousand_separator TEXT NOT NULL DEFAULT 'comma',
     is_archived INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
     last_opened_at TEXT NULL,
@@ -214,11 +217,14 @@ SQL);
             'id' => self::BOOK_ID,
             'user_id' => 'user-1',
             'type_key' => 'minishop',
+            'currency_code' => 'UZS',
             'title' => 'Shop Book',
             'description' => null,
             'icon' => null,
             'color' => null,
             'settings_json' => null,
+            'show_cents' => 1,
+            'thousand_separator' => 'comma',
             'is_archived' => 0,
             'sort_order' => 1,
             'last_opened_at' => null,
@@ -227,7 +233,7 @@ SQL);
             'deleted_at' => null,
         ]);
 
-        $db->table('minishop_customers')->insertBatch([
+        $db->table('app_minishop_customers')->insertBatch([
             [
                 'id' => self::TODAY_CUSTOMER_ID,
                 'book_id' => self::BOOK_ID,
@@ -256,7 +262,7 @@ SQL);
             ],
         ]);
 
-        $db->table('minishop_sales')->insertBatch([
+        $db->table('app_minishop_sales')->insertBatch([
             [
                 'id' => self::TODAY_SALE_ID,
                 'book_id' => self::BOOK_ID,
@@ -331,7 +337,7 @@ SQL);
             ],
         ]);
 
-        $db->table('minishop_sale_items')->insertBatch([
+        $db->table('app_minishop_sale_items')->insertBatch([
             [
                 'id' => 'item-1',
                 'sale_id' => self::TODAY_SALE_ID,

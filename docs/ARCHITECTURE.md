@@ -84,7 +84,6 @@ The current architecture is intentionally book-centric: a user owns books, each 
 Book-specific UI no longer lives in `components/`. It now lives in `views/book-types/`.
 
 - `views/book-types/notes/NotesApp.vue`
-- `views/book-types/todo/TodoApp.vue`
 - `views/book-types/finance/FinanceApp.vue`
 - `views/book-types/minishop/MinishopApp.vue`
 - `views/book-types/minishop/*`
@@ -237,7 +236,6 @@ This keeps the common path simple while still allowing direct URL access when th
 After the selected book is known:
 
 - `NotesApp.vue` calls `fetchNotes(book.id)`
-- `TodoApp.vue` calls `fetchTodos(book.id)`
 - `FinanceApp.vue` calls `fetchFinanceTransactions(book.id)`
 - `MinishopApp.vue` calls minishop product/category/customer/sales helpers under `api/minishop.js`
 
@@ -266,7 +264,6 @@ Current behavior:
 - missing keys resolve through English fallback
 - app-owned dynamic labels are translated through shared message keys such as:
   - book type names
-  - todo priorities
   - payment statuses
 
 Scope note:
@@ -286,7 +283,7 @@ API helpers live in `frontend-src/src/api/`.
   - auth request helpers
 - `books-api.js`
   - active/archived books lists, book-type loading, single-book fallback, creation, settings, archive, restore, and delete helpers
-- `notes.js`, `todos.js`, `finance.js`
+- `notes.js`, `finance.js`
   - book-type request helpers
 - `minishop.js`
   - minishop products, customers, sales, and payment summary helpers
@@ -310,9 +307,6 @@ This keeps transport code out of views and stores while staying lightweight.
 - `Notes`
   - `Api\NotesController`
   - notes-book content
-- `Todos`
-  - `Api\TodosController`
-  - todo-book content
 - `Finance`
   - `Api\FinanceController`
   - finance-book transactions
@@ -346,7 +340,6 @@ Current routes:
 /api/books/{bookId}/archive
 /api/books/{bookId}/restore
 /api/books/{bookId}/notes
-/api/books/{bookId}/todos
 /api/books/{bookId}/finance
 /api/books/{bookId}/minishop/products
 /api/books/{bookId}/minishop/customers
@@ -385,10 +378,15 @@ Core hierarchy:
 ```text
 users
   -> books
-      -> notes
-      -> todos
-      -> finance_transactions
-      -> finance_categories
+      -> app_notes
+      -> app_finance_transactions
+      -> app_finance_categories
+      -> app_minishop_categories
+      -> app_minishop_products
+      -> app_minishop_customers
+      -> app_minishop_sales
+      -> app_minishop_sale_items
+      -> app_minishop_sale_payments
 ```
 
 Rules:
@@ -398,7 +396,7 @@ Rules:
 - a book may also have one immutable `currency_code`
 - book creation may require `currency_code` for money-focused types, but the format is not limited to a fixed ISO allowlist
 - type-specific records belong to one `book_id`
-- type-specific data stays isolated in dedicated tables
+- type-specific data stays isolated in dedicated `app_*` tables
 - UUID strings are used for core entities
 
 ## Current Tradeoffs

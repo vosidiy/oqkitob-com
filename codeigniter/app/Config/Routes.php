@@ -39,7 +39,6 @@ $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->post('(:segment)/notes/(:segment)/unpin', 'Api\NotesController::unpin/$1/$2');
     $routes->post('(:segment)/notes/(:segment)/archive', 'Api\NotesController::archive/$1/$2');
     $routes->delete('(:segment)/notes/(:segment)', 'Api\NotesController::delete/$1/$2');
-    $routes->get('(:segment)/todos', 'Api\TodosController::index/$1');
     $routes->get('(:segment)/finance', 'Api\FinanceController::index/$1');
     $routes->get('(:segment)/minishop/categories', 'Api\MinishopCategoriesController::index/$1');
     $routes->post('(:segment)/minishop/categories/manage', 'Api\MinishopCategoriesController::manage/$1');

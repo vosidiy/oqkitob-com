@@ -52,7 +52,7 @@
       </div>
       <p class="text-sm text-secondary mb-4">{{ $t('appLayout.bookCurrencyLockedHint') }}</p>
 
-      <div v-if="showMoneyDisplaySettings" class="card p-3 mb-4">
+      <div class="card p-3 mb-4">
         <h6 class="mb-3">{{ $t('appLayout.moneyDisplaySettingsTitle') }}</h6>
 
         <div class="mb-3">
@@ -61,23 +61,19 @@
           </label>
           <select
             id="book-settings-thousand-separator"
-            v-model="form.settings.money_display.thousand_separator"
+            v-model="form.thousand_separator"
             class="form-select"
             :disabled="isBookSettingsActionPending"
           >
-            <option
-              v-for="separatorOption in moneyDisplaySeparatorOptions"
-              :key="separatorOption"
-              :value="separatorOption"
-            >
-              {{ formatMoneyDisplayOptionLabel(separatorOption) }}
-            </option>
+            <option value="comma">Format: 1,234.56 USD</option>
+            <option value="dot">Format: 1.234,56 USD</option>
+            <option value="space">Format: 1 234,56 USD</option>
           </select>
         </div>
 
         <label class="form-check">
           <input
-            v-model="form.settings.money_display.show_cents"
+            v-model="form.show_cents"
             class="form-check-input"
             type="checkbox"
             :disabled="isBookSettingsActionPending"
@@ -145,23 +141,11 @@ defineProps({
     type: Function,
     required: true,
   },
-  formatMoneyDisplayOptionLabel: {
-    type: Function,
-    required: true,
-  },
   isBookSettingsActionPending: {
     type: Boolean,
     default: false,
   },
   isSavingBookSettings: {
-    type: Boolean,
-    default: false,
-  },
-  moneyDisplaySeparatorOptions: {
-    type: Array,
-    default: () => [],
-  },
-  showMoneyDisplaySettings: {
     type: Boolean,
     default: false,
   },

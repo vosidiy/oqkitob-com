@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class MinishopCustomerModel extends Model
 {
-    protected $table            = 'minishop_customers';
+    protected $table            = 'app_minishop_customers';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = 'array';
@@ -69,40 +69,40 @@ class MinishopCustomerModel extends Model
     public function findCustomerListByBook(string $bookId, string $search = ''): array
     {
         $query = $this->select([
-            'minishop_customers.id',
-            'minishop_customers.book_id',
-            'minishop_customers.created_by',
-            'minishop_customers.name',
-            'minishop_customers.phone',
-            'minishop_customers.note',
-            'minishop_customers.reminder_at',
-            'minishop_customers.reminder_note',
-            'minishop_customers.created_at',
-            'minishop_customers.updated_at',
-            'COUNT(minishop_sales.id) AS receipt_count',
-            'COALESCE(SUM(minishop_sales.total_amount), 0) AS total_sales_amount',
-            'COALESCE(SUM(minishop_sales.paid_amount), 0) AS total_paid_amount',
-            'COALESCE(SUM(minishop_sales.due_amount), 0) AS outstanding_balance',
+            'app_minishop_customers.id',
+            'app_minishop_customers.book_id',
+            'app_minishop_customers.created_by',
+            'app_minishop_customers.name',
+            'app_minishop_customers.phone',
+            'app_minishop_customers.note',
+            'app_minishop_customers.reminder_at',
+            'app_minishop_customers.reminder_note',
+            'app_minishop_customers.created_at',
+            'app_minishop_customers.updated_at',
+            'COUNT(app_minishop_sales.id) AS receipt_count',
+            'COALESCE(SUM(app_minishop_sales.total_amount), 0) AS total_sales_amount',
+            'COALESCE(SUM(app_minishop_sales.paid_amount), 0) AS total_paid_amount',
+            'COALESCE(SUM(app_minishop_sales.due_amount), 0) AS outstanding_balance',
         ])->join(
-            'minishop_sales',
-            'minishop_sales.customer_id = minishop_customers.id'
-            . ' AND minishop_sales.deleted_at IS NULL',
+            'app_minishop_sales',
+            'app_minishop_sales.customer_id = app_minishop_customers.id'
+            . ' AND app_minishop_sales.deleted_at IS NULL',
             'left'
-        )->where('minishop_customers.book_id', $bookId)
-            ->where('minishop_customers.deleted_at', null);
+        )->where('app_minishop_customers.book_id', $bookId)
+            ->where('app_minishop_customers.deleted_at', null);
 
         $normalizedSearch = trim($search);
 
         if ($normalizedSearch !== '') {
             $query->groupStart()
-                ->like('minishop_customers.name', $normalizedSearch)
-                ->orLike('minishop_customers.phone', $normalizedSearch)
-                ->orLike('minishop_customers.note', $normalizedSearch)
+                ->like('app_minishop_customers.name', $normalizedSearch)
+                ->orLike('app_minishop_customers.phone', $normalizedSearch)
+                ->orLike('app_minishop_customers.note', $normalizedSearch)
                 ->groupEnd();
         }
 
-        return $query->groupBy('minishop_customers.id')
-            ->orderBy('minishop_customers.name', 'ASC')
+        return $query->groupBy('app_minishop_customers.id')
+            ->orderBy('app_minishop_customers.name', 'ASC')
             ->findAll();
     }
 
@@ -113,29 +113,29 @@ class MinishopCustomerModel extends Model
         }
 
         $customer = $this->select([
-            'minishop_customers.id',
-            'minishop_customers.book_id',
-            'minishop_customers.created_by',
-            'minishop_customers.name',
-            'minishop_customers.phone',
-            'minishop_customers.note',
-            'minishop_customers.reminder_at',
-            'minishop_customers.reminder_note',
-            'minishop_customers.created_at',
-            'minishop_customers.updated_at',
-            'COUNT(minishop_sales.id) AS receipt_count',
-            'COALESCE(SUM(minishop_sales.total_amount), 0) AS total_sales_amount',
-            'COALESCE(SUM(minishop_sales.paid_amount), 0) AS total_paid_amount',
-            'COALESCE(SUM(minishop_sales.due_amount), 0) AS outstanding_balance',
+            'app_minishop_customers.id',
+            'app_minishop_customers.book_id',
+            'app_minishop_customers.created_by',
+            'app_minishop_customers.name',
+            'app_minishop_customers.phone',
+            'app_minishop_customers.note',
+            'app_minishop_customers.reminder_at',
+            'app_minishop_customers.reminder_note',
+            'app_minishop_customers.created_at',
+            'app_minishop_customers.updated_at',
+            'COUNT(app_minishop_sales.id) AS receipt_count',
+            'COALESCE(SUM(app_minishop_sales.total_amount), 0) AS total_sales_amount',
+            'COALESCE(SUM(app_minishop_sales.paid_amount), 0) AS total_paid_amount',
+            'COALESCE(SUM(app_minishop_sales.due_amount), 0) AS outstanding_balance',
         ])->join(
-            'minishop_sales',
-            'minishop_sales.customer_id = minishop_customers.id'
-            . ' AND minishop_sales.deleted_at IS NULL',
+            'app_minishop_sales',
+            'app_minishop_sales.customer_id = app_minishop_customers.id'
+            . ' AND app_minishop_sales.deleted_at IS NULL',
             'left'
-        )->where('minishop_customers.id', $customerId)
-            ->where('minishop_customers.book_id', $bookId)
-            ->where('minishop_customers.deleted_at', null)
-            ->groupBy('minishop_customers.id')
+        )->where('app_minishop_customers.id', $customerId)
+            ->where('app_minishop_customers.book_id', $bookId)
+            ->where('app_minishop_customers.deleted_at', null)
+            ->groupBy('app_minishop_customers.id')
             ->first();
 
         return $customer ?: null;

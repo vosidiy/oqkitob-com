@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class NoteModel extends Model
 {
-    protected $table          = 'notes';
+    protected $table          = 'app_notes';
     protected $primaryKey     = 'id';
     protected $useAutoIncrement = false;
     protected $returnType     = 'array';

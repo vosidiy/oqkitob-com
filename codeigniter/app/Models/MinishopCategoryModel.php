@@ -11,7 +11,7 @@ class MinishopCategoryModel extends Model
         'name',
     ];
 
-    protected $table            = 'minishop_categories';
+    protected $table            = 'app_minishop_categories';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = 'array';

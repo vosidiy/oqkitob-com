@@ -7,7 +7,6 @@ use App\Models\BookModel;
 use App\Models\MinishopSaleItemModel;
 use App\Models\MinishopSaleModel;
 use App\Models\MinishopSalePaymentModel;
-use App\Services\BookSettingsService;
 use Mpdf\Mpdf;
 
 class MinishopPublicReceiptsController extends BaseController
@@ -21,8 +20,7 @@ class MinishopPublicReceiptsController extends BaseController
         private readonly BookModel $books = new BookModel(),
         private readonly MinishopSaleModel $sales = new MinishopSaleModel(),
         private readonly MinishopSaleItemModel $saleItems = new MinishopSaleItemModel(),
-        private readonly MinishopSalePaymentModel $salePayments = new MinishopSalePaymentModel(),
-        private readonly BookSettingsService $bookSettings = new BookSettingsService()
+        private readonly MinishopSalePaymentModel $salePayments = new MinishopSalePaymentModel()
     ) {
     }
 
@@ -93,23 +91,27 @@ class MinishopPublicReceiptsController extends BaseController
 
     private function buildReceiptViewData(array $receipt, bool $isPdf): array
     {
-        $settingsSchema = $this->bookSettings->getSchemaForBookType([
-            'requires_currency' => 1,
-        ]);
-        $settings = $this->bookSettings->normalizeStoredSettings(
-            $settingsSchema,
-            $receipt['book']['settings_json'] ?? null
-        );
-
         return [
             'book' => $receipt['book'],
             'sale' => $receipt['sale'],
             'items' => $receipt['items'],
             'payments' => $receipt['payments'],
             'isPdf' => $isPdf,
-            'moneyDisplay' => is_array($settings['money_display'] ?? null)
-                ? $settings['money_display']
-                : self::DEFAULT_MONEY_DISPLAY,
+            'moneyDisplay' => $this->normalizeMoneyDisplay($receipt['book']),
+        ];
+    }
+
+    private function normalizeMoneyDisplay(array $book): array
+    {
+        $separator = trim((string) ($book['thousand_separator'] ?? self::DEFAULT_MONEY_DISPLAY['thousand_separator']));
+
+        if (! in_array($separator, ['comma', 'dot', 'space'], true)) {
+            $separator = self::DEFAULT_MONEY_DISPLAY['thousand_separator'];
+        }
+
+        return [
+            'thousand_separator' => $separator,
+            'show_cents' => (int) ($book['show_cents'] ?? 1) === 1,
         ];
     }
 }

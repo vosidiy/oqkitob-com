@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class FinanceTransactionModel extends Model
 {
-    protected $table          = 'finance_transactions';
+    protected $table          = 'app_finance_transactions';
     protected $primaryKey     = 'id';
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;

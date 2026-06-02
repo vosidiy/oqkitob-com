@@ -40,6 +40,8 @@ CREATE TABLE db_books (
     icon TEXT NULL,
     color TEXT NULL,
     settings_json TEXT NULL,
+    show_cents INTEGER NOT NULL DEFAULT 1,
+    thousand_separator TEXT NOT NULL DEFAULT 'comma',
     is_archived INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
     last_opened_at TEXT NULL,
@@ -172,7 +174,9 @@ SQL);
             'description' => null,
             'icon' => null,
             'color' => null,
-            'settings_json' => '{"money_display":{"show_cents":false,"thousand_separator":"space"}}',
+            'settings_json' => null,
+            'show_cents' => 0,
+            'thousand_separator' => 'space',
             'is_archived' => 0,
             'sort_order' => 1,
             'last_opened_at' => null,
@@ -181,7 +185,7 @@ SQL);
             'deleted_at' => null,
         ]);
 
-        $db->table('minishop_customers')->insert([
+        $db->table('app_minishop_customers')->insert([
             'id' => '90000000-0000-0000-0000-000000000003',
             'book_id' => self::BOOK_ID,
             'created_by' => null,
@@ -195,7 +199,7 @@ SQL);
             'deleted_at' => null,
         ]);
 
-        $db->table('minishop_sales')->insert([
+        $db->table('app_minishop_sales')->insert([
             'id' => self::SALE_ID,
             'book_id' => self::BOOK_ID,
             'created_by' => null,
@@ -214,7 +218,7 @@ SQL);
             'deleted_at' => null,
         ]);
 
-        $db->table('minishop_sale_items')->insertBatch([
+        $db->table('app_minishop_sale_items')->insertBatch([
             [
                 'id' => '90000000-0000-0000-0000-000000000004',
                 'sale_id' => self::SALE_ID,
@@ -237,7 +241,7 @@ SQL);
             ],
         ]);
 
-        $db->table('minishop_sale_payments')->insert([
+        $db->table('app_minishop_sale_payments')->insert([
             'id' => '90000000-0000-0000-0000-000000000006',
             'sale_id' => self::SALE_ID,
             'created_by' => null,

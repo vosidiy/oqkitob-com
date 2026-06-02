@@ -30,7 +30,6 @@ import { useBooksStore } from '@/stores/books-store'
 import FinanceApp from '@/views/book-types/finance/FinanceApp.vue'
 import MinishopApp from '@/views/book-types/minishop/MinishopApp.vue'
 import NotesApp from '@/views/book-types/notes/NotesApp.vue'
-import TodoApp from '@/views/book-types/todo/TodoApp.vue'
 
 // Reuse one message constant so the template and loader logic stay in sync.
 const { t } = useI18n()
@@ -41,7 +40,6 @@ const componentByType = {
   finance: FinanceApp,
   minishop: MinishopApp,
   notes: NotesApp,
-  todo: TodoApp,
 }
 
 // Route params tell us which book should be visible, and the router lets us redirect on auth failures.

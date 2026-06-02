@@ -18,6 +18,7 @@ The schema should support:
 - Primary entity IDs stored as `CHAR(36)` UUID strings
 - Timestamps stored in UTC
 - Table names in plural snake_case
+- System tables stay unprefixed; book-scoped mini-app tables use the `app_` prefix
 - Foreign keys used where practical
 
 ## Core Tables
@@ -71,7 +72,6 @@ Lookup table for supported book types.
 Initial values:
 
 - `notes`
-- `todo`
 - `finance`
 - `minishop`
 
@@ -109,7 +109,7 @@ Core rule:
 
 ## Feature Tables Included In The Initial SQL
 
-### `notes`
+### `app_notes`
 
 For books of type `notes`.
 
@@ -123,22 +123,7 @@ Suggested behavior:
 - ordering support
 - soft delete support
 
-### `todos`
-
-For books of type `todo`.
-
-Each row is a task linked to one `book_id`.
-
-Suggested behavior:
-
-- title
-- optional description
-- completion state
-- due date
-- priority
-- ordering support
-
-### `finance_categories`
+### `app_finance_categories`
 
 For books of type `finance`.
 
@@ -150,7 +135,7 @@ Suggested behavior:
 - `income` or `expense` type
 - optional color
 
-### `finance_transactions`
+### `app_finance_transactions`
 
 For books of type `finance`.
 
@@ -169,11 +154,10 @@ Suggested behavior:
 These rules should be enforced in application logic:
 
 1. A user may only access books they own. 
-2. A user may only access notes/todos/finance rows through their own books.
+2. A user may only access `app_*` content rows through their own books.
 3. `users.default_book_id` must belong to the same user.
-4. A `notes` row must only be used for a book where `books.type_key = 'notes'`.
-5. A `todos` row must only be used for a book where `books.type_key = 'todo'`.
-6. Finance rows must only be used for a book where `books.type_key = 'finance'`.
+4. An `app_notes` row must only be used for a book where `books.type_key = 'notes'`.
+5. Finance rows must only be used for a book where `books.type_key = 'finance'`.
 
 ## Why Separate Tables Per Book Type
 
@@ -216,16 +200,15 @@ When adding a new type later:
 ```text
 users
   -> books
-      -> notes
-      -> todos
-      -> finance_categories
-      -> finance_transactions
-      -> minishop_categories
-      -> minishop_products
-      -> minishop_customers
-      -> minishop_sales
-      -> minishop_sale_items
-      -> minishop_sale_payments
+      -> app_notes
+      -> app_finance_categories
+      -> app_finance_transactions
+      -> app_minishop_categories
+      -> app_minishop_products
+      -> app_minishop_customers
+      -> app_minishop_sales
+      -> app_minishop_sale_items
+      -> app_minishop_sale_payments
 
 users
   -> user_email_verifications

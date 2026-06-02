@@ -37,6 +37,8 @@ CREATE TABLE `books` (
   `icon` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `color` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `settings_json` json DEFAULT NULL,
+  `show_cents` tinyint(1) NOT NULL DEFAULT '1',
+  `thousand_separator` enum('comma','dot','space') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'comma',
   `is_archived` tinyint(1) NOT NULL DEFAULT '0',
   `sort_order` int NOT NULL DEFAULT '0',
   `last_opened_at` datetime DEFAULT NULL,
@@ -49,18 +51,16 @@ CREATE TABLE `books` (
 -- Dumping data for table `books`
 --
 
-INSERT INTO `books` (`id`, `user_id`, `type_key`, `currency_code`, `title`, `description`, `icon`, `color`, `settings_json`, `is_archived`, `sort_order`, `last_opened_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
-('096ca5af-d877-4323-8cac-a908efdf145c', '11111111-1111-1111-1111-111111111111', 'todo', NULL, 'asdasd', 'asdasd', NULL, NULL, NULL, 0, 5, NULL, '2026-05-13 18:29:34', '2026-05-17 15:50:03', '2026-05-17 10:50:03'),
-('123', '11111111-1111-1111-1111-111111111111', 'finance', 'UZS', 'Birinchi kitob', 'Yaxshi kitobvha haqida', NULL, NULL, NULL, 1, 3, NULL, '2026-05-13 12:41:35', '2026-05-28 19:55:35', NULL),
-('34c416bd-5631-4394-84bc-2e05e436351d', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'Dukon', NULL, NULL, NULL, NULL, 1, 8, NULL, '2026-05-15 20:21:34', '2026-05-28 16:43:29', NULL),
-('3ed398e7-591a-4eb0-b5a4-e26437cb27e0', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'Super Kitobcha', NULL, NULL, NULL, NULL, 0, 9, NULL, '2026-05-28 19:08:59', '2026-05-28 19:08:59', NULL),
-('57104b19-df50-48c7-ac2f-89bf87dde244', '11111111-1111-1111-1111-111111111111', 'finance', 'UZS', 'moliya', NULL, NULL, NULL, '{\"money_display\": {\"show_cents\": true, \"thousand_separator\": \"comma\"}}', 0, 10, NULL, '2026-05-29 17:56:55', '2026-05-29 17:56:55', NULL),
-('aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1', '11111111-1111-1111-1111-111111111111', 'notes', NULL, 'Daily Notes', 'Personal notes book for Ali', NULL, NULL, NULL, 0, 1, NULL, '2026-05-11 20:52:13', '2026-05-28 16:43:52', NULL),
-('aaaaaaa2-aaaa-aaaa-aaaa-aaaaaaaaaaa2', '11111111-1111-1111-1111-111111111111', 'todo', NULL, 'Personal Tasks', 'Task management book for Ali', NULL, NULL, NULL, 0, 2, NULL, '2026-05-11 20:52:13', '2026-05-18 15:39:52', '2026-05-18 10:39:52'),
-('b00eb1d2-4403-446d-88bb-b00f9e6ad8d6', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'Do\'konim \'', 'sotuvlarim', NULL, NULL, '{\"money_display\": {\"show_cents\": false, \"thousand_separator\": \"space\"}}', 0, 7, NULL, '2026-05-15 16:30:28', '2026-05-29 18:54:34', NULL),
-('bcc06a2a-f691-460a-9a35-5ef871a8c56b', '11111111-1111-1111-1111-111111111111', 'notes', NULL, 'Salom', 'asdas', NULL, NULL, NULL, 1, 6, NULL, '2026-05-13 19:01:30', '2026-05-28 20:00:09', NULL),
-('c95e3e81-f172-4a9d-b854-962d4b12031f', '11111111-1111-1111-1111-111111111111', 'finance', 'UZS', 'Salom kitob', 'Asasdashdbas', NULL, NULL, NULL, 0, 4, NULL, '2026-05-13 18:29:07', '2026-05-26 15:46:08', '2026-05-18 10:39:48'),
-('f4c58109-cce8-4092-9c78-c27f2ec2858f', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'sd', NULL, NULL, NULL, NULL, 1, 9, NULL, '2026-05-15 20:28:45', '2026-05-28 16:36:04', '2026-05-28 11:36:04');
+INSERT INTO `books` (`id`, `user_id`, `type_key`, `currency_code`, `title`, `description`, `icon`, `color`, `settings_json`, `show_cents`, `thousand_separator`, `is_archived`, `sort_order`, `last_opened_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
+('123', '11111111-1111-1111-1111-111111111111', 'finance', 'UZS', 'Birinchi kitob', 'Yaxshi kitobvha haqida', NULL, NULL, NULL, 1, 'comma', 1, 3, NULL, '2026-05-13 12:41:35', '2026-05-28 19:55:35', NULL),
+('34c416bd-5631-4394-84bc-2e05e436351d', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'Dukon', NULL, NULL, NULL, NULL, 1, 'comma', 1, 8, NULL, '2026-05-15 20:21:34', '2026-05-28 16:43:29', NULL),
+('3ed398e7-591a-4eb0-b5a4-e26437cb27e0', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'Super Kitobcha', NULL, NULL, NULL, NULL, 1, 'comma', 0, 9, NULL, '2026-05-28 19:08:59', '2026-05-28 19:08:59', NULL),
+('57104b19-df50-48c7-ac2f-89bf87dde244', '11111111-1111-1111-1111-111111111111', 'finance', 'UZS', 'moliya', NULL, NULL, NULL, NULL, 1, 'comma', 0, 10, NULL, '2026-05-29 17:56:55', '2026-05-29 17:56:55', NULL),
+('aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1', '11111111-1111-1111-1111-111111111111', 'notes', NULL, 'Daily Notes', 'Personal notes book for Ali', NULL, NULL, NULL, 1, 'comma', 0, 1, NULL, '2026-05-11 20:52:13', '2026-05-28 16:43:52', NULL),
+('b00eb1d2-4403-446d-88bb-b00f9e6ad8d6', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'Do\'konim \'', 'sotuvlarim', NULL, NULL, NULL, 0, 'space', 0, 7, NULL, '2026-05-15 16:30:28', '2026-05-29 18:54:34', NULL),
+('bcc06a2a-f691-460a-9a35-5ef871a8c56b', '11111111-1111-1111-1111-111111111111', 'notes', NULL, 'Salom', 'asdas', NULL, NULL, NULL, 1, 'comma', 1, 6, NULL, '2026-05-13 19:01:30', '2026-05-28 20:00:09', NULL),
+('c95e3e81-f172-4a9d-b854-962d4b12031f', '11111111-1111-1111-1111-111111111111', 'finance', 'UZS', 'Salom kitob', 'Asasdashdbas', NULL, NULL, NULL, 1, 'comma', 0, 4, NULL, '2026-05-13 18:29:07', '2026-05-26 15:46:08', '2026-05-18 10:39:48'),
+('f4c58109-cce8-4092-9c78-c27f2ec2858f', '11111111-1111-1111-1111-111111111111', 'minishop', 'UZS', 'sd', NULL, NULL, NULL, NULL, 1, 'comma', 1, 9, NULL, '2026-05-15 20:28:45', '2026-05-28 16:36:04', '2026-05-28 11:36:04');
 
 -- --------------------------------------------------------
 
@@ -85,8 +85,7 @@ CREATE TABLE `book_types` (
 INSERT INTO `book_types` (`type_key`, `name`, `description`, `requires_currency`, `is_active`, `created_at`, `updated_at`) VALUES
 ('finance', 'Finance', 'Book type for income and expense tracking', 1, 0, '2026-05-11 20:01:14', '2026-06-01 13:13:39'),
 ('minishop', 'Min-store', 'Book type for small shop sales and inventory tracking', 1, 1, '2026-05-15 14:01:14', '2026-05-26 15:46:08'),
-('notes', 'Notes', 'Book type for note taking', 0, 1, '2026-05-11 20:01:14', '2026-05-26 16:46:46'),
-('todo', 'Todo', 'Book type for task management', 0, 0, '2026-05-11 20:01:14', '2026-06-01 13:13:32');
+('notes', 'Notes', 'Book type for note taking', 0, 1, '2026-05-11 20:01:14', '2026-05-26 16:46:46');
 
 -- --------------------------------------------------------
 
@@ -104,10 +103,10 @@ CREATE TABLE `ci_sessions` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `finance_categories`
+-- Table structure for table `app_finance_categories`
 --
 
-CREATE TABLE `finance_categories` (
+CREATE TABLE `app_finance_categories` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -122,10 +121,10 @@ CREATE TABLE `finance_categories` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `finance_transactions`
+-- Table structure for table `app_finance_transactions`
 --
 
-CREATE TABLE `finance_transactions` (
+CREATE TABLE `app_finance_transactions` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -144,10 +143,10 @@ CREATE TABLE `finance_transactions` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `minishop_categories`
+-- Table structure for table `app_minishop_categories`
 --
 
-CREATE TABLE `minishop_categories` (
+CREATE TABLE `app_minishop_categories` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -161,10 +160,10 @@ CREATE TABLE `minishop_categories` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `minishop_customers`
+-- Table structure for table `app_minishop_customers`
 --
 
-CREATE TABLE `minishop_customers` (
+CREATE TABLE `app_minishop_customers` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -181,10 +180,10 @@ CREATE TABLE `minishop_customers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `minishop_products`
+-- Table structure for table `app_minishop_products`
 --
 
-CREATE TABLE `minishop_products` (
+CREATE TABLE `app_minishop_products` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -203,10 +202,10 @@ CREATE TABLE `minishop_products` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `minishop_sales`
+-- Table structure for table `app_minishop_sales`
 --
 
-CREATE TABLE `minishop_sales` (
+CREATE TABLE `app_minishop_sales` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -228,10 +227,10 @@ CREATE TABLE `minishop_sales` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `minishop_sale_items`
+-- Table structure for table `app_minishop_sale_items`
 --
 
-CREATE TABLE `minishop_sale_items` (
+CREATE TABLE `app_minishop_sale_items` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `sale_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -245,10 +244,10 @@ CREATE TABLE `minishop_sale_items` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `minishop_sale_payments`
+-- Table structure for table `app_minishop_sale_payments`
 --
 
-CREATE TABLE `minishop_sale_payments` (
+CREATE TABLE `app_minishop_sale_payments` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `sale_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -263,10 +262,10 @@ CREATE TABLE `minishop_sale_payments` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `notes`
+-- Table structure for table `app_notes`
 --
 
-CREATE TABLE `notes` (
+CREATE TABLE `app_notes` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -294,29 +293,6 @@ CREATE TABLE `password_reset_tokens` (
   `expires_at` datetime NOT NULL,
   `used_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `todos`
---
-
-CREATE TABLE `todos` (
-  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `book_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `parent_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `priority` enum('low','medium','high') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'medium',
-  `is_completed` tinyint(1) NOT NULL DEFAULT '0',
-  `due_at` datetime DEFAULT NULL,
-  `completed_at` datetime DEFAULT NULL,
-  `position` int NOT NULL DEFAULT '0',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -400,18 +376,18 @@ ALTER TABLE `ci_sessions`
   ADD KEY `ci_sessions_timestamp` (`timestamp`);
 
 --
--- Indexes for table `finance_categories`
+-- Indexes for table `app_finance_categories`
 --
-ALTER TABLE `finance_categories`
+ALTER TABLE `app_finance_categories`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_finance_categories_book_id` (`book_id`),
   ADD KEY `idx_finance_categories_book_type` (`book_id`,`type`),
   ADD KEY `idx_finance_categories_created_by` (`created_by`);
 
 --
--- Indexes for table `finance_transactions`
+-- Indexes for table `app_finance_transactions`
 --
-ALTER TABLE `finance_transactions`
+ALTER TABLE `app_finance_transactions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_finance_transactions_book_id` (`book_id`),
   ADD KEY `idx_finance_transactions_category_id` (`category_id`),
@@ -420,9 +396,9 @@ ALTER TABLE `finance_transactions`
   ADD KEY `idx_finance_transactions_created_by` (`created_by`);
 
 --
--- Indexes for table `minishop_categories`
+-- Indexes for table `app_minishop_categories`
 --
-ALTER TABLE `minishop_categories`
+ALTER TABLE `app_minishop_categories`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_minishop_categories_book_id` (`book_id`),
   ADD KEY `idx_minishop_categories_created_by` (`created_by`),
@@ -430,9 +406,9 @@ ALTER TABLE `minishop_categories`
   ADD KEY `idx_minishop_categories_book_sort` (`book_id`,`sort_order`);
 
 --
--- Indexes for table `minishop_customers`
+-- Indexes for table `app_minishop_customers`
 --
-ALTER TABLE `minishop_customers`
+ALTER TABLE `app_minishop_customers`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_minishop_customers_book_id` (`book_id`),
   ADD KEY `idx_minishop_customers_created_by` (`created_by`),
@@ -441,9 +417,9 @@ ALTER TABLE `minishop_customers`
   ADD KEY `idx_minishop_customers_book_phone` (`book_id`,`phone`);
 
 --
--- Indexes for table `minishop_products`
+-- Indexes for table `app_minishop_products`
 --
-ALTER TABLE `minishop_products`
+ALTER TABLE `app_minishop_products`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_minishop_products_book_id` (`book_id`),
   ADD KEY `idx_minishop_products_created_by` (`created_by`),
@@ -454,9 +430,9 @@ ALTER TABLE `minishop_products`
   ADD KEY `idx_minishop_products_book_quantity` (`book_id`,`quantity`);
 
 --
--- Indexes for table `minishop_sales`
+-- Indexes for table `app_minishop_sales`
 --
-ALTER TABLE `minishop_sales`
+ALTER TABLE `app_minishop_sales`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_minishop_sales_book_id` (`book_id`),
   ADD KEY `idx_minishop_sales_created_by` (`created_by`),
@@ -467,26 +443,26 @@ ALTER TABLE `minishop_sales`
   ADD KEY `idx_minishop_sales_book_deleted` (`book_id`,`deleted_at`);
 
 --
--- Indexes for table `minishop_sale_items`
+-- Indexes for table `app_minishop_sale_items`
 --
-ALTER TABLE `minishop_sale_items`
+ALTER TABLE `app_minishop_sale_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_minishop_sale_items_sale_id` (`sale_id`),
   ADD KEY `idx_minishop_sale_items_product_id` (`product_id`);
 
 --
--- Indexes for table `minishop_sale_payments`
+-- Indexes for table `app_minishop_sale_payments`
 --
-ALTER TABLE `minishop_sale_payments`
+ALTER TABLE `app_minishop_sale_payments`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_minishop_sale_payments_sale_id` (`sale_id`),
   ADD KEY `idx_minishop_sale_payments_created_by` (`created_by`),
   ADD KEY `idx_minishop_sale_payments_paid_at` (`paid_at`);
 
 --
--- Indexes for table `notes`
+-- Indexes for table `app_notes`
 --
-ALTER TABLE `notes`
+ALTER TABLE `app_notes`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_notes_book_id` (`book_id`),
   ADD KEY `idx_notes_book_position` (`book_id`,`position`),
@@ -502,18 +478,6 @@ ALTER TABLE `password_reset_tokens`
   ADD KEY `idx_password_reset_tokens_user_id` (`user_id`),
   ADD KEY `idx_password_reset_tokens_expires_at` (`expires_at`);
 
---
--- Indexes for table `todos`
---
-ALTER TABLE `todos`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_todos_book_id` (`book_id`),
-  ADD KEY `idx_todos_parent_id` (`parent_id`),
-  ADD KEY `idx_todos_book_completed` (`book_id`,`is_completed`),
-  ADD KEY `idx_todos_book_due_at` (`book_id`,`due_at`),
-  ADD KEY `idx_todos_created_by` (`created_by`);
-
---
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -544,68 +508,68 @@ ALTER TABLE `books`
   ADD CONSTRAINT `fk_books_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `finance_categories`
+-- Constraints for table `app_finance_categories`
 --
-ALTER TABLE `finance_categories`
+ALTER TABLE `app_finance_categories`
   ADD CONSTRAINT `fk_finance_categories_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_finance_categories_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `finance_transactions`
+-- Constraints for table `app_finance_transactions`
 --
-ALTER TABLE `finance_transactions`
+ALTER TABLE `app_finance_transactions`
   ADD CONSTRAINT `fk_finance_transactions_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_finance_transactions_category` FOREIGN KEY (`category_id`) REFERENCES `finance_categories` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_finance_transactions_category` FOREIGN KEY (`category_id`) REFERENCES `app_finance_categories` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_finance_transactions_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `minishop_categories`
+-- Constraints for table `app_minishop_categories`
 --
-ALTER TABLE `minishop_categories`
+ALTER TABLE `app_minishop_categories`
   ADD CONSTRAINT `fk_minishop_categories_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_minishop_categories_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `minishop_customers`
+-- Constraints for table `app_minishop_customers`
 --
-ALTER TABLE `minishop_customers`
+ALTER TABLE `app_minishop_customers`
   ADD CONSTRAINT `fk_minishop_customers_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_minishop_customers_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `minishop_products`
+-- Constraints for table `app_minishop_products`
 --
-ALTER TABLE `minishop_products`
+ALTER TABLE `app_minishop_products`
   ADD CONSTRAINT `fk_minishop_products_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_minishop_products_category` FOREIGN KEY (`category_id`) REFERENCES `minishop_categories` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_minishop_products_category` FOREIGN KEY (`category_id`) REFERENCES `app_minishop_categories` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_minishop_products_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `minishop_sales`
+-- Constraints for table `app_minishop_sales`
 --
-ALTER TABLE `minishop_sales`
+ALTER TABLE `app_minishop_sales`
   ADD CONSTRAINT `fk_minishop_sales_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_minishop_sales_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_minishop_sales_customer` FOREIGN KEY (`customer_id`) REFERENCES `minishop_customers` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `fk_minishop_sales_customer` FOREIGN KEY (`customer_id`) REFERENCES `app_minishop_customers` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `minishop_sale_items`
+-- Constraints for table `app_minishop_sale_items`
 --
-ALTER TABLE `minishop_sale_items`
-  ADD CONSTRAINT `fk_minishop_sale_items_product` FOREIGN KEY (`product_id`) REFERENCES `minishop_products` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_minishop_sale_items_sale` FOREIGN KEY (`sale_id`) REFERENCES `minishop_sales` (`id`) ON DELETE CASCADE;
+ALTER TABLE `app_minishop_sale_items`
+  ADD CONSTRAINT `fk_minishop_sale_items_product` FOREIGN KEY (`product_id`) REFERENCES `app_minishop_products` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_minishop_sale_items_sale` FOREIGN KEY (`sale_id`) REFERENCES `app_minishop_sales` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `minishop_sale_payments`
+-- Constraints for table `app_minishop_sale_payments`
 --
-ALTER TABLE `minishop_sale_payments`
+ALTER TABLE `app_minishop_sale_payments`
   ADD CONSTRAINT `fk_minishop_sale_payments_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_minishop_sale_payments_sale` FOREIGN KEY (`sale_id`) REFERENCES `minishop_sales` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_minishop_sale_payments_sale` FOREIGN KEY (`sale_id`) REFERENCES `app_minishop_sales` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `notes`
+-- Constraints for table `app_notes`
 --
-ALTER TABLE `notes`
+ALTER TABLE `app_notes`
   ADD CONSTRAINT `fk_notes_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_notes_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
@@ -615,15 +579,6 @@ ALTER TABLE `notes`
 ALTER TABLE `password_reset_tokens`
   ADD CONSTRAINT `fk_password_reset_tokens_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
---
--- Constraints for table `todos`
---
-ALTER TABLE `todos`
-  ADD CONSTRAINT `fk_todos_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_todos_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_todos_parent` FOREIGN KEY (`parent_id`) REFERENCES `todos` (`id`) ON DELETE SET NULL;
-
---
 -- Constraints for table `users`
 --
 ALTER TABLE `users`

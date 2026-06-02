@@ -14,7 +14,8 @@ class BookModel extends Model
         'description',
         'icon',
         'color',
-        'settings_json',
+        'show_cents',
+        'thousand_separator',
         'is_archived',
     ];
     private const ARCHIVED_SIDEBAR_COLUMNS = [
@@ -25,6 +26,8 @@ class BookModel extends Model
         'description',
         'icon',
         'color',
+        'show_cents',
+        'thousand_separator',
         'is_archived',
     ];
 
@@ -42,7 +45,8 @@ class BookModel extends Model
         'description',
         'icon',
         'color',
-        'settings_json',
+        'show_cents',
+        'thousand_separator',
         'is_archived',
         'sort_order',
         'last_opened_at',
@@ -116,7 +120,8 @@ class BookModel extends Model
             'currency_code',
             'title',
             'description',
-            'settings_json',
+            'show_cents',
+            'thousand_separator',
             'is_archived',
         ])->where('id', $bookId)
             ->where('user_id', $userId)
@@ -142,7 +147,8 @@ class BookModel extends Model
             'currency_code',
             'title',
             'description',
-            'settings_json',
+            'show_cents',
+            'thousand_separator',
             'is_archived',
         ])->where('id', $bookId)
             ->where('user_id', $userId)
@@ -151,23 +157,6 @@ class BookModel extends Model
             ->first();
 
         return $book ?: null;
-    }
-
-    /**
-     * New books are appended to the user's current manual order.
-     */
-    public function findNextSortOrderForUser(string $userId): int
-    {
-        if ($userId === '') {
-            return 1;
-        }
-
-        $row = $this->selectMax('sort_order', 'max_sort_order')
-            ->where('user_id', $userId)
-            ->where('deleted_at', null)
-            ->first();
-
-        return ((int) ($row['max_sort_order'] ?? 0)) + 1;
     }
 
     /**
@@ -186,7 +175,8 @@ class BookModel extends Model
             'currency_code',
             'title',
             'description',
-            'settings_json',
+            'show_cents',
+            'thousand_separator',
             'is_archived',
         ])->where('id', $bookId)
             ->where('user_id', $userId)
@@ -223,7 +213,8 @@ class BookModel extends Model
             'currency_code',
             'title',
             'description',
-            'settings_json',
+            'show_cents',
+            'thousand_separator',
             'is_archived',
         ])->where('id', $bookId)
             ->where('deleted_at', null)

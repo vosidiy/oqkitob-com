@@ -94,7 +94,6 @@ export const messages = {
       finance: 'Finance',
       minishop: 'Sales',
       notes: 'Notes',
-      todo: 'Todo',
     },
     appLayout: {
       signedInAs: 'Signed in as',
@@ -245,22 +244,6 @@ export const messages = {
         blue: '🔵 Blue',
         green: '🟢 Green',
         red: '🔴 Red',
-      },
-    },
-    todo: {
-      title: 'Tasks',
-      loading: 'Loading tasks...',
-      empty: 'No tasks yet.',
-      unableLoad: 'Unable to load tasks.',
-      priority: 'Priority',
-      priorities: {
-        high: 'high',
-        low: 'low',
-        medium: 'medium',
-      },
-      status: {
-        done: 'Done',
-        open: 'Open',
       },
     },
     finance: {
@@ -550,7 +533,6 @@ export const messages = {
       finance: 'Moliya',
       minishop: 'Savdo',
       notes: 'Qaydlar',
-      todo: 'Vazifalar',
     },
     appLayout: {
       signedInAs: 'Tizimga kirgan foydalanuvchi',
@@ -701,22 +683,6 @@ export const messages = {
         blue: "🔵 Ko'k",
         green: '🟢 Yashil',
         red: '🔴 Qizil',
-      },
-    },
-    todo: {
-      title: 'Vazifalar',
-      loading: 'Vazifalar yuklanmoqda...',
-      empty: 'Hozircha vazifalar yo‘q.',
-      unableLoad: 'Hozir vazifalarni yuklab bo‘lmadi.',
-      priority: 'Muhimlik',
-      priorities: {
-        high: 'yuqori',
-        low: 'past',
-        medium: "o'rta",
-      },
-      status: {
-        done: 'Bajarildi',
-        open: 'Ochiq',
       },
     },
     finance: {
@@ -1006,7 +972,6 @@ export const messages = {
       finance: 'Финансы',
       minishop: 'Продажи',
       notes: 'Заметки',
-      todo: 'Задачи',
     },
     appLayout: {
       signedInAs: 'Вы вошли как',
@@ -1157,22 +1122,6 @@ export const messages = {
         blue: '🔵 Синий',
         green: '🟢 Зелен.',
         red: '🔴 Красн.',
-      },
-    },
-    todo: {
-      title: 'Задачи',
-      loading: 'Загрузка задач...',
-      empty: 'Пока нет задач.',
-      unableLoad: 'Не удалось загрузить задачи.',
-      priority: 'Приоритет',
-      priorities: {
-        high: 'высокий',
-        low: 'низкий',
-        medium: 'средний',
-      },
-      status: {
-        done: 'Готово',
-        open: 'Открыто',
       },
     },
     finance: {

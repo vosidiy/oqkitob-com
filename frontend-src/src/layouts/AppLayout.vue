@@ -153,11 +153,8 @@
     :error-message="bookSettingsErrorMessage"
     :form="bookSettingsForm"
     :format-currency-display="formatCurrencyDisplay"
-    :format-money-display-option-label="formatMoneyDisplayOptionLabel"
     :is-book-settings-action-pending="isBookSettingsActionPending"
     :is-saving-book-settings="isSavingBookSettings"
-    :money-display-separator-options="moneyDisplaySeparatorOptions"
-    :show-money-display-settings="showMoneyDisplaySettings"
     @archive="handleArchiveBook"
     @cancel="handleBookSettingsDialogCancel"
     @close="handleBookSettingsDialogClose"
@@ -210,6 +207,10 @@ const BOOK_CURRENCY_OPTIONS = [
   { code: 'UZS', label: '🇺🇿 UZS - Uzbekistan som' },
   { code: 'USD', label: '🇺🇸 USD ($) - US Dollar' },
 ]
+const DEFAULT_BOOK_MONEY_SETTINGS = Object.freeze({
+  thousand_separator: 'comma',
+  show_cents: true,
+})
 
 const router = useRouter()
 const route = useRoute()
@@ -257,12 +258,8 @@ const createBookForm = reactive({
 const bookSettingsForm = reactive({
   title: '',
   description: '',
-  settings: {
-    money_display: {
-      thousand_separator: '',
-      show_cents: false,
-    },
-  },
+  thousand_separator: DEFAULT_BOOK_MONEY_SETTINGS.thousand_separator,
+  show_cents: DEFAULT_BOOK_MONEY_SETTINGS.show_cents,
 })
 const profileErrorMessages = reactive({
   name: '',
@@ -310,12 +307,6 @@ const isCreateBookSubmitDisabled = computed(() => {
     (showCreateBookCurrencyField.value && createBookForm.currency_code === '')
   )
 })
-const showMoneyDisplaySettings = computed(() => bookForSettings.value?.settings_schema?.money_display != null)
-const moneyDisplaySeparatorOptions = computed(() => {
-  const options = bookForSettings.value?.settings_schema?.money_display?.fields?.thousand_separator?.options
-
-  return Array.isArray(options) ? options : []
-})
 const formattedProfileCreatedAt = computed(() => {
   return formatDate(user.value?.created_at, { locale: currentLocale.value })
 })
@@ -354,39 +345,24 @@ function formatCurrencyDisplay(currencyCode) {
   return option?.label ?? (normalizedCurrencyCode !== '' ? normalizedCurrencyCode : '-')
 }
 
-function applyMoneyDisplaySettings(settings) {
-  const moneyDisplaySettings = settings?.money_display ?? {}
-
-  bookSettingsForm.settings.money_display.thousand_separator = String(moneyDisplaySettings.thousand_separator ?? '').trim()
-  bookSettingsForm.settings.money_display.show_cents = moneyDisplaySettings.show_cents === true
-}
-
-function formatMoneyDisplayOptionLabel(separator) {
-  const normalizedSeparator = String(separator ?? '').trim()
-  const currencyCode = String(bookForSettings.value?.currency_code ?? 'USD').trim().toUpperCase() || 'USD'
-
-  if (normalizedSeparator === 'dot') {
-    return `1.234,56 ${currencyCode}`
-  }
-
-  if (normalizedSeparator === 'space') {
-    return `1 234,56 ${currencyCode}`
-  }
-
-  return `1,234.56 ${currencyCode}`
+function applyBookMoneyDisplaySettings(book) {
+  bookSettingsForm.thousand_separator = String(
+    book?.thousand_separator ?? DEFAULT_BOOK_MONEY_SETTINGS.thousand_separator
+  ).trim() || DEFAULT_BOOK_MONEY_SETTINGS.thousand_separator
+  bookSettingsForm.show_cents = !['0', 0, false].includes(book?.show_cents ?? DEFAULT_BOOK_MONEY_SETTINGS.show_cents)
 }
 
 function hydrateBookSettingsForm() {
-  // Settings form only edits mutable metadata and normalized book settings.
+  // Settings form only edits mutable metadata and top-level money settings.
   bookSettingsForm.title = String(bookForSettings.value?.title ?? '')
   bookSettingsForm.description = String(bookForSettings.value?.description ?? '')
-  applyMoneyDisplaySettings(bookForSettings.value?.settings ?? null)
+  applyBookMoneyDisplaySettings(bookForSettings.value)
 }
 
 function resetBookSettingsForm() {
   bookSettingsForm.title = ''
   bookSettingsForm.description = ''
-  applyMoneyDisplaySettings(null)
+  applyBookMoneyDisplaySettings(null)
 }
 
 function handleCreateBookTypeChange(bookType) {
@@ -750,16 +726,8 @@ async function handleUpdateBookSettings() {
     await updateBookRequest(bookId, {
       title: bookSettingsForm.title.trim(),
       description: normalizeOptionalTextInput(bookSettingsForm.description),
-      ...(showMoneyDisplaySettings.value
-        ? {
-            settings: {
-              money_display: {
-                thousand_separator: bookSettingsForm.settings.money_display.thousand_separator,
-                show_cents: bookSettingsForm.settings.money_display.show_cents,
-              },
-            },
-          }
-        : {}),
+      thousand_separator: bookSettingsForm.thousand_separator,
+      show_cents: bookSettingsForm.show_cents,
     })
 
     closeBookSettingsDialog()

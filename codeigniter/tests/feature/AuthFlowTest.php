@@ -25,7 +25,6 @@ final class AuthFlowTest extends CIUnitTestCase
         $db = db_connect('tests');
 
         $db->query('DROP TABLE IF EXISTS db_finance_transactions');
-        $db->query('DROP TABLE IF EXISTS db_todos');
         $db->query('DROP TABLE IF EXISTS db_notes');
         $db->query('DROP TABLE IF EXISTS db_books');
         $db->query('DROP TABLE IF EXISTS db_book_types');
@@ -62,8 +61,12 @@ CREATE TABLE db_books (
     description TEXT NULL,
     icon TEXT NULL,
     color TEXT NULL,
+    settings_json TEXT NULL,
+    show_cents INTEGER NOT NULL DEFAULT 1,
+    thousand_separator TEXT NOT NULL DEFAULT 'comma',
     is_archived INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
+    last_opened_at TEXT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TEXT NULL
@@ -100,24 +103,6 @@ CREATE TABLE db_notes (
 SQL);
 
         $db->query(<<<'SQL'
-CREATE TABLE db_todos (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL,
-    parent_id TEXT NULL,
-    title TEXT NOT NULL,
-    description TEXT NULL,
-    priority TEXT NOT NULL DEFAULT 'medium',
-    is_completed INTEGER NOT NULL DEFAULT 0,
-    due_at TEXT NULL,
-    completed_at TEXT NULL,
-    position INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NULL,
-    updated_at TEXT NULL,
-    deleted_at TEXT NULL
-)
-SQL);
-
-        $db->query(<<<'SQL'
 CREATE TABLE db_finance_transactions (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL,
@@ -138,7 +123,6 @@ SQL);
         $this->seedBookTypes($db);
         $this->seedBooks($db);
         $this->seedNotes($db);
-        $this->seedTodos($db);
         $this->seedTransactions($db);
     }
 
@@ -658,10 +642,16 @@ SQL);
         self::assertCount(3, $books);
         self::assertSame('Daily Notes', $books[0]['title']);
         self::assertNull($books[0]['currency_code']);
+        self::assertSame(1, (int) $books[0]['show_cents']);
+        self::assertSame('comma', $books[0]['thousand_separator']);
+        self::assertArrayNotHasKey('settings', $books[0]);
+        self::assertArrayNotHasKey('settings_schema', $books[0]);
         self::assertSame('Personal Tasks', $books[1]['title']);
         self::assertNull($books[1]['currency_code']);
         self::assertSame('Personal Finance', $books[2]['title']);
         self::assertSame('USD', $books[2]['currency_code']);
+        self::assertSame(0, (int) $books[2]['show_cents']);
+        self::assertSame('space', $books[2]['thousand_separator']);
     }
 
     public function testBookShowReturnsCurrencyCodeForAccessibleBook(): void
@@ -677,6 +667,10 @@ SQL);
         self::assertSame('Personal Finance', $payload['book']['title']);
         self::assertSame('finance', $payload['book']['type_key']);
         self::assertSame('USD', $payload['book']['currency_code']);
+        self::assertSame(0, (int) $payload['book']['show_cents']);
+        self::assertSame('space', $payload['book']['thousand_separator']);
+        self::assertArrayNotHasKey('settings', $payload['book']);
+        self::assertArrayNotHasKey('settings_schema', $payload['book']);
     }
 
     public function testBookTypesRequireAuthentication(): void
@@ -697,13 +691,11 @@ SQL);
         $payload   = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
         $bookTypes = $payload['bookTypes'];
 
-        self::assertCount(3, $bookTypes);
+        self::assertCount(2, $bookTypes);
         self::assertSame('Finance', $bookTypes[0]['name']);
         self::assertSame(1, $bookTypes[0]['requires_currency']);
         self::assertSame('Notes', $bookTypes[1]['name']);
         self::assertSame(0, $bookTypes[1]['requires_currency']);
-        self::assertSame('Todo', $bookTypes[2]['name']);
-        self::assertSame(0, $bookTypes[2]['requires_currency']);
     }
 
     public function testCreateBookRequiresAuthentication(): void
@@ -747,7 +739,11 @@ SQL);
         self::assertSame('notes', $book['type_key']);
         self::assertNull($book['currency_code']);
         self::assertSame('Summer trip ideas', $book['description']);
+        self::assertSame(1, (int) $book['show_cents']);
+        self::assertSame('comma', $book['thousand_separator']);
         self::assertArrayNotHasKey('user_id', $book);
+        self::assertArrayNotHasKey('settings', $book);
+        self::assertArrayNotHasKey('settings_schema', $book);
 
         self::assertNotNull($row);
         self::assertSame('11111111-1111-1111-1111-111111111111', $row['user_id']);
@@ -755,7 +751,9 @@ SQL);
         self::assertNull($row['currency_code']);
         self::assertSame('Travel Plans', $row['title']);
         self::assertSame('Summer trip ideas', $row['description']);
-        self::assertSame(5, (int) $row['sort_order']);
+        self::assertSame(1, (int) $row['show_cents']);
+        self::assertSame('comma', $row['thousand_separator']);
+        self::assertSame(0, (int) $row['sort_order']);
         self::assertNotEmpty($row['created_at']);
         self::assertSame($row['created_at'], $row['updated_at']);
     }
@@ -897,15 +895,15 @@ SQL);
         self::assertSame('Please select a valid book type.', $payload['message']);
     }
 
-    public function testNewlyCreatedBookAppearsAtTheEndOfTheSidebarList(): void
+    public function testNewlyCreatedBookAppearsAtTheBeginningOfTheSidebarList(): void
     {
         $createResponse = $this->withSession([
             'user_id' => '11111111-1111-1111-1111-111111111111',
         ])->withBodyFormat('json')
             ->post('books', [
-                'title' => 'Trip Checklist',
+                'title' => 'Trip Notes',
                 'description' => '',
-                'type_key' => 'todo',
+                'type_key' => 'notes',
             ]);
 
         $createResponse->assertStatus(201);
@@ -918,13 +916,15 @@ SQL);
 
         $payload = json_decode((string) $listResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
         $books   = $payload['books'];
-        $lastBook = $books[array_key_last($books)];
+        $firstBook = $books[0];
 
-        self::assertCount(4, $books);
-        self::assertSame('Trip Checklist', $lastBook['title']);
-        self::assertSame('todo', $lastBook['type_key']);
-        self::assertNull($lastBook['currency_code']);
-        self::assertNull($lastBook['description']);
+        self::assertCount(3, $books);
+        self::assertSame('Trip Notes', $firstBook['title']);
+        self::assertSame('notes', $firstBook['type_key']);
+        self::assertNull($firstBook['currency_code']);
+        self::assertNull($firstBook['description']);
+        self::assertSame(1, (int) $firstBook['show_cents']);
+        self::assertSame('comma', $firstBook['thousand_separator']);
     }
 
     public function testBookUpdateCanChangeTitleAndDescription(): void
@@ -950,10 +950,41 @@ SQL);
         self::assertSame('Updated finance notes', $payload['book']['description']);
         self::assertSame('USD', $payload['book']['currency_code']);
         self::assertSame('finance', $payload['book']['type_key']);
+        self::assertSame(0, (int) $payload['book']['show_cents']);
+        self::assertSame('space', $payload['book']['thousand_separator']);
         self::assertSame('Updated Finance', $row['title']);
         self::assertSame('Updated finance notes', $row['description']);
         self::assertSame('USD', $row['currency_code']);
         self::assertSame('finance', $row['type_key']);
+        self::assertSame(0, (int) $row['show_cents']);
+        self::assertSame('space', $row['thousand_separator']);
+    }
+
+    public function testBookUpdateCanChangeMoneyDisplayFields(): void
+    {
+        $response = $this->withSession([
+            'user_id' => '11111111-1111-1111-1111-111111111111',
+        ])->withBodyFormat('json')
+            ->put('books/aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4', [
+                'title' => 'Updated Finance',
+                'description' => 'Updated finance notes',
+                'show_cents' => true,
+                'thousand_separator' => 'dot',
+            ]);
+
+        $response->assertStatus(200);
+
+        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
+        $row = db_connect('tests')->table('books')
+            ->where('id', 'aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4')
+            ->get()
+            ->getRowArray();
+
+        self::assertSame('Book updated successfully.', $payload['message']);
+        self::assertSame(1, (int) $payload['book']['show_cents']);
+        self::assertSame('dot', $payload['book']['thousand_separator']);
+        self::assertSame(1, (int) $row['show_cents']);
+        self::assertSame('dot', $row['thousand_separator']);
     }
 
     public function testBookUpdateRejectsImmutableTypeAndCurrencyFields(): void
@@ -1032,7 +1063,7 @@ SQL);
 
         $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
         $note    = $payload['note'];
-        $row     = db_connect('tests')->table('notes')
+        $row     = db_connect('tests')->table('app_notes')
             ->where('id', $note['id'])
             ->get()
             ->getRowArray();
@@ -1105,7 +1136,7 @@ SQL);
         $response->assertStatus(200);
 
         $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
-        $row     = db_connect('tests')->table('notes')
+        $row     = db_connect('tests')->table('app_notes')
             ->where('id', 'note-2')
             ->get()
             ->getRowArray();
@@ -1131,7 +1162,7 @@ SQL);
         $archiveResponse->assertStatus(200);
 
         $payload = json_decode((string) $archiveResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
-        $row     = db_connect('tests')->table('notes')
+        $row     = db_connect('tests')->table('app_notes')
             ->where('id', 'note-2')
             ->get()
             ->getRowArray();
@@ -1165,7 +1196,7 @@ SQL);
         $pinResponse->assertStatus(200);
 
         $payload = json_decode((string) $pinResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
-        $row     = db_connect('tests')->table('notes')
+        $row     = db_connect('tests')->table('app_notes')
             ->where('id', 'note-2')
             ->get()
             ->getRowArray();
@@ -1199,7 +1230,7 @@ SQL);
         $unpinResponse->assertStatus(200);
 
         $payload = json_decode((string) $unpinResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
-        $row     = db_connect('tests')->table('notes')
+        $row     = db_connect('tests')->table('app_notes')
             ->where('id', 'note-1')
             ->get()
             ->getRowArray();
@@ -1221,7 +1252,7 @@ SQL);
         $deleteResponse->assertStatus(200);
 
         $payload = json_decode((string) $deleteResponse->getJSON(), true, 512, JSON_THROW_ON_ERROR);
-        $row     = db_connect('tests')->table('notes')
+        $row     = db_connect('tests')->table('app_notes')
             ->where('id', 'note-2')
             ->get()
             ->getRowArray();
@@ -1259,21 +1290,6 @@ SQL);
         $response->assertStatus(404);
     }
 
-    public function testTodosEndpointReturnsOnlySelectedBooksTodos(): void
-    {
-        $response = $this->withSession([
-            'user_id' => '11111111-1111-1111-1111-111111111111',
-        ])->get('books/aaaaaaa2-aaaa-aaaa-aaaa-aaaaaaaaaaa2/todos');
-
-        $response->assertStatus(200);
-
-        $payload = json_decode((string) $response->getJSON(), true, 512, JSON_THROW_ON_ERROR);
-
-        self::assertCount(2, $payload['todos']);
-        self::assertSame('Pay internet bill', $payload['todos'][0]['title']);
-        self::assertSame('Buy groceries', $payload['todos'][1]['title']);
-    }
-
     public function testFinanceEndpointReturnsSelectedBooksTransactions(): void
     {
         $response = $this->withSession([
@@ -1302,7 +1318,7 @@ SQL);
     {
         $response = $this->withSession([
             'user_id' => '11111111-1111-1111-1111-111111111111',
-        ])->get('books/aaaaaaa2-aaaa-aaaa-aaaa-aaaaaaaaaaa2/notes');
+        ])->get('books/aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4/notes');
 
         $response->assertStatus(404);
     }
@@ -1405,15 +1421,6 @@ SQL);
                 'updated_at' => '2026-05-11 20:01:14',
             ],
             [
-                'type_key' => 'todo',
-                'name' => 'Todo',
-                'description' => 'Book type for task management',
-                'requires_currency' => 0,
-                'is_active' => 1,
-                'created_at' => '2026-05-11 20:01:14',
-                'updated_at' => '2026-05-11 20:01:14',
-            ],
-            [
                 'type_key' => 'legacy',
                 'name' => 'Legacy',
                 'description' => 'Inactive book type for validation tests',
@@ -1437,23 +1444,12 @@ SQL);
                 'description' => 'Personal notes book for Ali',
                 'icon' => null,
                 'color' => null,
+                'settings_json' => null,
+                'show_cents' => 1,
+                'thousand_separator' => 'comma',
                 'is_archived' => 0,
                 'sort_order' => 1,
-                'created_at' => '2026-05-11 20:52:13',
-                'updated_at' => '2026-05-11 20:52:13',
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 'aaaaaaa2-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
-                'user_id' => '11111111-1111-1111-1111-111111111111',
-                'type_key' => 'todo',
-                'currency_code' => null,
-                'title' => 'Personal Tasks',
-                'description' => 'Task management book for Ali',
-                'icon' => null,
-                'color' => null,
-                'is_archived' => 0,
-                'sort_order' => 2,
+                'last_opened_at' => null,
                 'created_at' => '2026-05-11 20:52:13',
                 'updated_at' => '2026-05-11 20:52:13',
                 'deleted_at' => null,
@@ -1467,8 +1463,12 @@ SQL);
                 'description' => 'Finance tracking book for Ali',
                 'icon' => null,
                 'color' => null,
+                'settings_json' => null,
+                'show_cents' => 0,
+                'thousand_separator' => 'space',
                 'is_archived' => 0,
-                'sort_order' => 3,
+                'sort_order' => 2,
+                'last_opened_at' => null,
                 'created_at' => '2026-05-11 20:52:13',
                 'updated_at' => '2026-05-11 20:52:13',
                 'deleted_at' => null,
@@ -1482,8 +1482,12 @@ SQL);
                 'description' => 'Archived book should be hidden',
                 'icon' => null,
                 'color' => null,
+                'settings_json' => null,
+                'show_cents' => 1,
+                'thousand_separator' => 'comma',
                 'is_archived' => 1,
-                'sort_order' => 4,
+                'sort_order' => 3,
+                'last_opened_at' => null,
                 'created_at' => '2026-05-11 20:52:13',
                 'updated_at' => '2026-05-11 20:52:13',
                 'deleted_at' => null,
@@ -1497,8 +1501,12 @@ SQL);
                 'description' => 'Should never be visible',
                 'icon' => null,
                 'color' => null,
+                'settings_json' => null,
+                'show_cents' => 1,
+                'thousand_separator' => 'comma',
                 'is_archived' => 0,
                 'sort_order' => 1,
+                'last_opened_at' => null,
                 'created_at' => '2026-05-11 20:52:13',
                 'updated_at' => '2026-05-11 20:52:13',
                 'deleted_at' => null,
@@ -1508,7 +1516,7 @@ SQL);
 
     private function seedNotes($db): void
     {
-        $db->table('notes')->insertBatch([
+        $db->table('app_notes')->insertBatch([
             [
                 'id' => 'note-1',
                 'book_id' => 'aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
@@ -1582,45 +1590,9 @@ SQL);
         ]);
     }
 
-    private function seedTodos($db): void
-    {
-        $db->table('todos')->insertBatch([
-            [
-                'id' => 'todo-1',
-                'book_id' => 'aaaaaaa2-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
-                'parent_id' => null,
-                'title' => 'Pay internet bill',
-                'description' => 'Complete today',
-                'priority' => 'high',
-                'is_completed' => 0,
-                'due_at' => null,
-                'completed_at' => null,
-                'position' => 0,
-                'created_at' => '2026-05-11 20:52:13',
-                'updated_at' => '2026-05-11 20:52:13',
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 'todo-2',
-                'book_id' => 'aaaaaaa2-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
-                'parent_id' => null,
-                'title' => 'Buy groceries',
-                'description' => 'Milk and bread',
-                'priority' => 'medium',
-                'is_completed' => 1,
-                'due_at' => null,
-                'completed_at' => '2026-05-11 20:52:13',
-                'position' => 1,
-                'created_at' => '2026-05-11 20:52:13',
-                'updated_at' => '2026-05-11 20:52:13',
-                'deleted_at' => null,
-            ],
-        ]);
-    }
-
     private function seedTransactions($db): void
     {
-        $db->table('finance_transactions')->insertBatch([
+        $db->table('app_finance_transactions')->insertBatch([
             [
                 'id' => 'tx-1',
                 'book_id' => 'aaaaaaa4-aaaa-aaaa-aaaa-aaaaaaaaaaa4',

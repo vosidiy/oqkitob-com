@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class MinishopSaleItemModel extends Model
 {
-    protected $table            = 'minishop_sale_items';
+    protected $table            = 'app_minishop_sale_items';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = 'array';
@@ -49,30 +49,30 @@ class MinishopSaleItemModel extends Model
     ): array {
         $query = $this->builder()
             ->select([
-                'minishop_sale_items.product_id',
-                'minishop_sale_items.product_name',
-                'minishop_sale_items.product_sku',
-                'COALESCE(SUM(minishop_sale_items.quantity), 0) AS units_sold',
-                'COALESCE(SUM(minishop_sale_items.line_total), 0) AS total_amount',
+                'app_minishop_sale_items.product_id',
+                'app_minishop_sale_items.product_name',
+                'app_minishop_sale_items.product_sku',
+                'COALESCE(SUM(app_minishop_sale_items.quantity), 0) AS units_sold',
+                'COALESCE(SUM(app_minishop_sale_items.line_total), 0) AS total_amount',
             ])
-            ->join('minishop_sales', 'minishop_sales.id = minishop_sale_items.sale_id')
-            ->where('minishop_sales.book_id', $bookId)
-            ->where('minishop_sales.deleted_at', null);
+            ->join('app_minishop_sales', 'app_minishop_sales.id = app_minishop_sale_items.sale_id')
+            ->where('app_minishop_sales.book_id', $bookId)
+            ->where('app_minishop_sales.deleted_at', null);
 
         if ($soldFrom !== null) {
-            $query->where('minishop_sales.sold_at >=', $soldFrom);
+            $query->where('app_minishop_sales.sold_at >=', $soldFrom);
         }
 
         if ($soldTo !== null) {
-            $query->where('minishop_sales.sold_at <=', $soldTo);
+            $query->where('app_minishop_sales.sold_at <=', $soldTo);
         }
 
-        $rows = $query->groupBy('minishop_sale_items.product_id')
-            ->groupBy('minishop_sale_items.product_name')
-            ->groupBy('minishop_sale_items.product_sku')
+        $rows = $query->groupBy('app_minishop_sale_items.product_id')
+            ->groupBy('app_minishop_sale_items.product_name')
+            ->groupBy('app_minishop_sale_items.product_sku')
             ->orderBy('total_amount', 'DESC')
             ->orderBy('units_sold', 'DESC')
-            ->orderBy('minishop_sale_items.product_name', 'ASC')
+            ->orderBy('app_minishop_sale_items.product_name', 'ASC')
             ->get()
             ->getResultArray();
 
