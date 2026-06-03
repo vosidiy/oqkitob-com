@@ -2,7 +2,7 @@
 
 `oqkitob-com` is a same-origin Vue SPA with a CodeIgniter 4 API backend and a MySQL database.
 
-The product is organized around user-owned books. Each book has a `type_key` such as `notes`, `finance`, or `minishop`, and each type behaves like a small focused app inside the authenticated layout.
+The product is organized around user-owned books. Each book has a `type_key` such as `notes`, `finance`, `minishop`, or `service`, and each type behaves like a small focused app inside the authenticated layout.
 
 ## What It Is
 A single-page web app where users register, sign in, and create "books".
@@ -94,6 +94,7 @@ oqkitob-com/
   - `NotesApp.vue`
   - `FinanceApp.vue`
   - `MinishopApp.vue`
+  - `Service` book UI is planned next; the backend schema and base models now exist
   - each child app fetches and renders its own type-specific data
 - `frontend-src/src/i18n/*`
   - `index.js`
@@ -208,6 +209,8 @@ Frontend API helpers live under `frontend-src/src/api/`.
   - `fetchNotes(bookId)`
 - `finance.js`
   - `fetchFinanceTransactions(bookId)`
+- `service` helpers/routes
+  - planned next; current MVP work added the new book type plus DB/models only
 
 ## Book Loading Flow
 
@@ -225,6 +228,7 @@ Each book mini app then fetches its own content on mount:
 - notes -> `/api/books/{bookId}/notes`
 - finance -> `/api/books/{bookId}/finance`
 - minishop -> `/api/books/{bookId}/minishop/*`
+- service -> backend DB structure is ready; type-specific API/UI endpoints are still pending
 
 The desktop sidebar owns book creation:
 
@@ -258,6 +262,31 @@ Currency notes:
 - money book types still require a currency during create
 - backend accepts custom short codes up to 5 characters
 - non-money book types ignore extra submitted currency values
+
+## Service Book Status
+
+The `service` book type has now been introduced at the schema/model layer for service businesses such as laundry, carpet washing, and repair shops.
+
+- `book_types` includes a new `service` type with `requires_currency = 1`
+- new tables:
+  - `app_service_customers`
+  - `app_service_types`
+  - `app_service_orders`
+  - `app_service_order_items`
+- new backend base models:
+  - `ServiceCustomerModel`
+  - `ServiceTypeModel`
+  - `ServiceOrderModel`
+  - `ServiceOrderItemModel`
+- current MVP scope:
+  - no separate payments table
+  - no separate units table
+  - no separate object-name dictionary table
+  - one optional attachment path per order line
+- current naming:
+  - customer fields use `messenger` and `location`
+
+At this stage, the `service` book is ready in the database and model layer, while controllers, routes, frontend API helpers, and UI screens are still to be implemented.
 
 ## Session/Auth Notes
 

@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Models;
+
+use CodeIgniter\Model;
+
+class ServiceOrderItemModel extends Model
+{
+    protected $table            = 'app_service_order_items';
+    protected $primaryKey       = 'id';
+    protected $useAutoIncrement = false;
+    protected $returnType       = 'array';
+    protected $allowedFields    = [
+        'id',
+        'order_id',
+        'service_type_id',
+        'object_name',
+        'service_name',
+        'quantity',
+        'unit_code',
+        'unit_price',
+        'line_total',
+        'note',
+        'attachment_path',
+        'sort_order',
+    ];
+    protected $useTimestamps    = false;
+
+    /**
+     * Order items are stored as snapshots, and explicit sort_order preserves
+     * the line sequence from order entry screens.
+     */
+    public function findByOrder(string $orderId): array
+    {
+        return $this->select([
+            'id',
+            'order_id',
+            'service_type_id',
+            'object_name',
+            'service_name',
+            'quantity',
+            'unit_code',
+            'unit_price',
+            'line_total',
+            'note',
+            'attachment_path',
+            'sort_order',
+        ])->where('order_id', $orderId)
+            ->orderBy('sort_order', 'ASC')
+            ->orderBy('id', 'ASC')
+            ->findAll();
+    }
+
+    /**
+     * Suggests recently used object names from past orders in the same book.
+     */
+    public function findRecentObjectNameSuggestionsByBook(
+        string $bookId,
+        ?string $serviceTypeId = null,
+        int $limit = 10
+    ): array {
+        if ($bookId === '') {
+            return [];
+        }
+
+        $query = $this->builder()
+            ->select([
+                'app_service_order_items.object_name',
+                'COUNT(app_service_order_items.id) AS usage_count',
+                'MAX(COALESCE(app_service_orders.received_at, app_service_orders.created_at)) AS last_used_at',
+            ])
+            ->join('app_service_orders', 'app_service_orders.id = app_service_order_items.order_id')
+            ->where('app_service_orders.book_id', $bookId)
+            ->where('app_service_orders.deleted_at', null)
+            ->where('app_service_order_items.object_name <>', '');
+
+        if ($serviceTypeId !== null && $serviceTypeId !== '') {
+            $query->where('app_service_order_items.service_type_id', $serviceTypeId);
+        }
+
+        return $query->groupBy('app_service_order_items.object_name')
+            ->orderBy('last_used_at', 'DESC')
+            ->orderBy('usage_count', 'DESC')
+            ->orderBy('app_service_order_items.object_name', 'ASC')
+            ->limit(max(1, $limit))
+            ->get()
+            ->getResultArray();
+    }
+}

@@ -91,6 +91,9 @@ Book-specific UI no longer lives in `components/`. It now lives in `views/book-t
   - `SalesTab.vue`
   - `CustomersTab.vue`
   - minishop dialogs for products, customers, categories, receipts, checkout, and payments
+- `service`
+  - backend schema and base models are in place
+  - UI, routes, and controllers are still pending
 
 Each mini app:
 
@@ -238,6 +241,7 @@ After the selected book is known:
 - `NotesApp.vue` calls `fetchNotes(book.id)`
 - `FinanceApp.vue` calls `fetchFinanceTransactions(book.id)`
 - `MinishopApp.vue` calls minishop product/category/customer/sales helpers under `api/minishop.js`
+- `service` book support is currently backend-only at the DB/model layer
 
 Because both authenticated layouts key `RouterView` by `bookId`, switching between books remounts `BookView` and the child mini app, which resets filters, dialogs, and local in-memory state cleanly.
 
@@ -287,6 +291,8 @@ API helpers live in `frontend-src/src/api/`.
   - book-type request helpers
 - `minishop.js`
   - minishop products, customers, sales, and payment summary helpers
+- `service`
+  - request helpers are not added yet; current work only prepares the backend data model
 
 This keeps transport code out of views and stores while staying lightweight.
 
@@ -312,6 +318,9 @@ This keeps transport code out of views and stores while staying lightweight.
   - finance-book transactions
 - `Minishop`
   - minishop products, customers, sales, receipts, and payment summary endpoints
+- `Service`
+  - schema and base-model layer added
+  - future endpoints will cover customers, service catalog, orders, and order items
 - Shared authenticated API layer
   - `AuthenticatedApiController`
   - `BookAccessService`
@@ -351,6 +360,7 @@ Conventions:
 - book-type routes use `/api/books/{bookId}/{type}`
 - finance uses `/finance` while the response payload remains `transactions`
 - minishop uses `/minishop/...` subroutes for tab-specific workflows
+- service will follow the same book-scoped routing pattern once endpoints are added
 - book-type endpoints validate:
   - authenticated user
   - book ownership
@@ -387,6 +397,10 @@ users
       -> app_minishop_sales
       -> app_minishop_sale_items
       -> app_minishop_sale_payments
+      -> app_service_customers
+      -> app_service_types
+      -> app_service_orders
+      -> app_service_order_items
 ```
 
 Rules:
@@ -398,6 +412,14 @@ Rules:
 - type-specific records belong to one `book_id`
 - type-specific data stays isolated in dedicated `app_*` tables
 - UUID strings are used for core entities
+
+Service-book MVP notes:
+
+- `service` is a money-focused book type and requires a book-level `currency_code`
+- service orders keep payment summary fields directly on `app_service_orders`
+- service order items store snapshots such as `object_name`, `service_name`, `unit_code`, and `unit_price`
+- service customers currently use `messenger` and `location` fields
+- service object-name autocomplete is intended to come from historical `app_service_order_items` values rather than a separate dictionary table
 
 ## Current Tradeoffs
 

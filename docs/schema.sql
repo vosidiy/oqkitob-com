@@ -357,6 +357,123 @@ CREATE TABLE IF NOT EXISTS app_minishop_sale_payments (
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS app_service_customers (
+    id CHAR(36) NOT NULL,
+    book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) DEFAULT NULL,
+    messenger VARCHAR(100) DEFAULT NULL,
+    address TEXT DEFAULT NULL,
+    location TEXT DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_service_customers_book_id (book_id),
+    KEY idx_service_customers_created_by (created_by),
+    KEY idx_service_customers_book_deleted (book_id, deleted_at),
+    KEY idx_service_customers_book_phone (book_id, phone),
+    CONSTRAINT fk_service_customers_book
+        FOREIGN KEY (book_id) REFERENCES books(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_service_customers_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS app_service_types (
+    id CHAR(36) NOT NULL,
+    book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
+    name VARCHAR(255) NOT NULL,
+    default_unit ENUM('qty', 'm2', 'kg') NOT NULL DEFAULT 'qty',
+    default_price DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    sort_order INT NOT NULL DEFAULT 0,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_service_types_book_id (book_id),
+    KEY idx_service_types_created_by (created_by),
+    KEY idx_service_types_book_active (book_id, is_active),
+    KEY idx_service_types_book_sort (book_id, sort_order),
+    KEY idx_service_types_book_deleted (book_id, deleted_at),
+    CONSTRAINT fk_service_types_book
+        FOREIGN KEY (book_id) REFERENCES books(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_service_types_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS app_service_orders (
+    id CHAR(36) NOT NULL,
+    book_id CHAR(36) NOT NULL,
+    created_by CHAR(36) DEFAULT NULL,
+    customer_id CHAR(36) DEFAULT NULL,
+    currency_code CHAR(3) NOT NULL,
+    subtotal_amount DECIMAL(15,2) NOT NULL,
+    discount_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    total_amount DECIMAL(15,2) NOT NULL,
+    paid_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    due_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    payment_status ENUM('unpaid', 'partial', 'paid') NOT NULL DEFAULT 'unpaid',
+    order_status ENUM('received', 'working', 'ready', 'delivered') NOT NULL DEFAULT 'received',
+    note TEXT DEFAULT NULL,
+    received_at DATETIME NOT NULL,
+    ready_at DATETIME DEFAULT NULL,
+    delivered_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_service_orders_book_id (book_id),
+    KEY idx_service_orders_created_by (created_by),
+    KEY idx_service_orders_customer_id (customer_id),
+    KEY idx_service_orders_book_received_at (book_id, received_at),
+    KEY idx_service_orders_book_customer (book_id, customer_id),
+    KEY idx_service_orders_book_payment_status (book_id, payment_status),
+    KEY idx_service_orders_book_order_status (book_id, order_status),
+    KEY idx_service_orders_book_deleted (book_id, deleted_at),
+    CONSTRAINT fk_service_orders_book
+        FOREIGN KEY (book_id) REFERENCES books(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_service_orders_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_service_orders_customer
+        FOREIGN KEY (customer_id) REFERENCES app_service_customers(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS app_service_order_items (
+    id CHAR(36) NOT NULL,
+    order_id CHAR(36) NOT NULL,
+    service_type_id CHAR(36) DEFAULT NULL,
+    object_name VARCHAR(255) NOT NULL,
+    service_name VARCHAR(255) NOT NULL,
+    quantity DECIMAL(10,3) NOT NULL,
+    unit_code ENUM('qty', 'm2', 'kg') NOT NULL DEFAULT 'qty',
+    unit_price DECIMAL(15,2) NOT NULL,
+    line_total DECIMAL(15,2) NOT NULL,
+    note TEXT DEFAULT NULL,
+    attachment_path VARCHAR(255) DEFAULT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    KEY idx_service_order_items_order_id (order_id),
+    KEY idx_service_order_items_service_type_id (service_type_id),
+    KEY idx_service_order_items_order_sort (order_id, sort_order),
+    KEY idx_service_order_items_object_name (object_name),
+    CONSTRAINT fk_service_order_items_order
+        FOREIGN KEY (order_id) REFERENCES app_service_orders(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_service_order_items_service_type
+        FOREIGN KEY (service_type_id) REFERENCES app_service_types(id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 ALTER TABLE users
     ADD CONSTRAINT fk_users_default_book
     FOREIGN KEY (default_book_id) REFERENCES books(id)
@@ -366,7 +483,8 @@ INSERT INTO book_types (type_key, name, description, requires_currency, is_activ
 VALUES
     ('notes', 'Notes', 'Book type for note taking', 0, 1, NOW(), NOW()),
     ('finance', 'Finance', 'Book type for income and expense tracking', 1, 1, NOW(), NOW()),
-    ('minishop', 'Minishop', 'Book type for small shop sales and inventory tracking', 1, 1, NOW(), NOW())
+    ('minishop', 'Minishop', 'Book type for small shop sales and inventory tracking', 1, 1, NOW(), NOW()),
+    ('service', 'Services', 'Book type for service business orders and customer tracking', 1, 1, NOW(), NOW())
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     description = VALUES(description),
