@@ -1,6 +1,6 @@
 <template>
   <dialog ref="dialogRef" class="dialog-xl max-h-full mt-5" @cancel="emit('cancel', $event)" @close="emit('close')">
-    <div class="d-flex flex-col max-h-90vh">
+    <div class="d-flex flex-col" style="max-height:96vh;">
       <header class="dialog-header">
         <h5>{{ $t('service.dialogs.createOrder') }}</h5>
         <button class="btn btn-icon" :disabled="isSubmitting" @click="close">
@@ -18,25 +18,26 @@
             {{ $t('service.dialogs.createServiceTypeFirst') }}
           </div>
 
-          <section class="mb-4">
-            <label class="form-label">{{ $t('service.dialogs.customerInfo') }}</label>
+          <section class="mb-4 card border bg-primary-100 p-4">
+            <h6 class="mb-4">👤 {{ $t('service.dialogs.customerInfo') }}</h6>
 
             <div class="row gap-3">
-              <div class="col-6 mb-4">
-                <label class="form-label" for="service-order-customer-phone">{{ $t('common.fields.phone') }}</label>
-                <input
-                  id="service-order-customer-phone"
-                  v-model.trim="form.customer.phone"
-                  type="text"
-                  class="form-control"
-                  :placeholder="$t('service.dialogs.phonePlaceholder')"
-                  :disabled="isSubmitting"
-                  required
-                >
+              <div class="col-6 mb-3">
+                <div class="d-flex align-items-center">
+                  <span class="p-2 flex-shrink-0 bg-white h-9 rounded-left"> 📞 +998 </span>
+                  <input
+                    id="service-order-customer-phone"
+                    v-model.trim="form.customer.phone"
+                    type="text"
+                    class="form-control h-9 rounded-left-0"
+                    :placeholder="901112233"
+                    :disabled="isSubmitting"
+                    required
+                  >
+                </div>
               </div>
 
-              <div class="col-6 mb-4">
-                <label class="form-label" for="service-order-customer-name">{{ $t('common.fields.name') }}</label>
+              <div class="col-6 mb-3">
                 <input
                   id="service-order-customer-name"
                   v-model.trim="form.customer.name"
@@ -50,33 +51,36 @@
             </div>
 
             <div class="row gap-3">
-              <div class="col-6 mb-4">
-                <label class="form-label" for="service-order-customer-messenger">{{ $t('service.fields.messenger') }}</label>
-                <input
-                  id="service-order-customer-messenger"
-                  v-model.trim="form.customer.messenger"
-                  type="text"
-                  class="form-control"
-                  :placeholder="$t('service.dialogs.messengerPlaceholder')"
-                  :disabled="isSubmitting"
-                >
+              <div class="col-6 mb-3">
+                <div class="relative">
+                  <span class="d-inline-flex absolute ml-1 p-2 left-0 text-lg center-y">💬</span>
+                  <input
+                    id="service-order-customer-messenger"
+                    v-model.trim="form.customer.messenger"
+                    type="text"
+                    class="form-control pl-9"
+                    :placeholder="$t('service.dialogs.messengerPlaceholder')"
+                    :disabled="isSubmitting"
+                  >
+                </div>
               </div>
 
-              <div class="col-6 mb-4">
-                <label class="form-label" for="service-order-customer-address">{{ $t('service.fields.address') }}</label>
-                <input
-                  id="service-order-customer-address"
-                  v-model.trim="form.customer.address"
-                  type="text"
-                  class="form-control"
-                  :placeholder="$t('service.dialogs.addressPlaceholder')"
-                  :disabled="isSubmitting"
-                >
+              <div class="col-6 mb-3">
+                <div class="relative">
+                  <span class="d-inline-flex absolute ml-1 p-2 left-0 text-lg center-y"> 🏠 </span>
+                  <input
+                    id="service-order-customer-address"
+                    v-model.trim="form.customer.address"
+                    type="text"
+                    class="form-control pl-9"
+                    :placeholder="$t('service.dialogs.addressPlaceholder')"
+                    :disabled="isSubmitting"
+                  >
+                </div>
               </div>
             </div>
 
             <div class="mb-2">
-              <label class="form-label" for="service-order-customer-location">{{ $t('service.fields.location') }}</label>
               <input
                 id="service-order-customer-location"
                 v-model.trim="form.customer.location"
@@ -91,22 +95,10 @@
           <hr>
 
           <section class="mb-4">
-            <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-              <label class="form-label mb-0">{{ $t('service.dialogs.orderItems') }}</label>
-              <button
-                type="button"
-                class="btn btn-neutral"
-                :disabled="isSubmitting"
-                @click="addItemRow"
-              >
-                {{ $t('service.dialogs.addAnotherItem') }}
-              </button>
-            </div>
-
             <article
               v-for="(item, index) in form.items"
               :key="item._key"
-              class="d-flex flex-row border-bottom border-width-2 p-2 border-color-neutral-500"
+              class="d-flex flex-row border-bottom border-width-2 py-3 border-color-neutral-500"
             >
               <div class="flex-1">
                 <div class="row gap-cols-2 mb-3">
@@ -147,22 +139,18 @@
 
                 <div class="row gap-cols-2 mb-3">
                   <div class="col-6">
-                    <label class="form-label" :for="`service-order-quantity-${item._key}`">
-                      {{ $t('common.fields.quantity') }}
-                    </label>
                     <div class="d-flex gap-2">
                       <input
                         :id="`service-order-quantity-${item._key}`"
                         v-model.trim="item.quantity"
                         type="number"
                         class="form-control"
-                        min="0.001"
-                        step="0.001"
+                        min="0"
+                        step="1"
                         :placeholder="$t('service.dialogs.quantityPlaceholder')"
                         :disabled="isSubmitting"
                         required
                       >
-
                       <select
                         v-model="item.unit_code"
                         class="form-select"
@@ -177,18 +165,16 @@
                   </div>
 
                   <div class="col-6">
-                    <label class="form-label" :for="`service-order-price-${item._key}`">
-                      {{ $t('service.fields.unitPrice') }}
-                    </label>
-                    <div class="relative">
+                    <div class="relative d-flex flex-row">
+                      <span class="p-2 flex-shrink-0 bg-neutral-200 rounded-left">{{ $t('service.fields.unitPrice') }} </span>
                       <input
                         :id="`service-order-price-${item._key}`"
                         v-model.trim="item.unit_price"
                         type="number"
-                        class="form-control"
+                        class="form-control rounded-left-0"
                         min="0"
-                        step="0.01"
-                        :placeholder="$t('service.dialogs.moneyPlaceholder')"
+                        step="1"
+                        placeholder="0.00"
                         :disabled="isSubmitting"
                         required
                       >
@@ -199,10 +185,7 @@
                   </div>
                 </div>
 
-                <div class="mb-2">
-                  <label class="form-label" :for="`service-order-note-${item._key}`">
-                    {{ $t('common.fields.note') }}
-                  </label>
+                <div>
                   <input
                     :id="`service-order-note-${item._key}`"
                     v-model.trim="item.note"
@@ -214,18 +197,18 @@
                 </div>
               </div>
 
-              <div class="p-2 border text-right bg-neutral-200 min-w-40 rounded ml-2">
-                <p class="text-sm text-secondary">
+              <div class="p-3 border text-right bg-neutral-200 min-w-40 rounded ml-2">
+                <p class="text-secondary">
                   {{ formatQuantityDisplay(item.quantity) }} × {{ formatMoney(lineTotal(item)) }} =
                 </p>
-                <p class="text-xl mb-3 font-bold">
+                <p class="text-lg mb-3 font-semibold max-w-40" style="word-break: break-all;">
                   {{ formatMoney(lineTotal(item)) }} <small class="currency-code">{{ book.currency_code }}</small>
                 </p>
 
                 <button
                   v-if="form.items.length > 1"
                   type="button"
-                  class="btn btn-link text-red p-0"
+                  class="btn btn-link text-red btn-sm"
                   :disabled="isSubmitting"
                   @click="removeItemRow(index)"
                 >
@@ -233,49 +216,20 @@
                 </button>
               </div>
             </article>
-          </section>
 
-          <section class="row gap-3 mb-4">
-            <div class="col-6 mb-4">
-              <label class="form-label" for="service-order-discount">{{ $t('common.fields.discount') }}</label>
-              <div class="relative">
-                <input
-                  id="service-order-discount"
-                  v-model.trim="form.discount_amount"
-                  type="number"
-                  class="form-control"
-                  min="0"
-                  step="0.01"
-                  :placeholder="$t('service.dialogs.moneyPlaceholder')"
+            <div class="pt-4">
+              <button
+                  type="button"
+                  class="btn w-full btn-neutral"
                   :disabled="isSubmitting"
+                  @click="addItemRow"
                 >
-                <small class="currency-code text-secondary text-default bg-neutral-50 absolute right-2 top-1 p-1">
-                  {{ book.currency_code }}
-                </small>
-              </div>
-            </div>
-
-            <div class="col-6 mb-4">
-              <label class="form-label" for="service-order-paid">{{ $t('common.fields.paid') }}</label>
-              <div class="relative">
-                <input
-                  id="service-order-paid"
-                  v-model.trim="form.paid_amount"
-                  type="number"
-                  class="form-control"
-                  min="0"
-                  step="0.01"
-                  :placeholder="$t('service.dialogs.moneyPlaceholder')"
-                  :disabled="isSubmitting"
-                >
-                <small class="currency-code text-secondary text-default bg-neutral-50 absolute right-2 top-1 p-1">
-                  {{ book.currency_code }}
-                </small>
-              </div>
+                  {{ $t('service.dialogs.addAnotherItem') }}
+              </button>
             </div>
           </section>
 
-          <div class="mb-4">
+          <section class="mb-4">
             <label class="form-label" for="service-order-main-note">{{ $t('service.fields.orderNote') }}</label>
             <textarea
               id="service-order-main-note"
@@ -285,30 +239,81 @@
               :placeholder="$t('service.dialogs.orderNotePlaceholder')"
               :disabled="isSubmitting"
             ></textarea>
-          </div>
+          </section>
 
-          <div class="d-flex flex-col align-items-end pr-2">
-            <div class="d-flex col-6 justify-content-between gap-3">
+          <hr>
+
+          <section class="d-flex flex-col align-items-end pr-2 mt-4">
+            <div class="d-flex mb-1 col-5 align-items-center justify-content-between gap-3">
+              <label class="col-6 font-bold" for="service-order-discount">{{ $t('common.fields.discount') }}:</label>
+              <div class="col-6 text-right font-semibold">
+                <div class="relative">
+                  <input
+                    id="service-order-discount"
+                    v-model.trim="form.discount_amount"
+                    type="number"
+                    class="form-control min-h-5"
+                    min="0"
+                    step="1"
+                    :placeholder="$t('service.dialogs.moneyPlaceholder')"
+                    :disabled="isSubmitting"
+                  >
+                  <small class="currency-code text-secondary text-default bg-neutral-50 absolute right-2 top-1 p-1">
+                    {{ book.currency_code }}
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex col-5 align-items-center justify-content-between gap-3">
+              <label class="col-6  font-bold" for="service-order-paid">{{ $t('common.fields.paid') }}:</label>
+              <div class="col-6 text-right font-semibold">
+                <div class="relative">
+                  <input
+                    id="service-order-paid"
+                    v-model.trim="form.paid_amount"
+                    type="number"
+                    class="form-control min-h-5"
+                    min="0"
+                    step="1"
+                    :placeholder="$t('service.dialogs.moneyPlaceholder')"
+                    :disabled="isSubmitting"
+                  >
+                  <small class="currency-code text-secondary text-default bg-neutral-50 absolute right-2 top-1 p-1">
+                    {{ book.currency_code }}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <hr>
+
+          <section class="d-flex flex-col align-items-end pr-2">
+            <div class="d-flex col-5 justify-content-between gap-3">
               <span>{{ $t('common.fields.subtotal') }}</span>
               <strong>{{ formatMoney(subtotalAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
             </div>
-            <div class="d-flex col-6 justify-content-between gap-3">
+            <div class="d-flex col-5 justify-content-between gap-3">
               <span>{{ $t('common.fields.discount') }}</span>
               <strong>- {{ formatMoney(discountAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
             </div>
-            <div class="d-flex col-6 justify-content-between gap-3">
+            <div class="d-flex col-5 justify-content-between gap-3">
               <span>{{ $t('service.orders.totalToPay') }}</span>
               <strong>{{ formatMoney(totalAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
             </div>
-            <div class="d-flex col-6 justify-content-between gap-3">
+            <div class="d-flex col-5 justify-content-between gap-3">
               <span class="text-green">{{ $t('common.fields.paid') }}</span>
               <strong class="text-green">{{ formatMoney(paidAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
             </div>
-            <div class="d-flex col-6 justify-content-between gap-3">
+            <div class="d-flex col-5 justify-content-between gap-3">
               <span class="text-orange">{{ $t('service.orders.remainingDue') }}</span>
               <strong class="text-orange">{{ formatMoney(dueAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
             </div>
-          </div>
+          </section>
+
+          
+
         </form>
       </div>
 
@@ -325,6 +330,11 @@
         <button type="button" class="btn btn-default" :disabled="isSubmitting" @click="close">
           {{ $t('common.actions.cancel') }}
         </button>
+
+        <p class="ml-auto d-flex gap-3 text-xl">
+          <span>{{ $t('service.orders.totalToPay') }}</span>
+          <strong>{{ formatMoney(totalAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
+        </p>
       </footer>
     </div>
   </dialog>

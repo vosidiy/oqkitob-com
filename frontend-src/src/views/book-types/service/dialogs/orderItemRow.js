@@ -22,7 +22,7 @@ export function createServiceOrderItemRow(overrides = {}) {
     service_type_id: '',
     quantity: '1',
     unit_code: 'qty',
-    unit_price: '0.00',
+    unit_price: '0',
     note: '',
     ...overrides,
   }
