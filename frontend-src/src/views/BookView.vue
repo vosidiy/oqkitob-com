@@ -1,6 +1,6 @@
 <template>
 
-    <div v-if="errorMessage" class="alert" :class="errorMessage === bookNotFoundMessage ? 'alert-warning' : 'alert-danger'" role="alert">
+    <div v-if="errorMessage" class="alert m-5" :class="errorMessage === bookNotFoundMessage ? 'alert-warning' : 'alert-danger'" role="alert">
       {{ errorMessage }}
     </div>
 
@@ -9,12 +9,12 @@
     <template v-else-if="book">
       <component :is="activeComponent" v-if="activeComponent" :key="book.id" :book="book" />
 
-      <div v-else class="alert alert-info" role="alert">
+      <div v-else class="alert alert-warning m-5" role="alert">
         {{ $t('bookView.unsupportedType') }}
       </div>
     </template>
 
-    <div v-else class="alert alert-warning" role="alert">
+    <div v-else class="alert alert-warning m-5" role="alert">
       {{ BOOK_NOT_FOUND_MESSAGE }}
     </div>
     
@@ -30,6 +30,7 @@ import { useBooksStore } from '@/stores/books-store'
 import FinanceApp from '@/views/book-types/finance/FinanceApp.vue'
 import MinishopApp from '@/views/book-types/minishop/MinishopApp.vue'
 import NotesApp from '@/views/book-types/notes/NotesApp.vue'
+import ServiceApp from '@/views/book-types/service/ServiceApp.vue'
 
 // Reuse one message constant so the template and loader logic stay in sync.
 const { t } = useI18n()
@@ -40,6 +41,7 @@ const componentByType = {
   finance: FinanceApp,
   minishop: MinishopApp,
   notes: NotesApp,
+  service: ServiceApp,
 }
 
 // Route params tell us which book should be visible, and the router lets us redirect on auth failures.

@@ -55,7 +55,7 @@
                 >
                   {{ book.description }}
                 </div>
-                <p class="text-secondary mt-1">{{ $t('bookTypes.' + book.type_key) }}</p>
+                <p class="text-secondary  mt-1"> [{{ $t('bookTypes.' + book.type_key) }}]</p>
             </div>
             
           </RouterLink>

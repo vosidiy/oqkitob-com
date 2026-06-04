@@ -94,6 +94,7 @@ export const messages = {
       finance: 'Finance',
       minishop: 'Sales',
       notes: 'Notes',
+      service: 'Services',
     },
     appLayout: {
       signedInAs: 'Signed in as',
@@ -251,6 +252,25 @@ export const messages = {
       loading: 'Loading transactions...',
       empty: 'No transactions yet.',
       unableLoad: 'Unable to load transactions.',
+    },
+    service: {
+      tabs: {
+        orders: 'Orders',
+        clients: 'Clients',
+        reports: 'Reports',
+      },
+      orders: {
+        title: 'Orders',
+        placeholder: 'Orders will appear here once the service backend is connected.',
+      },
+      clients: {
+        title: 'Clients',
+        placeholder: 'Client records will appear here once the service backend is connected.',
+      },
+      reports: {
+        title: 'Reports',
+        placeholder: 'Reports will appear here once the service backend is connected.',
+      },
     },
     minishop: {
       tabs: {
@@ -533,6 +553,7 @@ export const messages = {
       finance: 'Moliya',
       minishop: 'Savdo',
       notes: 'Qaydlar',
+      service: 'Xizmatlar',
     },
     appLayout: {
       signedInAs: 'Tizimga kirgan foydalanuvchi',
@@ -972,6 +993,7 @@ export const messages = {
       finance: 'Финансы',
       minishop: 'Продажи',
       notes: 'Заметки',
+      service: 'Услуги',
     },
     appLayout: {
       signedInAs: 'Вы вошли как',
