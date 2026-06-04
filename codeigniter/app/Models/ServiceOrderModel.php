@@ -149,7 +149,9 @@ class ServiceOrderModel extends Model
 
     private function makeOrderSummaryQuery(?array $columns = null): self
     {
-        return $this->select($columns ?? $this->orderSummaryColumns())->join(
+        return $this->select($columns ?? $this->orderSummaryColumns())
+            ->select($this->orderItemCountSelect(), false)
+            ->join(
             'app_service_customers',
             'app_service_customers.id = app_service_orders.customer_id'
             . ' AND app_service_customers.deleted_at IS NULL',
@@ -167,6 +169,7 @@ class ServiceOrderModel extends Model
     ): BaseBuilder {
         $query = $this->builder()
             ->select($this->orderSummaryColumns())
+            ->select($this->orderItemCountSelect(), false)
             ->join(
                 'app_service_customers',
                 'app_service_customers.id = app_service_orders.customer_id'
@@ -290,7 +293,15 @@ class ServiceOrderModel extends Model
             'app_service_customers.name AS customer_name',
             'app_service_customers.phone AS customer_phone',
             'app_service_customers.messenger AS customer_messenger',
+            'app_service_customers.address AS customer_address',
+            'app_service_customers.location AS customer_location',
         ];
+    }
+
+    private function orderItemCountSelect(): string
+    {
+        return '(SELECT COUNT(*) FROM app_service_order_items'
+            . ' WHERE app_service_order_items.order_id = app_service_orders.id) AS item_count';
     }
 
     private function formatAggregateMoney(mixed $value): string

@@ -58,4 +58,11 @@ $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->post('(:segment)/minishop/sales/(:segment)/payments', 'Api\MinishopSalesController::addPayment/$1/$2');
     $routes->delete('(:segment)/minishop/sales/(:segment)/payments/(:segment)', 'Api\MinishopSalesController::deletePayment/$1/$2/$3');
     $routes->delete('(:segment)/minishop/sales/(:segment)', 'Api\MinishopSalesController::delete/$1/$2');
+    $routes->get('(:segment)/service/types', 'Api\ServiceTypesController::index/$1');
+    $routes->post('(:segment)/service/types', 'Api\ServiceTypesController::create/$1');
+    $routes->put('(:segment)/service/types/(:segment)', 'Api\ServiceTypesController::update/$1/$2');
+    $routes->delete('(:segment)/service/types/(:segment)', 'Api\ServiceTypesController::delete/$1/$2');
+    $routes->get('(:segment)/service/orders', 'Api\ServiceOrdersController::index/$1');
+    $routes->get('(:segment)/service/orders/(:segment)', 'Api\ServiceOrdersController::show/$1/$2');
+    $routes->post('(:segment)/service/orders', 'Api\ServiceOrdersController::create/$1');
 });

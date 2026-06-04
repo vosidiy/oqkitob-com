@@ -91,4 +91,23 @@ class ServiceTypeModel extends Model
 
         return $serviceType ?: null;
     }
+
+    /**
+     * Returns the next sort_order value for a new service type in this book.
+     */
+    public function findNextSortOrderByBook(string $bookId): int
+    {
+        if ($bookId === '') {
+            return 0;
+        }
+
+        $row = $this->builder()
+            ->select('MAX(sort_order) AS max_sort_order', false)
+            ->where('book_id', $bookId)
+            ->where('deleted_at', null)
+            ->get()
+            ->getRowArray();
+
+        return ((int) ($row['max_sort_order'] ?? -1)) + 1;
+    }
 }

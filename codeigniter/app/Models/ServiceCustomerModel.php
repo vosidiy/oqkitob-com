@@ -83,4 +83,21 @@ class ServiceCustomerModel extends Model
 
         return $customer ?: null;
     }
+
+    /**
+     * Exact phone lookup for reusing customers during order creation.
+     */
+    public function findExistingByPhoneAndBook(string $bookId, string $phone): ?array
+    {
+        if ($bookId === '' || $phone === '') {
+            return null;
+        }
+
+        $customer = $this->where('book_id', $bookId)
+            ->where('phone', $phone)
+            ->where('deleted_at', null)
+            ->first();
+
+        return $customer ?: null;
+    }
 }
