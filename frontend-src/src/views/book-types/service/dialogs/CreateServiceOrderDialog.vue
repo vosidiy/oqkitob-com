@@ -19,77 +19,101 @@
           </div>
 
           <section class="mb-4 card border bg-primary-100 p-4">
-            <h6 class="mb-4">👤 {{ $t('service.dialogs.customerInfo') }}</h6>
+            
+            <div v-if="isLockedCustomerMode" class="d-flex flex-col gap-2">
+              
+              <h6 class="mb-1">👤
+                  {{ lockedCustomer?.name }}
+              </h6>
+              <p>
+                <span v-if="lockedCustomer?.phone">
+                  📞 {{ lockedCustomer.phone }}
+                 </span>
+                
+                 <span v-if="lockedCustomer?.messenger">
+                 •  💬 {{ $t('service.fields.messenger') }}: {{ lockedCustomer.messenger }}
+                </span>
+                <span v-if="lockedCustomer?.address">
+                  •   🏠 {{ $t('service.fields.address') }}: {{ lockedCustomer.address }}
+                </span>
+              </p>
+              <p v-if="lockedCustomer?.location">
+                📍 {{ $t('service.fields.location') }}: {{ lockedCustomer.location }}
+              </p>
+            </div>
 
-            <div class="row gap-3">
-              <div class="col-6 mb-3">
-                <div class="d-flex align-items-center">
-                  <span class="p-2 flex-shrink-0 bg-white h-9 rounded-left"> 📞 +998 </span>
+            <template v-else>
+              <h6 class="mb-4">👤 {{ $t('service.dialogs.customerInfo') }}</h6>
+              <div class="row gap-3">
+                <div class="col-6 mb-3">
+                  <div class="d-flex align-items-center">
+                    <span class="p-2 flex-shrink-0 bg-white h-9 rounded-left"> 📞 +998 </span>
+                    <input
+                      id="service-order-customer-phone"
+                      v-model.trim="form.customer.phone"
+                      type="text"
+                      class="form-control h-9 rounded-left-0"
+                      placeholder="901234567"
+                      :disabled="isSubmitting"
+                      required
+                    >
+                  </div>
+                </div>
+
+                <div class="col-6 mb-3">
                   <input
-                    id="service-order-customer-phone"
-                    v-model.trim="form.customer.phone"
+                    id="service-order-customer-name"
+                    v-model.trim="form.customer.name"
                     type="text"
-                    class="form-control h-9 rounded-left-0"
-                    :placeholder="901112233"
+                    class="form-control"
+                    :placeholder="$t('service.dialogs.customerNamePlaceholder')"
                     :disabled="isSubmitting"
                     required
                   >
                 </div>
               </div>
 
-              <div class="col-6 mb-3">
+              <div class="row gap-3">
+                <div class="col-6 mb-3">
+                  <div class="relative">
+                    <span class="d-inline-flex absolute ml-1 p-2 left-0 text-lg center-y">💬</span>
+                    <input
+                      id="service-order-customer-messenger"
+                      v-model.trim="form.customer.messenger"
+                      type="text"
+                      class="form-control pl-9"
+                      :placeholder="$t('service.dialogs.messengerPlaceholder')"
+                      :disabled="isSubmitting"
+                    >
+                  </div>
+                </div>
+
+                <div class="col-6 mb-3">
+                  <div class="relative">
+                    <span class="d-inline-flex absolute ml-1 p-2 left-0 text-lg center-y"> 🏠 </span>
+                    <input
+                      id="service-order-customer-address"
+                      v-model.trim="form.customer.address"
+                      type="text"
+                      class="form-control pl-9"
+                      :placeholder="$t('service.dialogs.addressPlaceholder')"
+                      :disabled="isSubmitting"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-none">
                 <input
-                  id="service-order-customer-name"
-                  v-model.trim="form.customer.name"
+                  id="service-order-customer-location"
+                  v-model.trim="form.customer.location"
                   type="text"
                   class="form-control"
-                  :placeholder="$t('service.dialogs.customerNamePlaceholder')"
+                  :placeholder="$t('service.dialogs.locationPlaceholder')"
                   :disabled="isSubmitting"
-                  required
                 >
               </div>
-            </div>
-
-            <div class="row gap-3">
-              <div class="col-6 mb-3">
-                <div class="relative">
-                  <span class="d-inline-flex absolute ml-1 p-2 left-0 text-lg center-y">💬</span>
-                  <input
-                    id="service-order-customer-messenger"
-                    v-model.trim="form.customer.messenger"
-                    type="text"
-                    class="form-control pl-9"
-                    :placeholder="$t('service.dialogs.messengerPlaceholder')"
-                    :disabled="isSubmitting"
-                  >
-                </div>
-              </div>
-
-              <div class="col-6 mb-3">
-                <div class="relative">
-                  <span class="d-inline-flex absolute ml-1 p-2 left-0 text-lg center-y"> 🏠 </span>
-                  <input
-                    id="service-order-customer-address"
-                    v-model.trim="form.customer.address"
-                    type="text"
-                    class="form-control pl-9"
-                    :placeholder="$t('service.dialogs.addressPlaceholder')"
-                    :disabled="isSubmitting"
-                  >
-                </div>
-              </div>
-            </div>
-
-            <div class="mb-2">
-              <input
-                id="service-order-customer-location"
-                v-model.trim="form.customer.location"
-                type="text"
-                class="form-control"
-                :placeholder="$t('service.dialogs.locationPlaceholder')"
-                :disabled="isSubmitting"
-              >
-            </div>
+            </template>
           </section>
 
           <hr>
@@ -219,12 +243,12 @@
 
             <div class="pt-4">
               <button
-                  type="button"
-                  class="btn w-full btn-neutral"
-                  :disabled="isSubmitting"
-                  @click="addItemRow"
-                >
-                  {{ $t('service.dialogs.addAnotherItem') }}
+                type="button"
+                class="btn w-full btn-neutral"
+                :disabled="isSubmitting"
+                @click="addItemRow"
+              >
+                {{ $t('service.dialogs.addAnotherItem') }}
               </button>
             </div>
           </section>
@@ -266,7 +290,7 @@
             </div>
 
             <div class="d-flex col-5 align-items-center justify-content-between gap-3">
-              <label class="col-6  font-bold" for="service-order-paid">{{ $t('common.fields.paid') }}:</label>
+              <label class="col-6 font-bold" for="service-order-paid">{{ $t('common.fields.paid') }}:</label>
               <div class="col-6 text-right font-semibold">
                 <div class="relative">
                   <input
@@ -311,9 +335,6 @@
               <strong class="text-orange">{{ formatMoney(dueAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
             </div>
           </section>
-
-          
-
         </form>
       </div>
 
@@ -363,6 +384,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  lockedCustomer: {
+    type: Object,
+    default: null,
+  },
+  mode: {
+    type: String,
+    default: 'editable',
+  },
   serviceTypes: {
     type: Array,
     default: () => [],
@@ -373,6 +402,7 @@ const emit = defineEmits(['cancel', 'close', 'submit'])
 const dialogRef = ref(null)
 const unitOptions = SERVICE_UNIT_OPTIONS
 
+const isLockedCustomerMode = computed(() => props.mode === 'locked' && props.lockedCustomer !== null)
 const subtotalAmount = computed(() => props.form.items.reduce((sum, item) => sum + lineTotal(item), 0))
 const discountAmount = computed(() => clampMoney(props.form.discount_amount, subtotalAmount.value))
 const totalAmount = computed(() => Math.max(0, subtotalAmount.value - discountAmount.value))
@@ -416,7 +446,7 @@ function applyServiceDefaults(item) {
   }
 
   item.unit_code = String(serviceType.default_unit ?? 'qty')
-  item.unit_price = String(serviceType.default_price ?? '0.00')
+  item.unit_price = String(serviceType.default_price ?? '0')
 }
 
 function lineTotal(item) {

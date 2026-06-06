@@ -145,7 +145,9 @@ class ServiceOrdersController extends AuthenticatedApiController
             throw new RuntimeException('Book currency is required to create service orders.');
         }
 
-        $customerPayload = $this->normalizeCustomerPayload($payload['customer'] ?? null);
+        $selectedCustomerId = $this->normalizeOptionalId($payload['customer_id'] ?? null);
+        $selectedCustomer = null;
+        $customerPayload = null;
         $items = $payload['items'] ?? null;
         $discountValue = $payload['discount_amount'] ?? 0;
         $paidValue = $payload['paid_amount'] ?? 0;
@@ -155,7 +157,16 @@ class ServiceOrdersController extends AuthenticatedApiController
             throw new InvalidArgumentException('At least one order item is required.');
         }
 
-        $this->validateCustomerPayload($customerPayload);
+        if ($selectedCustomerId !== null) {
+            $selectedCustomer = $this->customers->findExistingByIdAndBook($bookId, $selectedCustomerId);
+
+            if ($selectedCustomer === null) {
+                throw new InvalidArgumentException('Please choose a valid customer.');
+            }
+        } else {
+            $customerPayload = $this->normalizeCustomerPayload($payload['customer'] ?? null);
+            $this->validateCustomerPayload($customerPayload);
+        }
 
         if (! $this->isNumericValue($discountValue)) {
             throw new InvalidArgumentException('Please enter a valid discount amount.');
@@ -198,7 +209,9 @@ class ServiceOrdersController extends AuthenticatedApiController
         $this->db->transException(true)->transStart();
 
         try {
-            $customerId = $this->upsertCustomerForOrder($userId, $bookId, $customerPayload, $timestamp);
+            $customerId = $selectedCustomer !== null
+                ? (string) $selectedCustomer['id']
+                : $this->upsertCustomerForOrder($userId, $bookId, $customerPayload ?? [], $timestamp);
 
             $created = $this->orders->insert([
                 'id' => $orderId,

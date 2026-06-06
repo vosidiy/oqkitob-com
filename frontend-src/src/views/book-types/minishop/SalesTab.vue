@@ -141,7 +141,7 @@
     </aside>
 
     <aside class="col-6 mobile:max-w-full flex-grow mobile:w-full">
-      <section class="flex-1 overflow-y-auto p-4 bg-lower h-full">
+      <section class="flex-1 overflow-y-auto p-3 bg-lower h-full">
         <div v-if="selectedSaleErrorMessage" class="alert alert-danger" role="alert">
           {{ selectedSaleErrorMessage }}
         </div>
