@@ -8,13 +8,24 @@
           </button>
         </div>
         <div class="flex-grow">
-          <input
-            v-model.trim="customerSearchQuery"
-            type="search"
-            :placeholder="$t('minishop.customers.searchCustomers')"
-            class="form-control"
-            @input="handleCustomerSearchInput"
-          >
+          <div class="relative">
+            <input
+              v-model.trim="customerSearchQuery"
+              type="search"
+              :placeholder="$t('minishop.customers.searchCustomers')"
+              class="form-control"
+              @input="handleCustomerSearchInput"
+            >
+            <button
+              v-if="hasActiveCustomerSearch"
+              type="button"
+              class="btn btn-neutral top-0 right-0 absolute"
+              :title="$t('common.actions.clearSearch')"
+              @click="clearCustomerSearch"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       </header>
 
@@ -282,6 +293,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
+import { useClearableSearch } from '@/composables/use-clearable-search'
 import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
 import { formatQuantityDisplay } from '@/utils/quantity'
@@ -318,7 +330,6 @@ const receiptDetailDialog = ref(null)
 const addPaymentDialog = ref(null)
 const customerList = ref([])
 const customerErrorMessage = ref('')
-const customerSearchQuery = ref('')
 const selectedCustomerId = ref('')
 const selectedCustomer = ref(null)
 const selectedCustomerReceipts = ref([])
@@ -341,7 +352,17 @@ const editingCustomerId = ref('')
 const activeReceiptId = ref('')
 const pendingFocusedCustomerId = ref('')
 const deletingPaymentId = ref('')
-let customerSearchDebounceTimer = null
+const {
+  cancelPendingSearch: cancelPendingCustomerSearch,
+  clearSearch: clearCustomerSearch,
+  handleSearchInput: handleCustomerSearchInput,
+  hasActiveSearch: hasActiveCustomerSearch,
+  searchQuery: customerSearchQuery,
+} = useClearableSearch({
+  onSearch: (query) => {
+    void loadCustomerList(query)
+  },
+})
 
 const createCustomerForm = reactive({
   name: '',
@@ -373,6 +394,7 @@ const canAddPaymentToReceipt = computed(() => {
 })
 
 watch(() => props.book.id, () => {
+  cancelPendingCustomerSearch()
   clearSelectedCustomer()
   customerSearchQuery.value = ''
   void loadCustomerList('')
@@ -430,16 +452,6 @@ function syncSelectedCustomerSummary() {
       ...matchingCustomer,
     }
   }
-}
-
-function handleCustomerSearchInput() {
-  if (customerSearchDebounceTimer !== null) {
-    window.clearTimeout(customerSearchDebounceTimer)
-  }
-
-  customerSearchDebounceTimer = window.setTimeout(() => {
-    void loadCustomerList(customerSearchQuery.value.trim())
-  }, 500)
 }
 
 async function selectCustomer(customer) {

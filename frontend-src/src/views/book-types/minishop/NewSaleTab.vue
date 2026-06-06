@@ -22,13 +22,24 @@
           </select>
         </div>
         <div  class="flex-grow">
-          <input
-            type="search"
-            :value="productSearchQuery"
-            :placeholder="$t('minishop.main.searchProducts')"
-            class="form-control"
-            @input="updateProductSearchQuery"
-          >
+          <div class="relative">
+            <input
+              type="search"
+              :value="productSearchQuery"
+              :placeholder="$t('minishop.main.searchProducts')"
+              class="form-control"
+              @input="updateProductSearchQuery"
+            >
+            <button
+              v-if="hasActiveProductSearch"
+              type="button"
+              class="btn btn-neutral top-0 right-0 absolute"
+              :title="$t('common.actions.clearSearch')"
+              @click="clearProductSearch"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       </header>
 
@@ -297,6 +308,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import vSelect from 'vue-select'
+import { hasSearchValue } from '@/composables/use-clearable-search'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
 import { formatQuantityDisplay } from '@/utils/quantity'
 
@@ -434,6 +446,7 @@ const selectedCustomerIdModel = computed({
 const showClearFiltersAction = computed(() => {
   return props.selectedCategoryId !== '' || props.productSearchQuery.trim() !== ''
 })
+const hasActiveProductSearch = computed(() => hasSearchValue(props.productSearchQuery))
 
 const isMobileCartOpen = ref(false)
 
@@ -451,6 +464,10 @@ function updateSelectedCategoryId(event) {
 
 function updateProductSearchQuery(event) {
   emit('update:productSearchQuery', event.target.value)
+}
+
+function clearProductSearch() {
+  emit('update:productSearchQuery', '')
 }
 
 function decrementCartItem(item) {

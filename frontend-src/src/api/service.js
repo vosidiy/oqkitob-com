@@ -43,3 +43,7 @@ export function fetchServiceOrder(bookId, orderId) {
 export function createServiceOrder(bookId, payload) {
   return apiClient.post(`/books/${bookId}/service/orders`, payload)
 }
+
+export function updateServiceOrderStatus(bookId, orderId, payload) {
+  return apiClient.post(`/books/${bookId}/service/orders/${orderId}/status`, payload)
+}

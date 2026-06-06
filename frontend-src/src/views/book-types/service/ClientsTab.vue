@@ -8,13 +8,24 @@
           </button>
         </div>
         <div class="flex-grow">
-          <input
-            v-model.trim="customerSearchQuery"
-            type="search"
-            :placeholder="$t('service.clients.searchPlaceholder')"
-            class="form-control"
-            @input="handleCustomerSearchInput"
-          >
+          <div class="relative">
+            <input
+              v-model.trim="customerSearchQuery"
+              type="search"
+              :placeholder="$t('service.clients.searchPlaceholder')"
+              class="form-control"
+              @input="handleCustomerSearchInput"
+            >
+            <button
+              v-if="hasActiveCustomerSearch"
+              type="button"
+              class="btn btn-neutral top-0 right-0 absolute"
+              title="Clear search"
+              @click="clearCustomerSearch"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       </header>
 
@@ -171,7 +182,10 @@
                 <li
                   v-for="order in selectedCustomerOrders"
                   :key="order.id"
-                  class="d-flex align-items-center p-3 bg-neutral-100 mb-1 border-strong rounded"
+                  class="d-flex align-items-center p-3 bg-neutral-100 mb-1 border-strong rounded hover:bg-neutral-200"
+                  role="button"
+                  :aria-disabled="isLoadingSelectedCustomerOrder && activeCustomerOrderId === order.id"
+                  @click="openOrderDetailDialog(order.id)"
                 >
                   <div class="mr-3">
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-receipt-text-icon lucide-receipt-text"><path d="M13 16H8"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"></path></svg>
@@ -185,7 +199,11 @@
                       <span>•</span>
                       <p>{{ formatMoney(order.total_amount) }} <small class="currency-code">{{ order.currency_code }}</small></p>
                       <span>•</span>
-                      <p>{{ $t('service.orderStatusLabels.' + order.order_status) }}</p>
+                      <p :class="getOrderStatusMeta(order.order_status).textClass">
+                        {{ $t('common.fields.status') }}:
+                        {{ getOrderStatusMeta(order.order_status).emoji }}
+                        {{ $t(getOrderStatusMeta(order.order_status).labelKey) }}
+                      </p>
                       <span>•</span>
                       <p>{{ $t('service.paymentStatusLabels.' + order.payment_status) }}</p>
                     </div>
@@ -231,18 +249,35 @@
     @close="createOrderErrorMessage = ''"
     @submit="submitCreateOrder"
   />
+
+  <ServiceOrderDetailDialog
+    ref="orderDetailDialogRef"
+    :book="book"
+    :error-message="selectedCustomerOrderErrorMessage"
+    :is-loading-order-detail="isLoadingSelectedCustomerOrder"
+    :is-updating-order-status="isUpdatingSelectedCustomerOrderStatus"
+    :items="selectedCustomerOrderItems"
+    :order="selectedCustomerOrder"
+    @cancel="handleOrderDetailDialogCancel"
+    @change-order-status="updateSelectedCustomerOrderStatus"
+    @close="handleOrderDetailDialogClose"
+  />
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { createServiceCustomer, createServiceOrder, fetchServiceCustomer, fetchServiceCustomers, fetchServiceTypes, updateServiceCustomer } from '@/api/service'
+import { createServiceCustomer, createServiceOrder, fetchServiceCustomer, fetchServiceCustomers, fetchServiceOrder, fetchServiceTypes, updateServiceCustomer, updateServiceOrderStatus } from '@/api/service'
 import { getApiErrorMessage, isNotFoundError } from '@/api/errors'
+import { useClearableSearch } from '@/composables/use-clearable-search'
+import { useToast } from '@/composables/use-toast'
 import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
 import CreateServiceOrderDialog from '@/views/book-types/service/dialogs/CreateServiceOrderDialog.vue'
 import ServiceClientDialog from '@/views/book-types/service/dialogs/ServiceClientDialog.vue'
+import ServiceOrderDetailDialog from '@/views/book-types/service/dialogs/ServiceOrderDetailDialog.vue'
 import { createServiceOrderItemRow } from '@/views/book-types/service/dialogs/orderItemRow'
+import { getServiceOrderStatusMeta } from '@/views/book-types/service/serviceOrderStatus'
 
 const props = defineProps({
   book: {
@@ -255,31 +290,46 @@ const { t } = useI18n()
 
 const customerDialogRef = ref(null)
 const createOrderDialogRef = ref(null)
+const orderDetailDialogRef = ref(null)
 const customerList = ref([])
-const customerSearchQuery = ref('')
 const selectedCustomerId = ref('')
 const selectedCustomer = ref(null)
 const selectedCustomerOrders = ref([])
+const activeCustomerOrderId = ref('')
+const selectedCustomerOrder = ref(null)
+const selectedCustomerOrderItems = ref([])
 const serviceTypes = ref([])
-const feedbackMessage = ref('')
+const { feedbackMessage, showToast, clearToast } = useToast()
 
 const customerErrorMessage = ref('')
 const selectedCustomerErrorMessage = ref('')
+const selectedCustomerOrderErrorMessage = ref('')
 const customerDialogErrorMessage = ref('')
 const createOrderErrorMessage = ref('')
 const serviceTypesErrorMessage = ref('')
 
 const isLoadingCustomers = ref(false)
 const isLoadingSelectedCustomer = ref(false)
+const isLoadingSelectedCustomerOrder = ref(false)
 const isSubmittingCustomer = ref(false)
 const isCreatingOrder = ref(false)
 const isLoadingServiceTypes = ref(false)
+const isUpdatingSelectedCustomerOrderStatus = ref(false)
 
 const customerDialogMode = ref('create')
 const editingCustomerId = ref('')
 const orderForm = ref(createLockedCustomerOrderForm(''))
-
-let customerSearchDebounceTimer = null
+const {
+  cancelPendingSearch: cancelPendingCustomerSearch,
+  clearSearch: clearCustomerSearch,
+  handleSearchInput: handleCustomerSearchInput,
+  hasActiveSearch: hasActiveCustomerSearch,
+  searchQuery: customerSearchQuery,
+} = useClearableSearch({
+  onSearch: (query) => {
+    void loadCustomerList(query)
+  },
+})
 
 const customerForm = reactive({
   name: '',
@@ -308,13 +358,9 @@ const isCustomerSubmitDisabled = computed(() => (
 ))
 
 watch(() => props.book.id, () => {
-  if (customerSearchDebounceTimer !== null) {
-    window.clearTimeout(customerSearchDebounceTimer)
-    customerSearchDebounceTimer = null
-  }
-
+  cancelPendingCustomerSearch()
   clearSelectedCustomer()
-  clearFeedbackMessage()
+  clearToast()
   customerSearchQuery.value = ''
   serviceTypes.value = []
   serviceTypesErrorMessage.value = ''
@@ -349,17 +395,6 @@ function syncSelectedCustomerSummary() {
       ...matchingCustomer,
     }
   }
-}
-
-function handleCustomerSearchInput() {
-  if (customerSearchDebounceTimer !== null) {
-    window.clearTimeout(customerSearchDebounceTimer)
-  }
-
-  customerSearchDebounceTimer = window.setTimeout(() => {
-    void loadCustomerList(customerSearchQuery.value.trim())
-    customerSearchDebounceTimer = null
-  }, 500)
 }
 
 async function selectCustomer(customer) {
@@ -399,10 +434,12 @@ function clearSelectedCustomer() {
   selectedCustomerOrders.value = []
   selectedCustomerErrorMessage.value = ''
   isLoadingSelectedCustomer.value = false
+  resetSelectedCustomerOrderDetail()
+  closeOrderDetailDialog()
 }
 
 function openCreateCustomerDialog() {
-  clearFeedbackMessage()
+  clearToast()
   customerDialogMode.value = 'create'
   editingCustomerId.value = ''
   customerDialogErrorMessage.value = ''
@@ -415,7 +452,7 @@ function openEditCustomerDialog() {
     return
   }
 
-  clearFeedbackMessage()
+  clearToast()
   customerDialogMode.value = 'edit'
   editingCustomerId.value = String(selectedCustomer.value.id ?? '')
   customerDialogErrorMessage.value = ''
@@ -438,7 +475,7 @@ async function submitCustomer() {
       const response = await updateServiceCustomer(props.book.id, editingCustomerId.value, payload)
       const updatedCustomerId = String(response.data?.customer?.id ?? editingCustomerId.value)
 
-      feedbackMessage.value = t('service.clientMessages.updated')
+      showToast(t('service.clientMessages.updated'))
       customerDialogRef.value?.close()
       await loadCustomerList()
       selectedCustomerId.value = updatedCustomerId
@@ -447,7 +484,7 @@ async function submitCustomer() {
       const response = await createServiceCustomer(props.book.id, payload)
       const createdCustomerId = String(response.data?.customer?.id ?? '')
 
-      feedbackMessage.value = t('service.clientMessages.created')
+      showToast(t('service.clientMessages.created'))
       customerDialogRef.value?.close()
       customerSearchQuery.value = ''
       await loadCustomerList('')
@@ -498,7 +535,7 @@ async function openCreateOrderDialogForCustomer() {
     return
   }
 
-  clearFeedbackMessage()
+  clearToast()
   createOrderErrorMessage.value = ''
 
   const loaded = await ensureServiceTypesLoaded()
@@ -520,7 +557,7 @@ async function submitCreateOrder() {
     await createServiceOrder(props.book.id, payload)
 
     createOrderDialogRef.value?.close()
-    feedbackMessage.value = t('service.orderMessages.created')
+    showToast(t('service.orderMessages.created'))
 
     await loadCustomerList()
 
@@ -532,6 +569,85 @@ async function submitCreateOrder() {
   } finally {
     isCreatingOrder.value = false
   }
+}
+
+async function openOrderDetailDialog(orderId) {
+  if (!orderId) {
+    return
+  }
+
+  activeCustomerOrderId.value = String(orderId)
+  selectedCustomerOrder.value = null
+  selectedCustomerOrderItems.value = []
+  selectedCustomerOrderErrorMessage.value = ''
+  isLoadingSelectedCustomerOrder.value = true
+  orderDetailDialogRef.value?.open()
+
+  try {
+    const response = await fetchServiceOrder(props.book.id, orderId)
+    selectedCustomerOrder.value = response.data?.order ?? null
+    selectedCustomerOrderItems.value = Array.isArray(response.data?.items) ? response.data.items : []
+  } catch (error) {
+    selectedCustomerOrderErrorMessage.value = getApiErrorMessage(error, t('service.orderMessages.unableLoadDetail'))
+  } finally {
+    isLoadingSelectedCustomerOrder.value = false
+  }
+}
+
+function closeOrderDetailDialog() {
+  orderDetailDialogRef.value?.close()
+}
+
+function handleOrderDetailDialogCancel(event) {
+  if (isLoadingSelectedCustomerOrder.value || isUpdatingSelectedCustomerOrderStatus.value) {
+    event.preventDefault()
+  }
+}
+
+function handleOrderDetailDialogClose() {
+  resetSelectedCustomerOrderDetail()
+}
+
+async function updateSelectedCustomerOrderStatus(nextStatus) {
+  if (!selectedCustomerOrder.value?.id) {
+    return
+  }
+
+  isUpdatingSelectedCustomerOrderStatus.value = true
+  selectedCustomerOrderErrorMessage.value = ''
+
+  try {
+    const response = await updateServiceOrderStatus(props.book.id, selectedCustomerOrder.value.id, {
+      order_status: nextStatus,
+    })
+    const updatedOrder = response.data?.order ?? null
+
+    if (!updatedOrder) {
+      return
+    }
+
+    selectedCustomerOrder.value = updatedOrder
+    selectedCustomerOrders.value = selectedCustomerOrders.value.map((order) => (
+      order.id === updatedOrder.id
+        ? { ...order, ...updatedOrder }
+        : order
+    ))
+
+    showToast(t('service.orderMessages.statusUpdated'))
+  } catch (error) {
+    selectedCustomerOrderErrorMessage.value = getApiErrorMessage(error, t('service.orderMessages.unableUpdateStatus'))
+  } finally {
+    isUpdatingSelectedCustomerOrderStatus.value = false
+  }
+}
+
+function resetSelectedCustomerOrderDetail() {
+  activeCustomerOrderId.value = ''
+  selectedCustomerOrder.value = null
+  selectedCustomerOrderItems.value = []
+  selectedCustomerOrderErrorMessage.value = ''
+  isLoadingSelectedCustomerOrder.value = false
+  isUpdatingSelectedCustomerOrderStatus.value = false
 }
 
 function makeCustomerPayload() {
@@ -592,18 +708,11 @@ function formatMoney(value) {
   return formatMoneyByBookSettings(value, props.book)
 }
 
+function getOrderStatusMeta(status) {
+  return getServiceOrderStatusMeta(status)
+}
+
 function looksLikeUrl(value) {
   return /^https?:\/\//i.test(String(value ?? '').trim())
 }
-
-function clearFeedbackMessage() {
-  feedbackMessage.value = ''
-}
-
-onBeforeUnmount(() => {
-  if (customerSearchDebounceTimer !== null) {
-    window.clearTimeout(customerSearchDebounceTimer)
-    customerSearchDebounceTimer = null
-  }
-})
 </script>

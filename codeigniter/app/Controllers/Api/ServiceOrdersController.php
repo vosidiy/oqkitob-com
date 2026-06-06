@@ -26,6 +26,7 @@ class ServiceOrdersController extends AuthenticatedApiController
     private const DEFAULT_PAGE = 1;
     private const DEFAULT_PER_PAGE = 100;
     private const ALLOWED_UNITS = ['qty', 'm2', 'kg'];
+    private const ALLOWED_ORDER_STATUSES = ['received', 'working', 'ready', 'delivered'];
 
     private BaseConnection $db;
 
@@ -52,12 +53,13 @@ class ServiceOrdersController extends AuthenticatedApiController
 
         $page = max(self::DEFAULT_PAGE, (int) $this->request->getGet('page'));
         $perPage = (int) $this->request->getGet('per_page');
+        $excludeOrderStatus = $this->normalizeOptionalOrderStatus($this->request->getGet('exclude_order_status'));
 
         if ($perPage <= 0) {
             $perPage = self::DEFAULT_PER_PAGE;
         }
 
-        $result = $this->orders->findByBook($bookId, null, null, null, null, '', $page, $perPage);
+        $result = $this->orders->findByBook($bookId, null, null, null, null, '', $page, $perPage, $excludeOrderStatus);
 
         return $this->respond([
             'orders' => $result['orders'],
@@ -114,6 +116,37 @@ class ServiceOrdersController extends AuthenticatedApiController
             'order' => $result['order'],
             'items' => $result['items'],
         ], 201);
+    }
+
+    public function updateStatus(string $bookId, string $orderId)
+    {
+        $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'service');
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
+        $payload = $this->getOrderPayload();
+
+        try {
+            $order = $this->updateOrderStatus($bookId, $orderId, $payload);
+        } catch (InvalidArgumentException $exception) {
+            return $this->respond([
+                'message' => $exception->getMessage(),
+            ], 422);
+        } catch (RuntimeException $exception) {
+            if ($exception->getMessage() === 'Order not found.') {
+                return $this->failNotFound('Order not found.');
+            }
+
+            return $this->failServerError($exception->getMessage());
+        }
+
+        return $this->respond([
+            'message' => 'Order status updated successfully.',
+            'order' => $order,
+        ]);
     }
 
     private function getOrderPayload(): array
@@ -275,6 +308,55 @@ class ServiceOrdersController extends AuthenticatedApiController
             $this->db->transRollback();
             throw $exception;
         }
+    }
+
+    private function updateOrderStatus(string $bookId, string $orderId, array $payload): array
+    {
+        $order = $this->orders->findExistingByIdAndBook($bookId, $orderId);
+
+        if ($order === null) {
+            throw new RuntimeException('Order not found.');
+        }
+
+        $nextOrderStatus = $this->normalizeRequiredOrderStatus($payload['order_status'] ?? null);
+
+        if ($nextOrderStatus === (string) ($order['order_status'] ?? '')) {
+            return $order;
+        }
+
+        $timestamp = $this->utcNow();
+        $readyAt = $order['ready_at'] ?? null;
+        $deliveredAt = $order['delivered_at'] ?? null;
+
+        if ($nextOrderStatus === 'received' || $nextOrderStatus === 'working') {
+            $readyAt = null;
+            $deliveredAt = null;
+        } elseif ($nextOrderStatus === 'ready') {
+            $readyAt = $timestamp;
+            $deliveredAt = null;
+        } elseif ($nextOrderStatus === 'delivered') {
+            $readyAt = $readyAt ?: $timestamp;
+            $deliveredAt = $timestamp;
+        }
+
+        $updated = $this->orders->update($orderId, [
+            'order_status' => $nextOrderStatus,
+            'ready_at' => $readyAt,
+            'delivered_at' => $deliveredAt,
+            'updated_at' => $timestamp,
+        ]);
+
+        if ($updated === false) {
+            throw new RuntimeException('Unable to update order status right now.');
+        }
+
+        $updatedOrder = $this->orders->findExistingByIdAndBook($bookId, $orderId);
+
+        if ($updatedOrder === null) {
+            throw new RuntimeException('Unable to load updated order right now.');
+        }
+
+        return $updatedOrder;
     }
 
     private function normalizeCustomerPayload(mixed $payload): array
@@ -475,6 +557,30 @@ class ServiceOrdersController extends AuthenticatedApiController
         $normalizedValue = trim((string) $value);
 
         return $normalizedValue !== '' ? $normalizedValue : null;
+    }
+
+    private function normalizeOptionalOrderStatus(mixed $value): ?string
+    {
+        $normalizedValue = trim((string) $value);
+
+        if ($normalizedValue === '') {
+            return null;
+        }
+
+        return in_array($normalizedValue, self::ALLOWED_ORDER_STATUSES, true)
+            ? $normalizedValue
+            : null;
+    }
+
+    private function normalizeRequiredOrderStatus(mixed $value): string
+    {
+        $normalizedValue = trim((string) $value);
+
+        if (! in_array($normalizedValue, self::ALLOWED_ORDER_STATUSES, true)) {
+            throw new InvalidArgumentException('Please choose a valid order status.');
+        }
+
+        return $normalizedValue;
     }
 
     private function normalizeMoney(mixed $value): float

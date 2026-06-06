@@ -69,4 +69,5 @@ $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->get('(:segment)/service/orders', 'Api\ServiceOrdersController::index/$1');
     $routes->get('(:segment)/service/orders/(:segment)', 'Api\ServiceOrdersController::show/$1/$2');
     $routes->post('(:segment)/service/orders', 'Api\ServiceOrdersController::create/$1');
+    $routes->post('(:segment)/service/orders/(:segment)/status', 'Api\ServiceOrdersController::updateStatus/$1/$2');
 });

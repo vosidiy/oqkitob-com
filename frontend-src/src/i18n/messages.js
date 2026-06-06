@@ -15,6 +15,7 @@ export const messages = {
         close: 'Close',
         confirm: 'Confirm',
         create: 'Create',
+        clearSearch: 'Clear search',
         deactivate: 'Deactivate',
         delete: 'Delete',
         edit: 'Edit',
@@ -276,10 +277,10 @@ export const messages = {
         kg: 'Kilo.',
       },
       orderStatusLabels: {
-        received: 'New received',
-        working: 'Working on',
-        ready: 'Completed - waiting customer',
-        delivered: 'Delivered',
+        received: 'New',
+        working: 'On process',
+        ready: 'Ready to give',
+        delivered: 'Done',
       },
       paymentStatusLabels: {
         unpaid: 'Unpaid',
@@ -289,6 +290,7 @@ export const messages = {
       orders: {
         title: 'Orders',
         createOrder: 'Create new order',
+        changeStatus: 'Change status',
         loadingOrders: 'Loading orders...',
         empty: 'No service orders yet.',
         walkInCustomer: 'Client',
@@ -366,6 +368,8 @@ export const messages = {
         unableLoad: 'Unable to load service orders right now.',
         unableLoadDetail: 'Unable to load order detail right now.',
         unableCreate: 'Unable to create order right now.',
+        statusUpdated: 'Order status updated.',
+        unableUpdateStatus: 'Unable to update order status right now.',
       },
       clientMessages: {
         created: 'Client created successfully.',
@@ -580,6 +584,7 @@ export const messages = {
         close: 'Yopish',
         confirm: 'Tasdiqlash',
         create: 'Yaratish',
+        clearSearch: 'Qidiruvni tozalash',
         deactivate: 'O‘chirish',
         delete: "O'chirish",
         edit: 'Tahrirlash',
@@ -841,10 +846,10 @@ export const messages = {
         kg: 'Kilo',
       },
       orderStatusLabels: {
-        received: 'Yangi qabul qilindi',
+        received: 'Yangi',
         working: 'Jarayonda',
-        ready: 'Tayyor - mijoz kutilyapti',
-        delivered: 'Topshirildi',
+        ready: 'Berishga tayyor',
+        delivered: 'Bajarildi',
       },
       paymentStatusLabels: {
         unpaid: "To'lanmagan",
@@ -854,6 +859,7 @@ export const messages = {
       orders: {
         title: 'Buyurtmalar',
         createOrder: 'Yangi buyurtma',
+        changeStatus: 'Holatni o‘zgartirish',
         loadingOrders: 'Buyurtmalar yuklanmoqda...',
         empty: "Hozircha xizmat buyurtmalari yo'q.",
         walkInCustomer: 'Mijoz',
@@ -931,6 +937,8 @@ export const messages = {
         unableLoad: 'Hozir buyurtmalarni yuklab bo‘lmadi.',
         unableLoadDetail: 'Hozir buyurtma tafsilotini yuklab bo‘lmadi.',
         unableCreate: 'Hozir buyurtma yaratib bo‘lmadi.',
+        statusUpdated: 'Buyurtma holati yangilandi.',
+        unableUpdateStatus: 'Hozir buyurtma holatini yangilab bo‘lmadi.',
       },
       clientMessages: {
         created: '✅ Mijoz muvaffaqiyatli yaratildi.',
@@ -1145,6 +1153,7 @@ export const messages = {
         close: 'Закрыть',
         confirm: 'Подтвердить',
         create: 'Создать',
+        clearSearch: 'Очистить поиск',
         deactivate: 'Деактивировать',
         delete: 'Удалить',
         edit: 'Редактировать',
@@ -1406,10 +1415,10 @@ export const messages = {
         kg: 'Кило',
       },
       orderStatusLabels: {
-        received: 'Новый заказ',
-        working: 'В работе',
-        ready: 'Готово - ожидает клиента',
-        delivered: 'Выдано',
+        received: 'Новый',
+        working: 'В процессе',
+        ready: 'Готов к выдаче',
+        delivered: 'Готово',
       },
       paymentStatusLabels: {
         unpaid: 'Не оплачено',
@@ -1419,6 +1428,7 @@ export const messages = {
       orders: {
         title: 'Заказы',
         createOrder: 'Создать новый заказ',
+        changeStatus: 'Изменить статус',
         loadingOrders: 'Загрузка заказов...',
         empty: 'Пока нет сервисных заказов.',
         walkInCustomer: 'Клиент',
@@ -1496,6 +1506,8 @@ export const messages = {
         unableLoad: 'Не удалось загрузить заказы.',
         unableLoadDetail: 'Не удалось загрузить детали заказа.',
         unableCreate: 'Не удалось создать заказ.',
+        statusUpdated: 'Статус заказа обновлен.',
+        unableUpdateStatus: 'Не удалось обновить статус заказа.',
       },
       clientMessages: {
         created: 'Клиент успешно создан.',

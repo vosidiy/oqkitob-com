@@ -9,8 +9,22 @@
         </div>
         <div class="flex-grow">
           <div class="relative">
-            <input type="search" placeholder="Chek ID, Mijoz nomi" class="form-control">
-            <button class="btn btn-neutral top-0 right-0 absolute" title="Clear search"> ✕ </button>
+            <input
+              v-model.trim="orderSearchQuery"
+              type="search"
+              placeholder="Chek ID, Mijoz nomi"
+              class="form-control"
+              @input="handleOrderSearchInput"
+            >
+            <button
+              v-if="hasActiveOrderSearch"
+              type="button"
+              class="btn btn-neutral top-0 right-0 absolute"
+              title="Clear search"
+              @click="clearOrderSearch"
+            >
+              ✕
+            </button>
           </div>
         </div>
       </header>
@@ -65,11 +79,15 @@
                 </div>
 
                 <div class="ml-auto text-right">
-                  <p class="badge" :class="orderStatusBadgeClass(order.order_status)">
-                    {{ $t('service.orderStatusLabels.' + order.order_status) }}
-                  </p>
-                  <p class="text-secondary text-sm mt-2">
+                  <p>
                     {{ $t('common.fields.status') }}:
+                    <span class="mt-1" :class="getOrderStatusMeta(order.order_status).textClass">
+                      {{ getOrderStatusMeta(order.order_status).emoji }}
+                      {{ $t(getOrderStatusMeta(order.order_status).labelKey) }}
+                    </span>
+                 </p>
+                  <p class="text-secondary text-sm mt-2">
+                    {{ $t('service.orders.paymentStatus') }}:
                     {{ $t('service.paymentStatusLabels.' + order.payment_status) }}
                   </p>
                 </div>
@@ -101,8 +119,13 @@
                 <h3 class="text-2xl">{{ $t('service.orders.detailTitle') }}</h3>
                 <p class="text-secondary text-xs">ID: {{ selectedOrder.id }}</p>
               </div>
-              <div>
-                <button type="button" class="btn btn-neutral" @click="clearSelectedOrder">
+              <div class="d-flex align-items-start gap-2">
+                <ServiceOrderStatusDropdown
+                  :order-status="selectedOrder.order_status"
+                  :is-updating="isUpdatingSelectedOrderStatus"
+                  @change-status="updateSelectedOrderStatus"
+                />
+                <button type="button" class="btn btn-neutral" :disabled="isUpdatingSelectedOrderStatus" @click="clearSelectedOrder">
                   {{ $t('common.actions.close') }}
                 </button>
               </div>
@@ -136,10 +159,6 @@
                 <span v-else>{{ selectedOrder.customer_location }}</span>
               </p>
               <hr>
-              <p>
-                <strong>{{ $t('common.fields.status') }}:</strong>
-                {{ $t('service.orderStatusLabels.' + selectedOrder.order_status) }}
-              </p>
               <p>
                 <strong>{{ $t('service.orders.receivedAt') }}:</strong>
                 {{ formatDateTime(selectedOrder.received_at) }}
@@ -318,15 +337,20 @@ import {
   fetchServiceOrder,
   fetchServiceOrders,
   fetchServiceTypes,
+  updateServiceOrderStatus,
   updateServiceType,
 } from '@/api/service'
 import { getApiErrorMessage } from '@/api/errors'
+import { useClearableSearch } from '@/composables/use-clearable-search'
+import { useToast } from '@/composables/use-toast'
 import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
 import { formatQuantityDisplay } from '@/utils/quantity'
+import ServiceOrderStatusDropdown from '@/views/book-types/service/components/ServiceOrderStatusDropdown.vue'
 import CreateServiceOrderDialog from '@/views/book-types/service/dialogs/CreateServiceOrderDialog.vue'
 import ServiceTypeDialog from '@/views/book-types/service/dialogs/ServiceTypeDialog.vue'
 import { createServiceOrderItemRow } from '@/views/book-types/service/dialogs/orderItemRow'
+import { getServiceOrderStatusMeta } from '@/views/book-types/service/serviceOrderStatus'
 
 const props = defineProps({
   book: {
@@ -335,13 +359,19 @@ const props = defineProps({
   },
 })
 const { t } = useI18n()
+const {
+  clearSearch: clearOrderSearch,
+  handleSearchInput: handleOrderSearchInput,
+  hasActiveSearch: hasActiveOrderSearch,
+  searchQuery: orderSearchQuery,
+} = useClearableSearch()
 
 const orders = ref([])
 const selectedOrderId = ref('')
 const selectedOrder = ref(null)
 const selectedOrderItems = ref([])
 const serviceTypes = ref([])
-const feedbackMessage = ref('')
+const { feedbackMessage, showToast, clearToast } = useToast()
 
 const isLoadingOrdersList = ref(false)
 const isLoadingSelectedOrder = ref(false)
@@ -349,6 +379,7 @@ const isLoadingServiceTypes = ref(false)
 const isCreatingOrder = ref(false)
 const isSubmittingServiceType = ref(false)
 const isDeletingServiceTypeId = ref('')
+const isUpdatingSelectedOrderStatus = ref(false)
 
 const ordersListErrorMessage = ref('')
 const selectedOrderErrorMessage = ref('')
@@ -381,7 +412,7 @@ onMounted(() => {
 })
 
 async function loadInitialData() {
-  clearFeedbackMessage()
+  clearToast()
 
   await Promise.all([
     loadOrdersList(),
@@ -394,7 +425,9 @@ async function loadOrdersList() {
   ordersListErrorMessage.value = ''
 
   try {
-    const response = await fetchServiceOrders(props.book.id)
+    const response = await fetchServiceOrders(props.book.id, {
+      exclude_order_status: 'delivered',
+    })
     orders.value = Array.isArray(response.data?.orders) ? response.data.orders : []
   } catch (error) {
     ordersListErrorMessage.value = getApiErrorMessage(error, t('service.orderMessages.unableLoad'))
@@ -440,7 +473,7 @@ async function loadServiceTypes() {
 }
 
 async function selectOrder(orderId) {
-  clearFeedbackMessage()
+  clearToast()
   await loadOrderDetail(orderId)
 }
 
@@ -451,8 +484,48 @@ function clearSelectedOrder() {
   selectedOrderErrorMessage.value = ''
 }
 
+async function updateSelectedOrderStatus(nextStatus) {
+  if (!selectedOrder.value?.id) {
+    return
+  }
+
+  isUpdatingSelectedOrderStatus.value = true
+  selectedOrderErrorMessage.value = ''
+
+  try {
+    const response = await updateServiceOrderStatus(props.book.id, selectedOrder.value.id, {
+      order_status: nextStatus,
+    })
+    const updatedOrder = response.data?.order ?? null
+
+    showToast(t('service.orderMessages.statusUpdated'))
+
+    if (!updatedOrder) {
+      await loadOrdersList()
+      return
+    }
+
+    if (updatedOrder.order_status === 'delivered') {
+      clearSelectedOrder()
+      await loadOrdersList()
+      return
+    }
+
+    selectedOrder.value = updatedOrder
+    orders.value = orders.value.map((order) => (
+      order.id === updatedOrder.id
+        ? { ...order, ...updatedOrder }
+        : order
+    ))
+  } catch (error) {
+    selectedOrderErrorMessage.value = getApiErrorMessage(error, t('service.orderMessages.unableUpdateStatus'))
+  } finally {
+    isUpdatingSelectedOrderStatus.value = false
+  }
+}
+
 function openCreateOrderDialog() {
-  clearFeedbackMessage()
+  clearToast()
   createOrderErrorMessage.value = ''
   orderForm.value = createEmptyOrderForm()
   createOrderDialogRef.value?.open()
@@ -468,7 +541,7 @@ async function submitCreateOrder() {
     const createdOrderId = String(response.data?.order?.id ?? '').trim()
 
     createOrderDialogRef.value?.close()
-    feedbackMessage.value = t('service.orderMessages.created')
+    showToast(t('service.orderMessages.created'))
 
     await loadOrdersList()
 
@@ -483,7 +556,7 @@ async function submitCreateOrder() {
 }
 
 function openCreateServiceTypeDialog() {
-  clearFeedbackMessage()
+  clearToast()
   serviceTypeDialogMode.value = 'create'
   editingServiceTypeId.value = ''
   serviceTypeErrorMessage.value = ''
@@ -492,7 +565,7 @@ function openCreateServiceTypeDialog() {
 }
 
 function openEditServiceTypeDialog(serviceType) {
-  clearFeedbackMessage()
+  clearToast()
   serviceTypeDialogMode.value = 'edit'
   editingServiceTypeId.value = String(serviceType?.id ?? '')
   serviceTypeErrorMessage.value = ''
@@ -517,10 +590,10 @@ async function submitServiceType() {
 
     if (serviceTypeDialogMode.value === 'edit' && editingServiceTypeId.value !== '') {
       await updateServiceType(props.book.id, editingServiceTypeId.value, payload)
-      feedbackMessage.value = t('service.serviceTypeMessages.updated')
+      showToast(t('service.serviceTypeMessages.updated'))
     } else {
       await createServiceType(props.book.id, payload)
-      feedbackMessage.value = t('service.serviceTypeMessages.created')
+      showToast(t('service.serviceTypeMessages.created'))
     }
 
     serviceTypeDialogRef.value?.close()
@@ -539,13 +612,13 @@ async function removeServiceType(serviceType) {
     return
   }
 
-  clearFeedbackMessage()
+  clearToast()
   serviceTypesErrorMessage.value = ''
   isDeletingServiceTypeId.value = String(serviceType?.id ?? '')
 
   try {
     await deleteServiceType(props.book.id, isDeletingServiceTypeId.value)
-    feedbackMessage.value = t('service.serviceTypeMessages.deleted')
+    showToast(t('service.serviceTypeMessages.deleted'))
     await loadServiceTypes()
   } catch (error) {
     serviceTypesErrorMessage.value = getApiErrorMessage(error, t('service.serviceTypeMessages.unableDelete'))
@@ -607,23 +680,11 @@ function formatMoney(value) {
   return formatMoneyByBookSettings(value, props.book)
 }
 
-function orderStatusBadgeClass(status) {
-  if (status === 'ready' || status === 'delivered') {
-    return 'badge-green'
-  }
-
-  if (status === 'working') {
-    return 'badge-orange'
-  }
-
-  return 'badge-orange'
+function getOrderStatusMeta(status) {
+  return getServiceOrderStatusMeta(status)
 }
 
 function looksLikeUrl(value) {
   return /^https?:\/\//i.test(String(value ?? '').trim())
-}
-
-function clearFeedbackMessage() {
-  feedbackMessage.value = ''
 }
 </script>

@@ -46,16 +46,17 @@ class ServiceOrderModel extends Model
         ?string $paymentStatus = null,
         string $search = '',
         int $page = 1,
-        int $perPage = 20
+        int $perPage = 20,
+        ?string $excludeOrderStatus = null
     ): array {
         $currentPage = max(1, $page);
         $itemsPerPage = max(1, $perPage);
-        $totalItems = $this->countByBook($bookId, $receivedFrom, $receivedTo, $orderStatus, $paymentStatus, $search);
+        $totalItems = $this->countByBook($bookId, $receivedFrom, $receivedTo, $orderStatus, $paymentStatus, $search, $excludeOrderStatus);
         $totalPages = max(1, (int) ceil($totalItems / $itemsPerPage));
         $currentPage = min($currentPage, $totalPages);
         $offset = ($currentPage - 1) * $itemsPerPage;
 
-        $orders = $this->makeOrderListQuery($bookId, $receivedFrom, $receivedTo, $orderStatus, $paymentStatus, $search)
+        $orders = $this->makeOrderListQuery($bookId, $receivedFrom, $receivedTo, $orderStatus, $paymentStatus, $search, $excludeOrderStatus)
             ->orderBy('app_service_orders.received_at', 'DESC')
             ->orderBy('app_service_orders.created_at', 'DESC')
             ->limit($itemsPerPage, $offset)
@@ -165,7 +166,8 @@ class ServiceOrderModel extends Model
         ?string $receivedTo = null,
         ?string $orderStatus = null,
         ?string $paymentStatus = null,
-        string $search = ''
+        string $search = '',
+        ?string $excludeOrderStatus = null
     ): BaseBuilder {
         $query = $this->builder()
             ->select($this->orderSummaryColumns())
@@ -195,6 +197,10 @@ class ServiceOrderModel extends Model
             $query->where('app_service_orders.payment_status', $paymentStatus);
         }
 
+        if ($excludeOrderStatus !== null && $excludeOrderStatus !== '') {
+            $query->where('app_service_orders.order_status !=', $excludeOrderStatus);
+        }
+
         $normalizedSearch = trim($search);
 
         if ($normalizedSearch !== '') {
@@ -221,7 +227,8 @@ class ServiceOrderModel extends Model
         ?string $receivedTo = null,
         ?string $orderStatus = null,
         ?string $paymentStatus = null,
-        string $search = ''
+        string $search = '',
+        ?string $excludeOrderStatus = null
     ): int {
         $query = $this->builder()
             ->select('COUNT(DISTINCT app_service_orders.id) AS total_items', false)
@@ -248,6 +255,10 @@ class ServiceOrderModel extends Model
 
         if ($paymentStatus !== null && $paymentStatus !== '') {
             $query->where('app_service_orders.payment_status', $paymentStatus);
+        }
+
+        if ($excludeOrderStatus !== null && $excludeOrderStatus !== '') {
+            $query->where('app_service_orders.order_status !=', $excludeOrderStatus);
         }
 
         $normalizedSearch = trim($search);

@@ -27,7 +27,15 @@
               class="form-control"
               @input="handleSalesSearchInput"
             >
-            <button v-if="hasActiveSalesSearch" @click="clearSalesSearch" class="btn btn-neutral top-0 right-0 absolute" title="Clear search"> ✕ </button>
+            <button
+              v-if="hasActiveSalesSearch"
+              type="button"
+              class="btn btn-neutral top-0 right-0 absolute"
+              :title="$t('common.actions.clearSearch')"
+              @click="clearSalesSearch"
+            >
+              ✕
+            </button>
           </div>
         </div>
       </header>
@@ -435,6 +443,7 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getApiErrorMessage, isNotFoundError, isUnauthorizedError } from '@/api/errors'
+import { useClearableSearch } from '@/composables/use-clearable-search'
 import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
 import { formatQuantityDisplay } from '@/utils/quantity'
@@ -479,12 +488,21 @@ const salesAnalyticsErrorMessage = ref('')
 const selectedSaleErrorMessage = ref('')
 const paymentErrorMessage = ref('')
 const selectedFilterTime = ref('today')
-const salesSearchQuery = ref('')
 const salesCurrentPage = ref(1)
 const salesPerPage = 20
 const salesPagination = ref(makeEmptySalesPagination())
-
-let salesSearchDebounceTimer = null
+const {
+  cancelPendingSearch: cancelPendingSalesSearch,
+  clearSearch: baseClearSalesSearch,
+  handleSearchInput: handleSalesSearchInput,
+  hasActiveSearch: hasActiveSalesSearch,
+  searchQuery: salesSearchQuery,
+} = useClearableSearch({
+  onSearch: (query) => {
+    salesCurrentPage.value = 1
+    void loadSales(query, makeLocalDateTimeString(), 1)
+  },
+})
 let latestSalesRequestId = 0
 let latestSalesAnalyticsRequestId = 0
 
@@ -514,7 +532,6 @@ const salesPageNumbers = computed(() => {
   return Array.from({ length: salesPagination.value.total_pages }, (_, index) => index + 1)
 })
 
-const hasActiveSalesSearch = computed(() => salesSearchQuery.value !== '')
 const shouldShowAllPeriodsAction = computed(() => {
   return hasActiveSalesSearch.value && selectedFilterTime.value !== 'all_time'
 })
@@ -627,21 +644,9 @@ async function loadSalesAnalytics(localNow = makeLocalDateTimeString()) {
   }
 }
 
-function handleSalesSearchInput() {
-  cancelPendingSalesSearch()
-
-  salesSearchDebounceTimer = window.setTimeout(() => {
-    salesSearchDebounceTimer = null
-    salesCurrentPage.value = 1
-    void loadSales(salesSearchQuery.value, makeLocalDateTimeString(), 1)
-  }, 500)
-}
-
 function clearSalesSearch() {
-  cancelPendingSalesSearch()
-  salesSearchQuery.value = ''
   salesCurrentPage.value = 1
-  void loadSales('', makeLocalDateTimeString(), 1)
+  baseClearSalesSearch()
 }
 
 function showAllPeriods() {
@@ -912,13 +917,6 @@ function syncSalesPaginationAfterLocalDelete() {
     total_pages: totalPages,
   }
   salesCurrentPage.value = currentPage
-}
-
-function cancelPendingSalesSearch() {
-  if (salesSearchDebounceTimer !== null) {
-    window.clearTimeout(salesSearchDebounceTimer)
-    salesSearchDebounceTimer = null
-  }
 }
 
 function isLatestSalesRequest(requestId) {
