@@ -85,10 +85,6 @@
                       {{ getOrderStatusMeta(order.order_status).emoji }}
                       {{ $t(getOrderStatusMeta(order.order_status).labelKey) }}
                     </span>
-                 </p>
-                  <p class="text-secondary text-sm mt-2">
-                    {{ $t('service.orders.paymentStatus') }}:
-                    {{ $t('service.paymentStatusLabels.' + order.payment_status) }}
                   </p>
                 </div>
               </div>
@@ -163,10 +159,6 @@
                 <strong>{{ $t('service.orders.receivedAt') }}:</strong>
                 {{ formatDateTime(selectedOrder.received_at) }}
               </p>
-              <p>
-                <strong>{{ $t('service.orders.paymentStatus') }}:</strong>
-                {{ $t('service.paymentStatusLabels.' + selectedOrder.payment_status) }}
-              </p>
               <p v-if="selectedOrder.note">
                 <strong>{{ $t('common.fields.note') }}:</strong>
                 {{ selectedOrder.note }}
@@ -213,16 +205,8 @@
                 <strong>- {{ formatMoney(selectedOrder.discount_amount) }} <small class="currency-code">{{ selectedOrder.currency_code }}</small></strong>
               </div>
               <div class="d-flex col-6 justify-content-between gap-3">
-                <span>{{ $t('service.orders.totalToPay') }}</span>
+                <span>{{ $t('common.fields.total') }}</span>
                 <strong>{{ formatMoney(selectedOrder.total_amount) }} <small class="currency-code">{{ selectedOrder.currency_code }}</small></strong>
-              </div>
-              <div class="d-flex col-6 justify-content-between gap-3">
-                <span class="text-green">{{ $t('common.fields.paid') }}</span>
-                <strong class="text-green">{{ formatMoney(selectedOrder.paid_amount) }} <small class="currency-code">{{ selectedOrder.currency_code }}</small></strong>
-              </div>
-              <div class="d-flex col-6 justify-content-between gap-3">
-                <span class="text-orange">{{ $t('service.orders.remainingDue') }}</span>
-                <strong class="text-orange">{{ formatMoney(selectedOrder.due_amount) }} <small class="currency-code">{{ selectedOrder.currency_code }}</small></strong>
               </div>
             </div>
           </div>
@@ -645,7 +629,6 @@ function makeCreateOrderPayload(form) {
       note: String(item.note ?? '').trim(),
     })),
     discount_amount: String(form.discount_amount ?? '').trim(),
-    paid_amount: String(form.paid_amount ?? '').trim(),
     note: String(form.note ?? '').trim(),
   }
 }
@@ -663,7 +646,6 @@ function createEmptyOrderForm() {
       createServiceOrderItemRow(),
     ],
     discount_amount: '0.00',
-    paid_amount: '0.00',
     note: '',
   }
 }

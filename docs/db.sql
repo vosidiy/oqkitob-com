@@ -310,9 +310,6 @@ CREATE TABLE `app_service_orders` (
   `subtotal_amount` decimal(15,2) NOT NULL,
   `discount_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `total_amount` decimal(15,2) NOT NULL,
-  `paid_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `due_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `payment_status` enum('unpaid','partial','paid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'unpaid',
   `order_status` enum('received','working','ready','delivered') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'received',
   `note` text COLLATE utf8mb4_unicode_ci,
   `received_at` datetime NOT NULL,
@@ -672,7 +669,6 @@ ALTER TABLE `app_service_orders`
   ADD KEY `idx_service_orders_customer_id` (`customer_id`),
   ADD KEY `idx_service_orders_book_received_at` (`book_id`,`received_at`),
   ADD KEY `idx_service_orders_book_customer` (`book_id`,`customer_id`),
-  ADD KEY `idx_service_orders_book_payment_status` (`book_id`,`payment_status`),
   ADD KEY `idx_service_orders_book_order_status` (`book_id`,`order_status`),
   ADD KEY `idx_service_orders_book_deleted` (`book_id`,`deleted_at`);
 

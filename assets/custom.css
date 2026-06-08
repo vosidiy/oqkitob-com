@@ -1,7 +1,6 @@
 
-.toast{ transition: opacity 1s; z-index: 9999; position: fixed; background-color: #222; width: 100%; max-width: 320px; color: white; padding: 8px 12px; border-radius: 12px; bottom:32px; left:50%;transform:translateX(-50%) }
 
-.toast.hide { opacity: 0; }
+.toast{ font-size: 18px; z-index: 9999; position: fixed; background: #222; width: 100%; max-width: 340px; color: white; padding: 8px 12px; border-radius: 12px; bottom:32px; left:50%;transform:translateX(-50%) }
 /* Loader icon during HTMX request */
 .loader {
     width: 40px;
@@ -20,11 +19,6 @@
 }
 
 .loader{ display:none;  opacity: 0; }
-
-.rectangle-pattern {
-    background-image:  linear-gradient(#ececec 1px, transparent 1px), linear-gradient(to right,#ececec 1px, var(--neutral-100) 1px);
-    background-size: 20px 20px;
-}
 
 
 [data-tooltip]{
@@ -178,3 +172,5 @@ meter {
 .drag-handle:active {
     cursor: grabbing;
 }
+
+

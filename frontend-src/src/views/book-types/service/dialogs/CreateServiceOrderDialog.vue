@@ -289,26 +289,6 @@
               </div>
             </div>
 
-            <div class="d-flex col-5 align-items-center justify-content-between gap-3">
-              <label class="col-6 font-bold" for="service-order-paid">{{ $t('common.fields.paid') }}:</label>
-              <div class="col-6 text-right font-semibold">
-                <div class="relative">
-                  <input
-                    id="service-order-paid"
-                    v-model.trim="form.paid_amount"
-                    type="number"
-                    class="form-control min-h-5"
-                    min="0"
-                    step="1"
-                    :placeholder="$t('service.dialogs.moneyPlaceholder')"
-                    :disabled="isSubmitting"
-                  >
-                  <small class="currency-code text-secondary text-default bg-neutral-50 absolute right-2 top-1 p-1">
-                    {{ book.currency_code }}
-                  </small>
-                </div>
-              </div>
-            </div>
           </section>
 
           <hr>
@@ -323,16 +303,8 @@
               <strong>- {{ formatMoney(discountAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
             </div>
             <div class="d-flex col-5 justify-content-between gap-3">
-              <span>{{ $t('service.orders.totalToPay') }}</span>
+              <span>{{ $t('common.fields.total') }}</span>
               <strong>{{ formatMoney(totalAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
-            </div>
-            <div class="d-flex col-5 justify-content-between gap-3">
-              <span class="text-green">{{ $t('common.fields.paid') }}</span>
-              <strong class="text-green">{{ formatMoney(paidAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
-            </div>
-            <div class="d-flex col-5 justify-content-between gap-3">
-              <span class="text-orange">{{ $t('service.orders.remainingDue') }}</span>
-              <strong class="text-orange">{{ formatMoney(dueAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
             </div>
           </section>
         </form>
@@ -353,7 +325,7 @@
         </button>
 
         <p class="ml-auto d-flex gap-3 text-xl">
-          <span>{{ $t('service.orders.totalToPay') }}</span>
+          <span>{{ $t('common.fields.total') }}</span>
           <strong>{{ formatMoney(totalAmount) }} <small class="currency-code">{{ book.currency_code }}</small></strong>
         </p>
       </footer>
@@ -406,8 +378,6 @@ const isLockedCustomerMode = computed(() => props.mode === 'locked' && props.loc
 const subtotalAmount = computed(() => props.form.items.reduce((sum, item) => sum + lineTotal(item), 0))
 const discountAmount = computed(() => clampMoney(props.form.discount_amount, subtotalAmount.value))
 const totalAmount = computed(() => Math.max(0, subtotalAmount.value - discountAmount.value))
-const paidAmount = computed(() => clampMoney(props.form.paid_amount, totalAmount.value))
-const dueAmount = computed(() => Math.max(0, totalAmount.value - paidAmount.value))
 const isSubmitDisabled = computed(() => props.isSubmitting || props.serviceTypes.length === 0)
 
 function open() {

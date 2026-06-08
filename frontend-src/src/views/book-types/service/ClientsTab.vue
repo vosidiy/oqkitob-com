@@ -204,8 +204,6 @@
                         {{ getOrderStatusMeta(order.order_status).emoji }}
                         {{ $t(getOrderStatusMeta(order.order_status).labelKey) }}
                       </p>
-                      <span>•</span>
-                      <p>{{ $t('service.paymentStatusLabels.' + order.payment_status) }}</p>
                     </div>
                     <p v-if="order.note" class="text-secondary">{{ order.note }}</p>
                   </div>
@@ -672,7 +670,6 @@ function makeLockedCustomerOrderPayload(form) {
       note: String(item.note ?? '').trim(),
     })),
     discount_amount: String(form.discount_amount ?? '').trim(),
-    paid_amount: String(form.paid_amount ?? '').trim(),
     note: String(form.note ?? '').trim(),
   }
 }
@@ -691,7 +688,6 @@ function createLockedCustomerOrderForm(customerId) {
       createServiceOrderItemRow(),
     ],
     discount_amount: '0.00',
-    paid_amount: '0.00',
     note: '',
   }
 }

@@ -10,6 +10,8 @@ use App\Models\ServiceTypeModel;
 use App\Services\BookAccessService;
 use CodeIgniter\Database\BaseConnection;
 use Config\Database;
+use DateInterval;
+use DateTimeImmutable;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -20,13 +22,15 @@ use RuntimeException;
  * GET  /api/books/{bookId}/service/orders
  * GET  /api/books/{bookId}/service/orders/{orderId}
  * POST /api/books/{bookId}/service/orders
+ * POST /api/books/{bookId}/service/orders/{orderId}/status
  */
 class ServiceOrdersController extends AuthenticatedApiController
 {
     private const DEFAULT_PAGE = 1;
-    private const DEFAULT_PER_PAGE = 100;
+    private const DEFAULT_PER_PAGE = 25;
     private const ALLOWED_UNITS = ['qty', 'm2', 'kg'];
     private const ALLOWED_ORDER_STATUSES = ['received', 'working', 'ready', 'delivered'];
+    private const ALLOWED_REPORT_FILTERS = ['today', 'yesterday', 'last_10_days', 'last_30_days'];
 
     private BaseConnection $db;
 
@@ -46,6 +50,7 @@ class ServiceOrdersController extends AuthenticatedApiController
     {
         $userId = $this->currentUserIdAndCloseSession();
         $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'service');
+        $search = trim((string) $this->request->getGet('search'));
 
         if ($permission === 'none') {
             return $this->failNotFound('Book not found.');
@@ -53,17 +58,58 @@ class ServiceOrdersController extends AuthenticatedApiController
 
         $page = max(self::DEFAULT_PAGE, (int) $this->request->getGet('page'));
         $perPage = (int) $this->request->getGet('per_page');
+        $orderStatus = $this->normalizeOptionalOrderStatus($this->request->getGet('order_status'));
         $excludeOrderStatus = $this->normalizeOptionalOrderStatus($this->request->getGet('exclude_order_status'));
+        $receivedOn = $this->normalizeOptionalDateOnly($this->request->getGet('received_on'));
 
         if ($perPage <= 0) {
             $perPage = self::DEFAULT_PER_PAGE;
         }
 
-        $result = $this->orders->findByBook($bookId, null, null, null, null, '', $page, $perPage, $excludeOrderStatus);
+        $range = $this->makeReceivedOnRange($receivedOn);
+        $result = $this->orders->findByBook(
+            $bookId,
+            $range['received_from'],
+            $range['received_to'],
+            $orderStatus,
+            $search,
+            $page,
+            $perPage,
+            $excludeOrderStatus
+        );
 
         return $this->respond([
             'orders' => $result['orders'],
             'pagination' => $result['pagination'],
+        ]);
+    }
+
+    public function analytics(string $bookId)
+    {
+        $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'service');
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
+        $filter = $this->normalizeReportFilter((string) $this->request->getGet('filter_time'));
+        $localNow = $this->parseLocalDateTime((string) $this->request->getGet('local_now')) ?? new DateTimeImmutable();
+        $range = $this->makeReportDateRange($filter, $localNow);
+
+        return $this->respond([
+            'summary' => $this->orders->findAnalyticsSummaryByBook(
+                $bookId,
+                $range['received_from'],
+                $range['received_to'],
+                'delivered'
+            ),
+            'services' => $this->orderItems->findServiceAnalyticsByBook(
+                $bookId,
+                $range['received_from'],
+                $range['received_to'],
+                'delivered'
+            ),
         ]);
     }
 
@@ -183,7 +229,6 @@ class ServiceOrdersController extends AuthenticatedApiController
         $customerPayload = null;
         $items = $payload['items'] ?? null;
         $discountValue = $payload['discount_amount'] ?? 0;
-        $paidValue = $payload['paid_amount'] ?? 0;
         $note = $this->normalizeOptionalString($payload['note'] ?? null);
 
         if (! is_array($items) || $items === []) {
@@ -205,19 +250,10 @@ class ServiceOrdersController extends AuthenticatedApiController
             throw new InvalidArgumentException('Please enter a valid discount amount.');
         }
 
-        if (! $this->isNumericValue($paidValue)) {
-            throw new InvalidArgumentException('Please enter a valid paid amount.');
-        }
-
         $discountAmount = $this->normalizeMoney($discountValue);
-        $paidAmount = $this->normalizeMoney($paidValue);
 
         if ($discountAmount < 0) {
             throw new InvalidArgumentException('Discount amount cannot be negative.');
-        }
-
-        if ($paidAmount < 0) {
-            throw new InvalidArgumentException('Paid amount cannot be negative.');
         }
 
         $normalizedItems = $this->normalizeOrderItems($bookId, $items);
@@ -228,12 +264,6 @@ class ServiceOrdersController extends AuthenticatedApiController
         }
 
         $totalAmount = round($subtotalAmount - $discountAmount, 2);
-
-        if ($paidAmount > $totalAmount) {
-            throw new InvalidArgumentException('Paid amount cannot exceed the order total.');
-        }
-
-        $paymentSummary = $this->makePaymentSummary($totalAmount, $paidAmount);
         $timestamp = $this->utcNow();
 
         helper('uuid');
@@ -255,9 +285,6 @@ class ServiceOrdersController extends AuthenticatedApiController
                 'subtotal_amount' => $this->formatMoney($subtotalAmount),
                 'discount_amount' => $this->formatMoney($discountAmount),
                 'total_amount' => $this->formatMoney($totalAmount),
-                'paid_amount' => $this->formatMoney($paymentSummary['paid_amount']),
-                'due_amount' => $this->formatMoney($paymentSummary['due_amount']),
-                'payment_status' => $paymentSummary['payment_status'],
                 'order_status' => 'received',
                 'note' => $note,
                 'received_at' => $timestamp,
@@ -523,28 +550,6 @@ class ServiceOrdersController extends AuthenticatedApiController
         return round($subtotalAmount, 2);
     }
 
-    private function makePaymentSummary(float $totalAmount, float $paidAmount): array
-    {
-        if ($totalAmount <= 0) {
-            return [
-                'paid_amount' => 0.0,
-                'due_amount' => 0.0,
-                'payment_status' => 'paid',
-            ];
-        }
-
-        $dueAmount = round(max(0, $totalAmount - $paidAmount), 2);
-        $paymentStatus = $paidAmount <= 0
-            ? 'unpaid'
-            : ($dueAmount <= 0 ? 'paid' : 'partial');
-
-        return [
-            'paid_amount' => round($paidAmount, 2),
-            'due_amount' => $dueAmount,
-            'payment_status' => $paymentStatus,
-        ];
-    }
-
     private function normalizeOptionalId(mixed $value): ?string
     {
         $normalizedValue = trim((string) $value);
@@ -570,6 +575,115 @@ class ServiceOrdersController extends AuthenticatedApiController
         return in_array($normalizedValue, self::ALLOWED_ORDER_STATUSES, true)
             ? $normalizedValue
             : null;
+    }
+
+    private function normalizeReportFilter(string $filter): string
+    {
+        $normalizedFilter = trim($filter);
+
+        return in_array($normalizedFilter, self::ALLOWED_REPORT_FILTERS, true)
+            ? $normalizedFilter
+            : 'today';
+    }
+
+    private function makeReportDateRange(string $filter, DateTimeImmutable $localNow): array
+    {
+        return match ($filter) {
+            'yesterday' => [
+                'received_from' => $localNow->modify('-1 day')->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'received_to' => $localNow->modify('-1 day')->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
+            ],
+            'last_10_days' => [
+                'received_from' => $localNow->sub(new DateInterval('P10D'))->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'received_to' => $localNow->format('Y-m-d H:i:s'),
+            ],
+            'last_30_days' => [
+                'received_from' => $localNow->sub(new DateInterval('P30D'))->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'received_to' => $localNow->format('Y-m-d H:i:s'),
+            ],
+            default => [
+                'received_from' => $localNow->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+                'received_to' => $localNow->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
+            ],
+        };
+    }
+
+    private function normalizeOptionalDateOnly(mixed $value): ?string
+    {
+        $normalizedValue = trim((string) $value);
+
+        if ($normalizedValue === '') {
+            return null;
+        }
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $normalizedValue)) {
+            return null;
+        }
+
+        $parsedValue = DateTimeImmutable::createFromFormat('Y-m-d', $normalizedValue);
+        $parseErrors = DateTimeImmutable::getLastErrors();
+
+        if (
+            ! ($parsedValue instanceof DateTimeImmutable)
+            || ! ($parseErrors === false || ($parseErrors['warning_count'] === 0 && $parseErrors['error_count'] === 0))
+        ) {
+            return null;
+        }
+
+        return $parsedValue->format('Y-m-d');
+    }
+
+    private function makeReceivedOnRange(?string $receivedOn): array
+    {
+        if ($receivedOn === null) {
+            return [
+                'received_from' => null,
+                'received_to' => null,
+            ];
+        }
+
+        $parsedDate = DateTimeImmutable::createFromFormat('Y-m-d', $receivedOn);
+        $parseErrors = DateTimeImmutable::getLastErrors();
+
+        if (
+            ! ($parsedDate instanceof DateTimeImmutable)
+            || ! ($parseErrors === false || ($parseErrors['warning_count'] === 0 && $parseErrors['error_count'] === 0))
+        ) {
+            return [
+                'received_from' => null,
+                'received_to' => null,
+            ];
+        }
+
+        return [
+            'received_from' => $parsedDate->setTime(0, 0, 0)->format('Y-m-d H:i:s'),
+            'received_to' => $parsedDate->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    private function parseLocalDateTime(string $value): ?DateTimeImmutable
+    {
+        $normalizedValue = trim($value);
+
+        if ($normalizedValue === '') {
+            return null;
+        }
+
+        $parsedValue = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $normalizedValue);
+        $parseErrors = DateTimeImmutable::getLastErrors();
+
+        if (
+            $parsedValue instanceof DateTimeImmutable
+            && ($parseErrors === false || ($parseErrors['warning_count'] === 0 && $parseErrors['error_count'] === 0))
+        ) {
+            return $parsedValue;
+        }
+
+        try {
+            return new DateTimeImmutable($normalizedValue);
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     private function normalizeRequiredOrderStatus(mixed $value): string

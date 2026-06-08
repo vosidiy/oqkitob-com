@@ -417,9 +417,6 @@ CREATE TABLE IF NOT EXISTS app_service_orders (
     subtotal_amount DECIMAL(15,2) NOT NULL,
     discount_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     total_amount DECIMAL(15,2) NOT NULL,
-    paid_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    due_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    payment_status ENUM('unpaid', 'partial', 'paid') NOT NULL DEFAULT 'unpaid',
     order_status ENUM('received', 'working', 'ready', 'delivered') NOT NULL DEFAULT 'received',
     note TEXT DEFAULT NULL,
     received_at DATETIME NOT NULL,
@@ -434,7 +431,6 @@ CREATE TABLE IF NOT EXISTS app_service_orders (
     KEY idx_service_orders_customer_id (customer_id),
     KEY idx_service_orders_book_received_at (book_id, received_at),
     KEY idx_service_orders_book_customer (book_id, customer_id),
-    KEY idx_service_orders_book_payment_status (book_id, payment_status),
     KEY idx_service_orders_book_order_status (book_id, order_status),
     KEY idx_service_orders_book_deleted (book_id, deleted_at),
     CONSTRAINT fk_service_orders_book

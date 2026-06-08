@@ -40,6 +40,10 @@ export function fetchServiceOrder(bookId, orderId) {
   return apiClient.get(`/books/${bookId}/service/orders/${orderId}`)
 }
 
+export function fetchServiceOrderAnalytics(bookId, params = {}) {
+  return apiClient.get(`/books/${bookId}/service/orders/analytics`, { params })
+}
+
 export function createServiceOrder(bookId, payload) {
   return apiClient.post(`/books/${bookId}/service/orders`, payload)
 }

@@ -60,10 +60,6 @@
             <strong>{{ $t('service.orders.receivedAt') }}:</strong>
             {{ formatDateTime(order.received_at) }}
           </p>
-          <p>
-            <strong>{{ $t('service.orders.paymentStatus') }}:</strong>
-            {{ $t('service.paymentStatusLabels.' + order.payment_status) }}
-          </p>
           <p v-if="order.note">
             <strong>{{ $t('common.fields.note') }}:</strong>
             {{ order.note }}
@@ -110,16 +106,8 @@
             <strong>- {{ formatMoney(order.discount_amount) }} <small class="currency-code">{{ order.currency_code }}</small></strong>
           </div>
           <div class="d-flex col-6 justify-content-between gap-3">
-            <span>{{ $t('service.orders.totalToPay') }}</span>
+            <span>{{ $t('common.fields.total') }}</span>
             <strong>{{ formatMoney(order.total_amount) }} <small class="currency-code">{{ order.currency_code }}</small></strong>
-          </div>
-          <div class="d-flex col-6 justify-content-between gap-3">
-            <span class="text-green">{{ $t('common.fields.paid') }}</span>
-            <strong class="text-green">{{ formatMoney(order.paid_amount) }} <small class="currency-code">{{ order.currency_code }}</small></strong>
-          </div>
-          <div class="d-flex col-6 justify-content-between gap-3">
-            <span class="text-orange">{{ $t('service.orders.remainingDue') }}</span>
-            <strong class="text-orange">{{ formatMoney(order.due_amount) }} <small class="currency-code">{{ order.currency_code }}</small></strong>
           </div>
         </div>
       </div>

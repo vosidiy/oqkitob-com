@@ -21,9 +21,6 @@ class ServiceOrderModel extends Model
         'subtotal_amount',
         'discount_amount',
         'total_amount',
-        'paid_amount',
-        'due_amount',
-        'payment_status',
         'order_status',
         'note',
         'received_at',
@@ -43,7 +40,6 @@ class ServiceOrderModel extends Model
         ?string $receivedFrom = null,
         ?string $receivedTo = null,
         ?string $orderStatus = null,
-        ?string $paymentStatus = null,
         string $search = '',
         int $page = 1,
         int $perPage = 20,
@@ -51,12 +47,12 @@ class ServiceOrderModel extends Model
     ): array {
         $currentPage = max(1, $page);
         $itemsPerPage = max(1, $perPage);
-        $totalItems = $this->countByBook($bookId, $receivedFrom, $receivedTo, $orderStatus, $paymentStatus, $search, $excludeOrderStatus);
+        $totalItems = $this->countByBook($bookId, $receivedFrom, $receivedTo, $orderStatus, $search, $excludeOrderStatus);
         $totalPages = max(1, (int) ceil($totalItems / $itemsPerPage));
         $currentPage = min($currentPage, $totalPages);
         $offset = ($currentPage - 1) * $itemsPerPage;
 
-        $orders = $this->makeOrderListQuery($bookId, $receivedFrom, $receivedTo, $orderStatus, $paymentStatus, $search, $excludeOrderStatus)
+        $orders = $this->makeOrderListQuery($bookId, $receivedFrom, $receivedTo, $orderStatus, $search, $excludeOrderStatus)
             ->orderBy('app_service_orders.received_at', 'DESC')
             ->orderBy('app_service_orders.created_at', 'DESC')
             ->limit($itemsPerPage, $offset)
@@ -116,15 +112,14 @@ class ServiceOrderModel extends Model
     public function findAnalyticsSummaryByBook(
         string $bookId,
         ?string $receivedFrom = null,
-        ?string $receivedTo = null
+        ?string $receivedTo = null,
+        ?string $orderStatus = null
     ): array {
         $query = $this->builder()
             ->select([
                 'COUNT(app_service_orders.id) AS order_count',
                 'COALESCE(SUM(app_service_orders.discount_amount), 0) AS total_discount_amount',
                 'COALESCE(SUM(app_service_orders.total_amount), 0) AS total_amount',
-                'COALESCE(SUM(app_service_orders.paid_amount), 0) AS paid_amount',
-                'COALESCE(SUM(app_service_orders.due_amount), 0) AS due_amount',
             ])
             ->where('app_service_orders.book_id', $bookId)
             ->where('app_service_orders.deleted_at', null);
@@ -137,14 +132,16 @@ class ServiceOrderModel extends Model
             $query->where('app_service_orders.received_at <=', $receivedTo);
         }
 
+        if ($orderStatus !== null && $orderStatus !== '') {
+            $query->where('app_service_orders.order_status', $orderStatus);
+        }
+
         $row = $query->get()->getRowArray() ?? [];
 
         return [
             'order_count' => (int) ($row['order_count'] ?? 0),
             'total_discount_amount' => $this->formatAggregateMoney($row['total_discount_amount'] ?? 0),
             'total_amount' => $this->formatAggregateMoney($row['total_amount'] ?? 0),
-            'paid_amount' => $this->formatAggregateMoney($row['paid_amount'] ?? 0),
-            'due_amount' => $this->formatAggregateMoney($row['due_amount'] ?? 0),
         ];
     }
 
@@ -165,7 +162,6 @@ class ServiceOrderModel extends Model
         ?string $receivedFrom = null,
         ?string $receivedTo = null,
         ?string $orderStatus = null,
-        ?string $paymentStatus = null,
         string $search = '',
         ?string $excludeOrderStatus = null
     ): BaseBuilder {
@@ -191,10 +187,6 @@ class ServiceOrderModel extends Model
 
         if ($orderStatus !== null && $orderStatus !== '') {
             $query->where('app_service_orders.order_status', $orderStatus);
-        }
-
-        if ($paymentStatus !== null && $paymentStatus !== '') {
-            $query->where('app_service_orders.payment_status', $paymentStatus);
         }
 
         if ($excludeOrderStatus !== null && $excludeOrderStatus !== '') {
@@ -226,7 +218,6 @@ class ServiceOrderModel extends Model
         ?string $receivedFrom = null,
         ?string $receivedTo = null,
         ?string $orderStatus = null,
-        ?string $paymentStatus = null,
         string $search = '',
         ?string $excludeOrderStatus = null
     ): int {
@@ -251,10 +242,6 @@ class ServiceOrderModel extends Model
 
         if ($orderStatus !== null && $orderStatus !== '') {
             $query->where('app_service_orders.order_status', $orderStatus);
-        }
-
-        if ($paymentStatus !== null && $paymentStatus !== '') {
-            $query->where('app_service_orders.payment_status', $paymentStatus);
         }
 
         if ($excludeOrderStatus !== null && $excludeOrderStatus !== '') {
@@ -291,9 +278,6 @@ class ServiceOrderModel extends Model
             'app_service_orders.subtotal_amount',
             'app_service_orders.discount_amount',
             'app_service_orders.total_amount',
-            'app_service_orders.paid_amount',
-            'app_service_orders.due_amount',
-            'app_service_orders.payment_status',
             'app_service_orders.order_status',
             'app_service_orders.note',
             'app_service_orders.received_at',

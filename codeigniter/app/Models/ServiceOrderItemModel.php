@@ -86,4 +86,68 @@ class ServiceOrderItemModel extends Model
             ->get()
             ->getResultArray();
     }
+
+    public function findServiceAnalyticsByBook(
+        string $bookId,
+        ?string $receivedFrom = null,
+        ?string $receivedTo = null,
+        ?string $orderStatus = null
+    ): array {
+        if ($bookId === '') {
+            return [];
+        }
+
+        $query = $this->builder()
+            ->select([
+                'app_service_order_items.service_name',
+                'app_service_order_items.unit_code',
+                'COALESCE(SUM(app_service_order_items.quantity), 0) AS total_quantity',
+                'COALESCE(SUM(app_service_order_items.line_total), 0) AS total_amount',
+            ])
+            ->join('app_service_orders', 'app_service_orders.id = app_service_order_items.order_id')
+            ->where('app_service_orders.book_id', $bookId)
+            ->where('app_service_orders.deleted_at', null);
+
+        if ($receivedFrom !== null) {
+            $query->where('app_service_orders.received_at >=', $receivedFrom);
+        }
+
+        if ($receivedTo !== null) {
+            $query->where('app_service_orders.received_at <=', $receivedTo);
+        }
+
+        if ($orderStatus !== null && $orderStatus !== '') {
+            $query->where('app_service_orders.order_status', $orderStatus);
+        }
+
+        $rows = $query->groupBy('app_service_order_items.service_name')
+            ->groupBy('app_service_order_items.unit_code')
+            ->orderBy('total_amount', 'DESC')
+            ->orderBy('app_service_order_items.service_name', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        return array_map(function (array $row): array {
+            return [
+                'service_name' => (string) ($row['service_name'] ?? ''),
+                'unit_code' => (string) ($row['unit_code'] ?? 'qty'),
+                'total_quantity' => $this->formatAggregateQuantity($row['total_quantity'] ?? 0),
+                'total_amount' => $this->formatAggregateMoney($row['total_amount'] ?? 0),
+            ];
+        }, $rows);
+    }
+
+    private function formatAggregateMoney(mixed $value): string
+    {
+        $amount = is_numeric($value) ? (float) $value : 0.0;
+
+        return number_format($amount, 2, '.', '');
+    }
+
+    private function formatAggregateQuantity(mixed $value): string
+    {
+        $quantity = is_numeric($value) ? (float) $value : 0.0;
+
+        return number_format($quantity, 3, '.', '');
+    }
 }

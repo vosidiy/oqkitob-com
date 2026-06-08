@@ -416,7 +416,7 @@ Rules:
 Service-book MVP notes:
 
 - `service` is a money-focused book type and requires a book-level `currency_code`
-- service orders keep payment summary fields directly on `app_service_orders`
+- service orders keep pricing totals directly on `app_service_orders` without separate payment-tracking fields
 - service order items store snapshots such as `object_name`, `service_name`, `unit_code`, and `unit_price`
 - service customers currently use `messenger` and `location` fields
 - service object-name autocomplete is intended to come from historical `app_service_order_items` values rather than a separate dictionary table

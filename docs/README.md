@@ -283,10 +283,11 @@ The `service` book type has now been introduced at the schema/model layer for se
   - no separate units table
   - no separate object-name dictionary table
   - one optional attachment path per order line
+- service orders keep pricing totals on the order itself and do not track partial payments, due amounts, or payment status
 - current naming:
   - customer fields use `messenger` and `location`
 
-At this stage, the `service` book is ready in the database and model layer, while controllers, routes, frontend API helpers, and UI screens are still to be implemented.
+At this stage, the `service` book has working backend routes/models/controllers and core frontend screens for service types, orders, customers, and status updates.
 
 ## Session/Auth Notes
 
