@@ -1,6 +1,7 @@
 import { FALLBACK_LOCALE, getCurrentLocale } from '@/i18n'
+import { messages } from '@/i18n/messages'
 
-const formatterCache = new Map()
+const DATE_TIME_PATTERN = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?)?(?:Z|[+-]\d{2}:?\d{2})?$/
 
 function resolveLocale(locale) {
   const normalizedLocale = String(locale ?? '').trim()
@@ -14,56 +15,73 @@ function resolveLocale(locale) {
   return currentLocale !== '' ? currentLocale : FALLBACK_LOCALE
 }
 
-function normalizeDateInput(value) {
-  const normalizedValue = String(value ?? '').trim()
+function getLocaleMessages(locale) {
+  const normalizedLocale = String(locale ?? '').trim()
+  const languageCode = normalizedLocale.split('-')[0]
 
-  if (normalizedValue === '') {
-    return ''
+  return messages[normalizedLocale] ?? messages[languageCode] ?? messages[FALLBACK_LOCALE]
+}
+
+function getMonthNames(locale) {
+  const localeMonthNames = getLocaleMessages(locale)?.common?.dates?.months
+
+  if (Array.isArray(localeMonthNames) && localeMonthNames.length === 12) {
+    return localeMonthNames
   }
 
-  return normalizedValue.includes('T')
-    ? normalizedValue
-    : normalizedValue.replace(' ', 'T')
+  return messages.en.common.dates.months
 }
 
 function parseDateValue(value) {
-  const normalizedValue = normalizeDateInput(value)
+  const normalizedValue = String(value ?? '').trim()
 
   if (normalizedValue === '') {
     return null
   }
 
-  const parsedDate = new Date(normalizedValue)
+  const matches = DATE_TIME_PATTERN.exec(normalizedValue)
 
-  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate
-}
-
-function getFormatter(locale, type) {
-  const cacheKey = `${locale}:${type}`
-
-  if (!formatterCache.has(cacheKey)) {
-    const formatterOptions = type === 'date'
-      ? {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }
-      : {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        }
-
-    formatterCache.set(cacheKey, new Intl.DateTimeFormat(locale, formatterOptions))
+  if (matches == null) {
+    return null
   }
 
-  return formatterCache.get(cacheKey)
+  const [, yearValue, monthValue, dayValue, hourValue = '00', minuteValue = '00', secondValue = '00'] = matches
+  const parsedValue = {
+    year: Number(yearValue),
+    month: Number(monthValue),
+    day: Number(dayValue),
+    hour: Number(hourValue),
+    minute: Number(minuteValue),
+    second: Number(secondValue),
+  }
+
+  const validationDate = new Date(Date.UTC(
+    parsedValue.year,
+    parsedValue.month - 1,
+    parsedValue.day,
+    parsedValue.hour,
+    parsedValue.minute,
+    parsedValue.second
+  ))
+
+  const isValidDate = validationDate.getUTCFullYear() === parsedValue.year
+    && validationDate.getUTCMonth() === parsedValue.month - 1
+    && validationDate.getUTCDate() === parsedValue.day
+    && validationDate.getUTCHours() === parsedValue.hour
+    && validationDate.getUTCMinutes() === parsedValue.minute
+    && validationDate.getUTCSeconds() === parsedValue.second
+
+  return isValidDate ? parsedValue : null
 }
 
-function formatWithFormatter(value, type, options = {}) {
+function formatTime(parsedDate) {
+  return [
+    String(parsedDate.hour).padStart(2, '0'),
+    String(parsedDate.minute).padStart(2, '0'),
+  ].join(':')
+}
+
+function formatWithMonthNames(value, type, options = {}) {
   const rawValue = String(value ?? '').trim()
 
   if (rawValue === '') {
@@ -76,17 +94,16 @@ function formatWithFormatter(value, type, options = {}) {
     return rawValue
   }
 
-  try {
-    return getFormatter(resolveLocale(options.locale), type).format(parsedDate)
-  } catch {
-    return rawValue
-  }
+  const monthNames = getMonthNames(resolveLocale(options.locale))
+  const formattedDate = `${parsedDate.day}-${monthNames[parsedDate.month - 1]}, ${parsedDate.year}`
+
+  return type === 'date' ? formattedDate : `${formattedDate}, ${formatTime(parsedDate)}`
 }
 
 export function formatDateTime(value, options = {}) {
-  return formatWithFormatter(value, 'dateTime', options)
+  return formatWithMonthNames(value, 'dateTime', options)
 }
 
 export function formatDate(value, options = {}) {
-  return formatWithFormatter(value, 'date', options)
+  return formatWithMonthNames(value, 'date', options)
 }

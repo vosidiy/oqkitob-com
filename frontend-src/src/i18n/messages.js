@@ -6,6 +6,22 @@ export const messages = {
       uzbek: 'Uzbek',
     },
     common: {
+      dates: {
+        months: [
+          'january',
+          'february',
+          'march',
+          'april',
+          'may',
+          'june',
+          'july',
+          'august',
+          'september',
+          'october',
+          'november',
+          'december',
+        ],
+      },
       actions: {
         add: 'Add',
         archive: 'Archive',
@@ -590,6 +606,22 @@ export const messages = {
       uzbek: "O'zbekcha",
     },
     common: {
+      dates: {
+        months: [
+          'yanvar',
+          'fevral',
+          'mart',
+          'aprel',
+          'may',
+          'iyun',
+          'iyul',
+          'avgust',
+          'sentabr',
+          'oktabr',
+          'noyabr',
+          'dekabr',
+        ],
+      },
       actions: {
         add: "Qo'shish",
         archive: 'Arxivlash',
@@ -1174,6 +1206,22 @@ export const messages = {
       uzbek: 'O‘zbekcha',
     },
     common: {
+      dates: {
+        months: [
+          'января',
+          'февраля',
+          'марта',
+          'апреля',
+          'мая',
+          'июня',
+          'июля',
+          'августа',
+          'сентября',
+          'октября',
+          'ноября',
+          'декабря',
+        ],
+      },
       actions: {
         add: 'Добавить',
         archive: 'Архивировать',
