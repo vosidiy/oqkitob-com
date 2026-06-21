@@ -105,8 +105,7 @@
           </div>
         </article>
 
-        <article v-else-if="selectedOrder" class="card">
-          
+        <article v-else-if="selectedOrder" class="card">  
           <div class="card-body">
             <header class="d-flex mb-2">
               <div class="flex-grow">
@@ -116,10 +115,10 @@
               <div class="d-flex align-items-start gap-2">
                 <ServiceOrderStatusDropdown
                   :order-status="selectedOrder.order_status"
-                  :is-updating="isUpdatingSelectedOrderStatus"
+                  :is-updating="isSelectedOrderBusy"
                   @change-status="updateSelectedOrderStatus"
                 />
-                <button type="button" class="btn btn-neutral" :disabled="isUpdatingSelectedOrderStatus" @click="clearSelectedOrder">
+                <button type="button" class="btn btn-neutral" :disabled="isSelectedOrderBusy" @click="clearSelectedOrder">
                   {{ $t('common.actions.close') }}
                 </button>
               </div>
@@ -207,6 +206,16 @@
                 <strong>{{ formatMoney(selectedOrder.total_amount) }} <small class="currency-code">{{ selectedOrder.currency_code }}</small></strong>
               </div>
             </div>
+            <hr>
+            <button
+              type="button"
+              class="btn text-secondary btn-sm"
+              :disabled="isSelectedOrderBusy"
+              @click="handleDeleteSelectedOrder"
+            >
+              <span v-if="isDeletingSelectedOrder">{{ $t('common.states.deleting') }}</span>
+              <span v-else>{{ $t('service.orders.deleteAction') }}</span>
+            </button>
           </div>
         </article>
 
@@ -315,6 +324,7 @@ import { useI18n } from 'vue-i18n'
 import {
   createServiceOrder,
   createServiceType,
+  deleteServiceOrder,
   deleteServiceType,
   fetchServiceOrder,
   fetchServiceOrders,
@@ -322,11 +332,12 @@ import {
   updateServiceOrderStatus,
   updateServiceType,
 } from '@/api/service'
-import { getApiErrorMessage } from '@/api/errors'
+import { getApiErrorMessage, isNotFoundError } from '@/api/errors'
 import { useClearableSearch } from '@/composables/use-clearable-search'
 import { useToast } from '@/composables/use-toast'
 import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
+import { normalizeInternationalPhone } from '@/utils/phone'
 import { formatQuantityDisplay } from '@/utils/quantity'
 import ServiceOrderStatusDropdown from '@/views/book-types/service/components/ServiceOrderStatusDropdown.vue'
 import CreateServiceOrderDialog from '@/views/book-types/service/dialogs/CreateServiceOrderDialog.vue'
@@ -361,6 +372,7 @@ const isLoadingServiceTypes = ref(false)
 const isCreatingOrder = ref(false)
 const isSubmittingServiceType = ref(false)
 const isDeletingServiceTypeId = ref('')
+const isDeletingSelectedOrder = ref(false)
 const isUpdatingSelectedOrderStatus = ref(false)
 
 const ordersListErrorMessage = ref('')
@@ -387,6 +399,9 @@ const serviceTypeSubmitLabel = computed(() => (
   serviceTypeDialogMode.value === 'edit'
     ? t('common.actions.update')
     : t('common.actions.create')
+))
+const isSelectedOrderBusy = computed(() => (
+  isUpdatingSelectedOrderStatus.value || isDeletingSelectedOrder.value
 ))
 
 onMounted(() => {
@@ -455,6 +470,10 @@ async function loadServiceTypes() {
 }
 
 async function selectOrder(orderId) {
+  if (isDeletingSelectedOrder.value) {
+    return
+  }
+
   clearToast()
   await loadOrderDetail(orderId)
 }
@@ -467,7 +486,7 @@ function clearSelectedOrder() {
 }
 
 async function updateSelectedOrderStatus(nextStatus) {
-  if (!selectedOrder.value?.id) {
+  if (!selectedOrder.value?.id || isDeletingSelectedOrder.value) {
     return
   }
 
@@ -503,6 +522,41 @@ async function updateSelectedOrderStatus(nextStatus) {
     selectedOrderErrorMessage.value = getApiErrorMessage(error, t('service.orderMessages.unableUpdateStatus'))
   } finally {
     isUpdatingSelectedOrderStatus.value = false
+  }
+}
+
+async function handleDeleteSelectedOrder() {
+  if (!selectedOrder.value?.id || isSelectedOrderBusy.value) {
+    return
+  }
+
+  const orderId = selectedOrder.value.id
+  const confirmed = window.confirm(t('service.orderMessages.confirmDelete'))
+
+  if (!confirmed) {
+    return
+  }
+
+  clearToast()
+  selectedOrderErrorMessage.value = ''
+  isDeletingSelectedOrder.value = true
+
+  try {
+    await deleteServiceOrder(props.book.id, orderId)
+    clearSelectedOrder()
+    showToast(t('service.orderMessages.deleted'))
+    await loadOrdersList()
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      clearSelectedOrder()
+      await loadOrdersList()
+      selectedOrderErrorMessage.value = t('service.orderMessages.unavailable')
+      return
+    }
+
+    selectedOrderErrorMessage.value = getApiErrorMessage(error, t('service.orderMessages.unableDelete'))
+  } finally {
+    isDeletingSelectedOrder.value = false
   }
 }
 
@@ -613,7 +667,7 @@ function makeCreateOrderPayload(form) {
   return {
     customer: {
       name: String(form.customer.name ?? '').trim(),
-      phone: String(form.customer.phone ?? '').trim(),
+      phone: normalizeInternationalPhone(form.customer.phone) ?? String(form.customer.phone ?? '').trim(),
       messenger: String(form.customer.messenger ?? '').trim(),
       address: String(form.customer.address ?? '').trim(),
       location: String(form.customer.location ?? '').trim(),
@@ -635,7 +689,7 @@ function createEmptyOrderForm() {
   return {
     customer: {
       name: '',
-      phone: '',
+      phone: '+998',
       messenger: '',
       address: '',
       location: '',

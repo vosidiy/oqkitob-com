@@ -9,7 +9,7 @@
       </header>
 
       <div class="dialog-body max-h-initial">
-        <form id="form-create-service-order" @submit.prevent="emit('submit')">
+        <form id="form-create-service-order" @submit.prevent="handleSubmit">
           <div v-if="errorMessage" class="alert alert-danger mb-4" role="alert">
             {{ errorMessage }}
           </div>
@@ -53,7 +53,7 @@
                       v-model.trim="form.customer.phone"
                       type="text"
                       class="form-control h-9 rounded-left-0"
-                      placeholder="+998901234567"
+                      :placeholder="$t('service.dialogs.phonePlaceholder')"
                       :disabled="isSubmitting"
                       required
                     >
@@ -119,9 +119,7 @@
           <hr>
 
           <section class="mb-4">
-            
-            
-            
+
             <article
               v-for="(item, index) in form.items"
               :key="item._key"
@@ -336,10 +334,16 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { lookupServiceCustomerByPhone } from '@/api/service'
+import { normalizeInternationalPhone } from '@/utils/phone'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
 import { formatQuantityDisplay } from '@/utils/quantity'
 import { createServiceOrderItemRow, SERVICE_UNIT_OPTIONS } from './orderItemRow'
+
+const DEFAULT_PHONE_PREFIX = '+998'
+const LOOKUP_DEBOUNCE_MS = 500
 
 const props = defineProps({
   book: {
@@ -373,8 +377,11 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['cancel', 'close', 'submit'])
+const { t } = useI18n()
 const dialogRef = ref(null)
 const unitOptions = SERVICE_UNIT_OPTIONS
+let customerLookupTimerId = 0
+let customerLookupRequestToken = 0
 
 const isLockedCustomerMode = computed(() => props.mode === 'locked' && props.lockedCustomer !== null)
 const subtotalAmount = computed(() => props.form.items.reduce((sum, item) => sum + lineTotal(item), 0))
@@ -382,7 +389,52 @@ const discountAmount = computed(() => clampMoney(props.form.discount_amount, sub
 const totalAmount = computed(() => Math.max(0, subtotalAmount.value - discountAmount.value))
 const isSubmitDisabled = computed(() => props.isSubmitting || props.serviceTypes.length === 0)
 
+watch(
+  () => [
+    String(props.book?.id ?? ''),
+    normalizeLookupPhone(props.form?.customer?.phone),
+    isLockedCustomerMode.value,
+  ],
+  ([bookId, phone, isLocked]) => {
+    invalidateCustomerLookup()
+
+    if (isLocked || bookId === '' || phone === '') {
+      return
+    }
+
+    const lookupToken = ++customerLookupRequestToken
+
+    customerLookupTimerId = window.setTimeout(async () => {
+      try {
+        const { data } = await lookupServiceCustomerByPhone(bookId, phone)
+
+        if (lookupToken !== customerLookupRequestToken) {
+          return
+        }
+
+        if (normalizeLookupPhone(props.form?.customer?.phone) !== phone) {
+          return
+        }
+
+        applyLookupCustomer(data?.customer ?? null)
+      } catch {
+        // Silent fallback keeps typing smooth when lookup is unavailable.
+      } finally {
+        if (lookupToken === customerLookupRequestToken) {
+          customerLookupTimerId = 0
+        }
+      }
+    }, LOOKUP_DEBOUNCE_MS)
+  }
+)
+
+onBeforeUnmount(() => {
+  invalidateCustomerLookup()
+})
+
 function open() {
+  ensureDefaultEditablePhone()
+
   if (!dialogRef.value?.open) {
     dialogRef.value?.showModal()
   }
@@ -396,6 +448,15 @@ function close() {
 
 function isOpen() {
   return dialogRef.value?.open === true
+}
+
+function handleSubmit() {
+  if (!isLockedCustomerMode.value && !isValidCustomerPhone(props.form?.customer?.phone)) {
+    window.alert(t('service.dialogs.validationPhoneInvalid'))
+    return
+  }
+
+  emit('submit')
 }
 
 function addItemRow() {
@@ -449,6 +510,68 @@ function roundCurrency(value) {
 
 function formatMoney(value) {
   return formatMoneyByBookSettings(value, props.book)
+}
+
+function ensureDefaultEditablePhone() {
+  if (isLockedCustomerMode.value || !props.form?.customer) {
+    return
+  }
+
+  if (normalizePhoneValue(props.form.customer.phone) !== '') {
+    return
+  }
+
+  props.form.customer.phone = DEFAULT_PHONE_PREFIX
+}
+
+function isValidCustomerPhone(value) {
+  return normalizeInternationalPhone(value) !== null
+}
+
+function normalizePhoneValue(value) {
+  return String(value ?? '').trim()
+}
+
+function normalizeLookupPhone(value) {
+  return normalizeInternationalPhone(value) ?? ''
+}
+
+function invalidateCustomerLookup() {
+  customerLookupRequestToken += 1
+
+  if (customerLookupTimerId !== 0) {
+    window.clearTimeout(customerLookupTimerId)
+    customerLookupTimerId = 0
+  }
+}
+
+function applyLookupCustomer(customer) {
+  if (!customer || !props.form?.customer) {
+    return
+  }
+
+  applyLookupValue('name', customer.name)
+  applyLookupValue('messenger', customer.messenger)
+  applyLookupValue('address', customer.address)
+  applyLookupValue('location', customer.location)
+}
+
+function applyLookupValue(fieldName, nextValue) {
+  if (!props.form?.customer) {
+    return
+  }
+
+  if (normalizePhoneValue(props.form.customer[fieldName]) !== '') {
+    return
+  }
+
+  const normalizedValue = normalizePhoneValue(nextValue)
+
+  if (normalizedValue === '') {
+    return
+  }
+
+  props.form.customer[fieldName] = normalizedValue
 }
 
 defineExpose({

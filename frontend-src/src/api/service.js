@@ -24,6 +24,12 @@ export function fetchServiceCustomer(bookId, customerId) {
   return apiClient.get(`/books/${bookId}/service/customers/${customerId}`)
 }
 
+export function lookupServiceCustomerByPhone(bookId, phone) {
+  return apiClient.get(`/books/${bookId}/service/customers/lookup`, {
+    params: { phone },
+  })
+}
+
 export function createServiceCustomer(bookId, payload) {
   return apiClient.post(`/books/${bookId}/service/customers`, payload)
 }
@@ -46,6 +52,10 @@ export function fetchServiceOrderAnalytics(bookId, params = {}) {
 
 export function createServiceOrder(bookId, payload) {
   return apiClient.post(`/books/${bookId}/service/orders`, payload)
+}
+
+export function deleteServiceOrder(bookId, orderId) {
+  return apiClient.delete(`/books/${bookId}/service/orders/${orderId}`)
 }
 
 export function updateServiceOrderStatus(bookId, orderId, payload) {

@@ -22,10 +22,13 @@ use RuntimeException;
  * GET  /api/books/{bookId}/service/orders
  * GET  /api/books/{bookId}/service/orders/{orderId}
  * POST /api/books/{bookId}/service/orders
+ * DELETE /api/books/{bookId}/service/orders/{orderId}
  * POST /api/books/{bookId}/service/orders/{orderId}/status
  */
 class ServiceOrdersController extends AuthenticatedApiController
 {
+    use NormalizesPhoneNumbers;
+
     private const DEFAULT_PAGE = 1;
     private const DEFAULT_PER_PAGE = 25;
     private const ALLOWED_UNITS = ['qty', 'm2', 'kg'];
@@ -162,6 +165,32 @@ class ServiceOrdersController extends AuthenticatedApiController
             'order' => $result['order'],
             'items' => $result['items'],
         ], 201);
+    }
+
+    public function delete(string $bookId, string $orderId)
+    {
+        $userId = $this->currentUserIdAndCloseSession();
+        $permission = $this->bookAccess->getUserBookPermission($userId, $bookId, 'service');
+
+        if ($permission === 'none') {
+            return $this->failNotFound('Book not found.');
+        }
+
+        try {
+            $result = $this->deleteOrder($bookId, $orderId);
+        } catch (RuntimeException $exception) {
+            if ($exception->getMessage() === 'Order not found.') {
+                return $this->failNotFound('Order not found.');
+            }
+
+            return $this->failServerError($exception->getMessage());
+        }
+
+        return $this->respond([
+            'message' => 'Order deleted successfully.',
+            'orderId' => $result['orderId'],
+            'deleted_at' => $result['deleted_at'],
+        ]);
     }
 
     public function updateStatus(string $bookId, string $orderId)
@@ -337,6 +366,30 @@ class ServiceOrdersController extends AuthenticatedApiController
         }
     }
 
+    private function deleteOrder(string $bookId, string $orderId): array
+    {
+        $order = $this->orders->findExistingByIdAndBook($bookId, $orderId);
+
+        if ($order === null) {
+            throw new RuntimeException('Order not found.');
+        }
+
+        $timestamp = $this->utcNow();
+        $deleted = $this->orders->update($orderId, [
+            'deleted_at' => $timestamp,
+            'updated_at' => $timestamp,
+        ]);
+
+        if ($deleted === false) {
+            throw new RuntimeException('Unable to delete order right now.');
+        }
+
+        return [
+            'orderId' => $orderId,
+            'deleted_at' => $timestamp,
+        ];
+    }
+
     private function updateOrderStatus(string $bookId, string $orderId, array $payload): array
     {
         $order = $this->orders->findExistingByIdAndBook($bookId, $orderId);
@@ -390,9 +443,13 @@ class ServiceOrdersController extends AuthenticatedApiController
     {
         $customer = is_array($payload) ? $payload : [];
 
+        $rawPhone = trim((string) ($customer['phone'] ?? ''));
+        $normalizedPhone = $rawPhone !== '' ? $this->normalizeInternationalPhone($rawPhone) : null;
+
         return [
             'name' => trim((string) ($customer['name'] ?? '')),
-            'phone' => trim((string) ($customer['phone'] ?? '')),
+            'phone' => $normalizedPhone,
+            'phone_is_invalid' => $rawPhone !== '' && $normalizedPhone === null,
             'messenger' => $this->normalizeOptionalString($customer['messenger'] ?? null),
             'address' => $this->normalizeOptionalString($customer['address'] ?? null),
             'location' => $this->normalizeOptionalString($customer['location'] ?? null),
@@ -402,7 +459,7 @@ class ServiceOrdersController extends AuthenticatedApiController
     private function validateCustomerPayload(array $payload): void
     {
         $name = (string) ($payload['name'] ?? '');
-        $phone = (string) ($payload['phone'] ?? '');
+        $phone = $payload['phone'] ?? null;
         $messenger = $payload['messenger'] ?? null;
 
         if ($name === '') {
@@ -413,7 +470,11 @@ class ServiceOrdersController extends AuthenticatedApiController
             throw new InvalidArgumentException('Customer name must be 255 characters or fewer.');
         }
 
-        if ($phone === '') {
+        if (($payload['phone_is_invalid'] ?? false) === true) {
+            throw new InvalidArgumentException('Please enter a valid phone number. Letters are not allowed.');
+        }
+
+        if (! is_string($phone) || $phone === '') {
             throw new InvalidArgumentException('Customer phone is required.');
         }
 

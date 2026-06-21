@@ -63,6 +63,7 @@ $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->put('(:segment)/service/types/(:segment)', 'Api\ServiceTypesController::update/$1/$2');
     $routes->delete('(:segment)/service/types/(:segment)', 'Api\ServiceTypesController::delete/$1/$2');
     $routes->get('(:segment)/service/customers', 'Api\ServiceCustomersController::index/$1');
+    $routes->get('(:segment)/service/customers/lookup', 'Api\ServiceCustomersController::lookup/$1');
     $routes->get('(:segment)/service/customers/(:segment)', 'Api\ServiceCustomersController::show/$1/$2');
     $routes->post('(:segment)/service/customers', 'Api\ServiceCustomersController::create/$1');
     $routes->put('(:segment)/service/customers/(:segment)', 'Api\ServiceCustomersController::update/$1/$2');
@@ -70,5 +71,6 @@ $routes->group('books', ['filter' => 'auth'], static function ($routes) {
     $routes->get('(:segment)/service/orders/analytics', 'Api\ServiceOrdersController::analytics/$1');
     $routes->get('(:segment)/service/orders/(:segment)', 'Api\ServiceOrdersController::show/$1/$2');
     $routes->post('(:segment)/service/orders', 'Api\ServiceOrdersController::create/$1');
+    $routes->delete('(:segment)/service/orders/(:segment)', 'Api\ServiceOrdersController::delete/$1/$2');
     $routes->post('(:segment)/service/orders/(:segment)/status', 'Api\ServiceOrdersController::updateStatus/$1/$2');
 });

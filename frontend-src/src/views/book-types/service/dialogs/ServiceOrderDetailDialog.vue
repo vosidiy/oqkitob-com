@@ -9,10 +9,10 @@
         <ServiceOrderStatusDropdown
           v-if="order"
           :order-status="order.order_status"
-          :is-updating="isUpdatingOrderStatus"
+          :is-updating="isDialogBusy"
           @change-status="emit('change-order-status', $event)"
         />
-        <button class="btn btn-icon" :disabled="isLoadingOrderDetail || isUpdatingOrderStatus" @click="close">
+        <button class="btn btn-icon" :disabled="isDialogBusy" @click="close">
           <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
         </button>
       </div>
@@ -113,8 +113,17 @@
       </div>
 
       <footer class="pt-3 border-top mt-4">
+        <button
+          type="button"
+          class="btn text-red"
+          :disabled="!order || isDialogBusy"
+          @click="emit('delete-order')"
+        >
+          <span v-if="isDeletingOrder">{{ $t('common.states.deleting') }}</span>
+          <span v-else>{{ $t('service.orders.deleteAction') }}</span>
+        </button>
         <div class="float-right">
-          <button type="button" class="btn btn-default" :disabled="isLoadingOrderDetail || isUpdatingOrderStatus" @click="close">
+          <button type="button" class="btn btn-default" :disabled="isDialogBusy" @click="close">
             {{ $t('common.actions.ok') }}
           </button>
         </div>
@@ -124,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
 import { formatQuantityDisplay } from '@/utils/quantity'
@@ -143,6 +152,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isDeletingOrder: {
+    type: Boolean,
+    default: false,
+  },
   isUpdatingOrderStatus: {
     type: Boolean,
     default: false,
@@ -157,8 +170,11 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['cancel', 'change-order-status', 'close'])
+const emit = defineEmits(['cancel', 'change-order-status', 'close', 'delete-order'])
 const dialogRef = ref(null)
+const isDialogBusy = computed(() => (
+  props.isLoadingOrderDetail || props.isUpdatingOrderStatus || props.isDeletingOrder
+))
 
 function open() {
   if (!dialogRef.value?.open) {

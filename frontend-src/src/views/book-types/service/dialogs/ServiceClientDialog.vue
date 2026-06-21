@@ -1,14 +1,14 @@
 <template>
   <dialog ref="dialogRef" class="mt-10" @cancel="emit('cancel', $event)" @close="emit('close')">
     <header class="dialog-header">
-      <h5>{{ title }}</h5>
+      <h5>{{ title }}</h5> 
       <button class="btn btn-icon" :disabled="isSubmitting" @click="close">
         <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19.0005 4.99988L5.00049 18.9999M5.00049 4.99988L19.0005 18.9999" stroke="currentColor" stroke-width="2"></path></svg>
       </button>
     </header>
 
     <div class="dialog-body">
-      <form @submit.prevent="emit('submit')">
+      <form @submit.prevent="handleSubmit">
         <div v-if="errorMessage" class="alert alert-danger mb-4" role="alert">
           {{ errorMessage }}
         </div>
@@ -95,8 +95,10 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { normalizeInternationalPhone } from '@/utils/phone'
 
-defineProps({
+const props = defineProps({
   errorMessage: {
     type: String,
     default: '',
@@ -124,7 +126,17 @@ defineProps({
 })
 
 const emit = defineEmits(['cancel', 'close', 'submit'])
+const { t } = useI18n()
 const dialogRef = ref(null)
+
+function handleSubmit() {
+  if (props.form?.phone && normalizeInternationalPhone(props.form.phone) === null) {
+    window.alert(t('service.dialogs.validationPhoneInvalid'))
+    return
+  }
+
+  emit('submit')
+}
 
 function open() {
   if (!dialogRef.value?.open) {

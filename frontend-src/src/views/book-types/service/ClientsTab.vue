@@ -252,6 +252,7 @@
     ref="orderDetailDialogRef"
     :book="book"
     :error-message="selectedCustomerOrderErrorMessage"
+    :is-deleting-order="isDeletingSelectedCustomerOrder"
     :is-loading-order-detail="isLoadingSelectedCustomerOrder"
     :is-updating-order-status="isUpdatingSelectedCustomerOrderStatus"
     :items="selectedCustomerOrderItems"
@@ -259,18 +260,20 @@
     @cancel="handleOrderDetailDialogCancel"
     @change-order-status="updateSelectedCustomerOrderStatus"
     @close="handleOrderDetailDialogClose"
+    @delete-order="handleDeleteSelectedCustomerOrder"
   />
 </template>
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { createServiceCustomer, createServiceOrder, fetchServiceCustomer, fetchServiceCustomers, fetchServiceOrder, fetchServiceTypes, updateServiceCustomer, updateServiceOrderStatus } from '@/api/service'
+import { createServiceCustomer, createServiceOrder, deleteServiceOrder, fetchServiceCustomer, fetchServiceCustomers, fetchServiceOrder, fetchServiceTypes, updateServiceCustomer, updateServiceOrderStatus } from '@/api/service'
 import { getApiErrorMessage, isNotFoundError } from '@/api/errors'
 import { useClearableSearch } from '@/composables/use-clearable-search'
 import { useToast } from '@/composables/use-toast'
 import { formatDateTime } from '@/utils/date-time'
 import { formatMoneyByBookSettings } from '@/utils/money-display'
+import { normalizeInternationalPhone } from '@/utils/phone'
 import CreateServiceOrderDialog from '@/views/book-types/service/dialogs/CreateServiceOrderDialog.vue'
 import ServiceClientDialog from '@/views/book-types/service/dialogs/ServiceClientDialog.vue'
 import ServiceOrderDetailDialog from '@/views/book-types/service/dialogs/ServiceOrderDetailDialog.vue'
@@ -312,6 +315,7 @@ const isLoadingSelectedCustomerOrder = ref(false)
 const isSubmittingCustomer = ref(false)
 const isCreatingOrder = ref(false)
 const isLoadingServiceTypes = ref(false)
+const isDeletingSelectedCustomerOrder = ref(false)
 const isUpdatingSelectedCustomerOrderStatus = ref(false)
 
 const customerDialogMode = ref('create')
@@ -353,6 +357,11 @@ const isCustomerSubmitDisabled = computed(() => (
   isSubmittingCustomer.value
   || String(customerForm.name ?? '').trim() === ''
   || String(customerForm.phone ?? '').trim() === ''
+))
+const isSelectedCustomerOrderDetailBusy = computed(() => (
+  isLoadingSelectedCustomerOrder.value
+  || isUpdatingSelectedCustomerOrderStatus.value
+  || isDeletingSelectedCustomerOrder.value
 ))
 
 watch(() => props.book.id, () => {
@@ -597,7 +606,7 @@ function closeOrderDetailDialog() {
 }
 
 function handleOrderDetailDialogCancel(event) {
-  if (isLoadingSelectedCustomerOrder.value || isUpdatingSelectedCustomerOrderStatus.value) {
+  if (isSelectedCustomerOrderDetailBusy.value) {
     event.preventDefault()
   }
 }
@@ -607,7 +616,7 @@ function handleOrderDetailDialogClose() {
 }
 
 async function updateSelectedCustomerOrderStatus(nextStatus) {
-  if (!selectedCustomerOrder.value?.id) {
+  if (!selectedCustomerOrder.value?.id || isDeletingSelectedCustomerOrder.value) {
     return
   }
 
@@ -639,19 +648,62 @@ async function updateSelectedCustomerOrderStatus(nextStatus) {
   }
 }
 
+async function handleDeleteSelectedCustomerOrder() {
+  if (!selectedCustomerOrder.value?.id || isSelectedCustomerOrderDetailBusy.value) {
+    return
+  }
+
+  const orderId = selectedCustomerOrder.value.id
+  const confirmed = window.confirm(t('service.orderMessages.confirmDelete'))
+
+  if (!confirmed) {
+    return
+  }
+
+  selectedCustomerOrderErrorMessage.value = ''
+  isDeletingSelectedCustomerOrder.value = true
+
+  try {
+    await deleteServiceOrder(props.book.id, orderId)
+    closeOrderDetailDialog()
+    showToast(t('service.orderMessages.deleted'))
+    await refreshSelectedCustomerData()
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      closeOrderDetailDialog()
+      selectedCustomerErrorMessage.value = t('service.orderMessages.unavailable')
+      await refreshSelectedCustomerData()
+      return
+    }
+
+    selectedCustomerOrderErrorMessage.value = getApiErrorMessage(error, t('service.orderMessages.unableDelete'))
+  } finally {
+    isDeletingSelectedCustomerOrder.value = false
+  }
+}
+
 function resetSelectedCustomerOrderDetail() {
   activeCustomerOrderId.value = ''
   selectedCustomerOrder.value = null
   selectedCustomerOrderItems.value = []
   selectedCustomerOrderErrorMessage.value = ''
   isLoadingSelectedCustomerOrder.value = false
+  isDeletingSelectedCustomerOrder.value = false
   isUpdatingSelectedCustomerOrderStatus.value = false
+}
+
+async function refreshSelectedCustomerData() {
+  await loadCustomerList()
+
+  if (selectedCustomerId.value !== '') {
+    await loadCustomerDetails(selectedCustomerId.value)
+  }
 }
 
 function makeCustomerPayload() {
   return {
     name: String(customerForm.name ?? '').trim(),
-    phone: String(customerForm.phone ?? '').trim(),
+    phone: normalizeInternationalPhone(customerForm.phone) ?? String(customerForm.phone ?? '').trim(),
     messenger: String(customerForm.messenger ?? '').trim(),
     address: String(customerForm.address ?? '').trim(),
     location: String(customerForm.location ?? '').trim(),
