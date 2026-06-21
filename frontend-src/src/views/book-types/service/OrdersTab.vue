@@ -64,27 +64,25 @@
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-receipt-text-icon lucide-receipt-text"><path d="M13 16H8"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"/></svg>
                 </div>
                 <div>
-                  <h6 class="mb-1 text-lg">
-                    👤 {{ order.customer_name || $t('service.orders.walkInCustomer') }}
-                    <span v-if="order.customer_phone" class="text-secondary"> • 📞 {{ order.customer_phone }}</span>
-                  </h6>
-                  <p class="mb-0">
+                  <h6 class="mb-1">
                     {{ $t('service.orders.itemsCount', { count: Number(order.item_count ?? 0) }) }}
-                    |
+                    • 
                     <span>{{ formatMoney(order.total_amount) }} <small class="currency-code">{{ order.currency_code }}</small></span>
-                  </p>
-                  <p class="text-secondary">
-                    {{ $t('service.orders.receivedAt') }}: {{ formatDateTime(order.received_at) }}
+                  </h6>
+                  <p>
+                    {{ order.customer_name || $t('service.orders.walkInCustomer') }}
+                    <span v-if="order.customer_phone" class="text-secondary"> • 📞 {{ order.customer_phone }}</span>
                   </p>
                 </div>
-
                 <div class="ml-auto text-right">
-                  <p>
-                    {{ $t('common.fields.status') }}:
-                    <span class="mt-1" :class="getOrderStatusMeta(order.order_status).textClass">
+                  <p class="mb-1">
+                    <span :class="getOrderStatusMeta(order.order_status).textClass">
                       {{ getOrderStatusMeta(order.order_status).emoji }}
                       {{ $t(getOrderStatusMeta(order.order_status).labelKey) }}
                     </span>
+                  </p>
+                  <p class="text-secondary">
+                    {{ $t('service.orders.receivedAt') }}: {{ formatDateTime(order.received_at) }}
                   </p>
                 </div>
               </div>

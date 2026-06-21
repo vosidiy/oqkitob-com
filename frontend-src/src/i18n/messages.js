@@ -284,7 +284,6 @@ export const messages = {
         messenger: 'Messenger',
         objectName: 'Item name',
         orderNote: 'Order note',
-        serviceType: 'Service',
         unitPrice: 'Price:',
       },
       units: {
@@ -884,7 +883,6 @@ export const messages = {
         messenger: 'Messenger',
         objectName: 'Buyum nomi',
         orderNote: 'Buyurtma izohi',
-        serviceType: 'Xizmat',
         unitPrice: 'Narxi',
       },
       units: {
@@ -906,7 +904,7 @@ export const messages = {
         empty: "Hozircha xizmat buyurtmalari yo'q.",
         walkInCustomer: 'Mijoz',
         itemsCount: '{count} xil buyum',
-        receivedAt: 'Qabul qilingan',
+        receivedAt: 'Olindi',
         deliveredAt: 'Topshirilgan',
         loadingOrderDetail: 'Buyurtma tafsiloti yuklanmoqda...',
         detailTitle: 'Buyurtma tafsiloti',
@@ -970,7 +968,7 @@ export const messages = {
         createOrderSubmit: 'Buyurtma yaratish',
         customerInfo: "Mijoz ma'lumoti",
         orderItems: 'Buyurtma bandlari',
-        addAnotherItem: 'Yana band qo‘shish',
+        addAnotherItem: 'Boshqa buyum qo‘shish',
         createServiceTypeFirst: "Buyurtma yaratishdan oldin kamida bitta xizmat turi yarating.",
         serviceNamePlaceholder: 'Masalan: Oddiy yuvish',
         customerNamePlaceholder: 'Mijoz ismi',
@@ -1484,7 +1482,6 @@ export const messages = {
         messenger: 'Мессенджер',
         objectName: 'Название предмета',
         orderNote: 'Примечание к заказу',
-        serviceType: 'Услуга',
         unitPrice: 'Цена:',
       },
       units: {

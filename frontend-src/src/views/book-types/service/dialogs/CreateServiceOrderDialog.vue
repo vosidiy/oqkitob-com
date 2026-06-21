@@ -18,11 +18,11 @@
             {{ $t('service.dialogs.createServiceTypeFirst') }}
           </div>
 
-          <section class="mb-4 card border bg-primary-100 p-4">
+          <section class="mb-4 card border bg-primary-100 p-3">
             
-            <div v-if="isLockedCustomerMode" class="d-flex flex-col gap-2">
+            <div v-if="isLockedCustomerMode" class="d-flex flex-col gap-1">
               
-              <h6 class="mb-1">👤
+              <h6 class="mb-3">👤
                   {{ lockedCustomer?.name }}
               </h6>
               <p>
@@ -43,17 +43,17 @@
             </div>
 
             <template v-else>
-              <h6 class="mb-4">👤 {{ $t('service.dialogs.customerInfo') }}</h6>
+              <h6 class="mb-3">👤 {{ $t('service.dialogs.customerInfo') }}</h6>
               <div class="row gap-3">
                 <div class="col-6 mb-3">
                   <div class="d-flex align-items-center">
-                    <span class="p-2 flex-shrink-0 bg-white h-9 rounded-left"> 📞 +998 </span>
+                    <span class="p-2 flex-shrink-0 bg-white h-9 rounded-left"> 📞 </span>
                     <input
                       id="service-order-customer-phone"
                       v-model.trim="form.customer.phone"
                       type="text"
                       class="form-control h-9 rounded-left-0"
-                      placeholder="901234567"
+                      placeholder="+998901234567"
                       :disabled="isSubmitting"
                       required
                     >
@@ -74,7 +74,7 @@
               </div>
 
               <div class="row gap-3">
-                <div class="col-6 mb-3">
+                <div class="col-6">
                   <div class="relative">
                     <span class="d-inline-flex absolute ml-1 p-2 left-0 text-lg center-y">💬</span>
                     <input
@@ -88,7 +88,7 @@
                   </div>
                 </div>
 
-                <div class="col-6 mb-3">
+                <div class="col-6">
                   <div class="relative">
                     <span class="d-inline-flex absolute ml-1 p-2 left-0 text-lg center-y"> 🏠 </span>
                     <input
@@ -119,125 +119,127 @@
           <hr>
 
           <section class="mb-4">
+            
+            
+            
             <article
               v-for="(item, index) in form.items"
               :key="item._key"
-              class="d-flex flex-row border-bottom border-width-2 py-3 border-color-neutral-500"
+              class="border-bottom border-width-2 py-4 border-color-neutral-300"
             >
-              <div class="flex-1">
-                <div class="row gap-cols-2 mb-3">
-                  <div class="col-6">
-                    <label class="form-label" :for="`service-order-object-${item._key}`">
-                      {{ $t('service.fields.objectName') }}
-                    </label>
-                    <input
-                      :id="`service-order-object-${item._key}`"
-                      v-model.trim="item.object_name"
-                      type="text"
-                      class="form-control"
-                      :placeholder="$t('service.dialogs.objectNamePlaceholder')"
-                      :disabled="isSubmitting"
-                      required
-                    >
-                  </div>
 
-                  <div class="col-6">
-                    <label class="form-label" :for="`service-order-service-${item._key}`">
-                      {{ $t('service.fields.serviceType') }}
-                    </label>
-                    <select
-                      :id="`service-order-service-${item._key}`"
-                      v-model="item.service_type_id"
-                      class="form-select"
-                      :disabled="isSubmitting || serviceTypes.length === 0"
-                      required
-                      @change="applyServiceDefaults(item)"
-                    >
-                      <option value="">{{ $t('service.dialogs.chooseService') }}</option>
-                      <option v-for="serviceType in serviceTypes" :key="serviceType.id" :value="serviceType.id">
-                        {{ serviceType.name }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="row gap-cols-2 mb-3">
-                  <div class="col-6">
-                    <div class="d-flex gap-2">
+              <label class="form-label font-semibold" :for="`service-order-object-${item._key}`">
+                {{ $t('service.fields.objectName') }}
+              </label>
+              <div class="d-flex gap-cols-2 flex-row">
+                <div class="flex-1">
+                  <div class="row gap-cols-2 mb-3">
+                    <div class="col-6">
                       <input
-                        :id="`service-order-quantity-${item._key}`"
-                        v-model.trim="item.quantity"
-                        type="number"
+                        :id="`service-order-object-${item._key}`"
+                        v-model.trim="item.object_name"
+                        type="text"
                         class="form-control"
-                        min="0"
-                        step="1"
-                        :placeholder="$t('service.dialogs.quantityPlaceholder')"
+                        :placeholder="$t('service.dialogs.objectNamePlaceholder')"
                         :disabled="isSubmitting"
                         required
                       >
+                    </div>
+
+                    <div class="col-6">
                       <select
-                        v-model="item.unit_code"
+                        :id="`service-order-service-${item._key}`"
+                        v-model="item.service_type_id"
                         class="form-select"
-                        :disabled="isSubmitting"
+                        :disabled="isSubmitting || serviceTypes.length === 0"
                         required
+                        @change="applyServiceDefaults(item)"
                       >
-                        <option v-for="unit in unitOptions" :key="unit.value" :value="unit.value">
-                          {{ $t(unit.labelKey) }}
+                        <option value="">{{ $t('service.dialogs.chooseService') }}</option>
+                        <option v-for="serviceType in serviceTypes" :key="serviceType.id" :value="serviceType.id">
+                          {{ serviceType.name }}
                         </option>
                       </select>
                     </div>
                   </div>
 
-                  <div class="col-6">
-                    <div class="relative d-flex flex-row">
-                      <span class="p-2 flex-shrink-0 bg-neutral-200 rounded-left">{{ $t('service.fields.unitPrice') }} </span>
-                      <input
-                        :id="`service-order-price-${item._key}`"
-                        v-model.trim="item.unit_price"
-                        type="number"
-                        class="form-control rounded-left-0"
-                        min="0"
-                        step="1"
-                        placeholder="0.00"
-                        :disabled="isSubmitting"
-                        required
-                      >
-                      <small class="currency-code text-secondary text-default bg-neutral-50 absolute right-2 top-1 p-1">
-                        {{ book.currency_code }}
-                      </small>
+                  <div class="row gap-cols-2">
+                    <div class="col-6">
+                      <div class="d-flex gap-2">
+                        <input
+                          :id="`service-order-quantity-${item._key}`"
+                          v-model.trim="item.quantity"
+                          type="number"
+                          class="form-control"
+                          min="0"
+                          step="1"
+                          :placeholder="$t('service.dialogs.quantityPlaceholder')"
+                          :disabled="isSubmitting"
+                          required
+                        >
+                        <select
+                          v-model="item.unit_code"
+                          class="form-select"
+                          :disabled="isSubmitting"
+                          required
+                        >
+                          <option v-for="unit in unitOptions" :key="unit.value" :value="unit.value">
+                            {{ $t(unit.labelKey) }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="col-6">
+                      <div class="relative d-flex flex-row">
+                        <span class="p-2 flex-shrink-0 bg-neutral-200 rounded-left">{{ $t('service.fields.unitPrice') }} </span>
+                        <input
+                          :id="`service-order-price-${item._key}`"
+                          v-model.trim="item.unit_price"
+                          type="number"
+                          class="form-control rounded-left-0"
+                          min="0"
+                          step="1"
+                          placeholder="0.00"
+                          :disabled="isSubmitting"
+                          required
+                        >
+                        <small class="currency-code text-secondary text-default bg-neutral-50 absolute right-2 top-1 p-1">
+                          {{ book.currency_code }}
+                        </small>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <div>
-                  <input
-                    :id="`service-order-note-${item._key}`"
-                    v-model.trim="item.note"
-                    type="text"
-                    class="form-control"
-                    :placeholder="$t('service.dialogs.itemNotePlaceholder')"
-                    :disabled="isSubmitting"
-                  >
+                <div class="min-w-40">
+                  <textarea
+                      :id="`service-order-note-${item._key}`"
+                      v-model.trim="item.note"
+                      type="text"
+                      class="form-control" style="height: 100%;"
+                      :placeholder="$t('service.dialogs.itemNotePlaceholder')"
+                      :disabled="isSubmitting"
+                    >
+                    </textarea>
                 </div>
-              </div>
+                <div class="p-2 border text-right bg-neutral-200 min-w-50 rounded">
+                  <p class="text-sm">
+                    {{ formatQuantityDisplay(item.quantity) }} × {{ formatMoney(lineTotal(item)) }} =
+                  </p>
+                  <p class="font-semibold max-w-50 mb-2 text-right" style="word-break: break-all;">
+                    {{ formatMoney(lineTotal(item)) }} <small class="currency-code">{{ book.currency_code }}</small>
+                  </p>
 
-              <div class="p-3 border text-right bg-neutral-200 min-w-40 rounded ml-2">
-                <p class="text-secondary">
-                  {{ formatQuantityDisplay(item.quantity) }} × {{ formatMoney(lineTotal(item)) }} =
-                </p>
-                <p class="text-lg mb-3 font-semibold max-w-40" style="word-break: break-all;">
-                  {{ formatMoney(lineTotal(item)) }} <small class="currency-code">{{ book.currency_code }}</small>
-                </p>
-
-                <button
-                  v-if="form.items.length > 1"
-                  type="button"
-                  class="btn btn-link text-red btn-sm"
-                  :disabled="isSubmitting"
-                  @click="removeItemRow(index)"
-                >
-                  {{ $t('common.actions.delete') }}
-                </button>
+                  <a
+                    v-if="form.items.length > 1"
+                    role="button"
+                    class="text-red link"
+                    :disabled="isSubmitting"
+                    @click="removeItemRow(index)"
+                  >
+                    {{ $t('common.actions.delete') }}
+                </a>
+                </div>
               </div>
             </article>
 
